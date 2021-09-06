@@ -15,11 +15,12 @@
 }
 
 :root {
-  --background: black;
+  --background: rgb(0, 0, 0);
   --background-alpha: 0, 0, 0;
-  --foreground: white;
+  --foreground: rgb(255, 255, 255);
   --foreground-alpha: 255, 255, 255;
-  --accent: #f52a2a;
+  --subdued: rgb(150 150 150);
+  --accent: rgb(245, 42, 42);
 }
 
 ::selection {
@@ -29,11 +30,12 @@
 
 @media (prefers-color-scheme: light) {
   :root {
-    --background: white;
+    --background: rgb(255, 255, 255);
     --background-alpha: 255, 255, 255;
-    --foreground: black;
+    --foreground: rgb(0, 0, 0);
     --foreground-alpha: 0, 0, 0;
-    --accent: #f52a2a;
+    --subdued: rgb(88 88 88);
+    --accent: rgb(245, 42, 42);
   }
 
   ::selection {
@@ -86,21 +88,25 @@ ul {
   max-width: 30em;
 }
 
-h2,
-h3 {
-  font-weight: normal;
-}
-
 h1 {
   font-family: "Nikolai", serif;
   font-size: 2em;
   line-height: 1.2;
+}
+
+h1,
+h2 {
   margin-top: 0.5em;
 }
 
 h2,
 h3 {
   font-size: 1em;
+  font-weight: normal;
+}
+
+h3 {
+  text-decoration: none;
 }
 
 ul {
@@ -108,18 +114,16 @@ ul {
   padding: 0 0 0 0.5em;
 }
 
-h2 + p,
-h3 + p,
 p + p,
-ul + p,
-h2 + ul,
-h3 + ul,
-ul + ul {
+ul + h3 {
   margin-top: 1em;
 }
 
 img {
   max-width: 100%;
+  line-height: 0;
+  margin: 0;
+  padding: 0;
 }
 
 a {
@@ -138,6 +142,10 @@ hr {
   max-width: 4em;
   height: 1px;
   margin: 2em 0;
+}
+
+.subdued {
+  color: var(--subdued);
 }
 
 .num {
