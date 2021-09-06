@@ -6,17 +6,38 @@
   font-weight: normal;
 }
 
+@font-face {
+  font-family: "Nikolai";
+  font-display: fallback;
+  src: url("Nikolai.woff") format("woff"), url("Nikolai.woff2") format("woff2");
+  font-style: normal;
+  font-weight: bold;
+}
+
 :root {
   --background: black;
+  --background-alpha: 0, 0, 0;
   --foreground: white;
+  --foreground-alpha: 255, 255, 255;
   --accent: #f52a2a;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--background);
 }
 
 @media (prefers-color-scheme: light) {
   :root {
     --background: white;
+    --background-alpha: 255, 255, 255;
     --foreground: black;
+    --foreground-alpha: 0, 0, 0;
     --accent: #f52a2a;
+  }
+
+  ::selection {
+    color: var(--foreground);
   }
 }
 
@@ -65,15 +86,16 @@ ul {
   max-width: 30em;
 }
 
-h1,
 h2,
 h3 {
   font-weight: normal;
 }
 
 h1 {
-  font-size: 1.3em;
-  text-transform: lowercase;
+  font-family: "Nikolai", serif;
+  font-size: 2em;
+  line-height: 1.2;
+  margin-top: 0.5em;
 }
 
 h2,
@@ -98,17 +120,24 @@ ul + ul {
 
 img {
   max-width: 100%;
-  margin-bottom: 1em;
 }
 
 a {
   color: var(--foreground);
-  transition: color 150ms ease-in-out;
 }
 
 a:hover {
   color: var(--accent);
   cursor: crosshair;
+}
+
+hr {
+  border: none;
+  background: rgba(var(--foreground-alpha), 0.1);
+  width: 100%;
+  max-width: 4em;
+  height: 1px;
+  margin: 2em 0;
 }
 
 .num {
