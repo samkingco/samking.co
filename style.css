@@ -1,0 +1,122 @@
+@font-face {
+  font-family: "Text";
+  font-display: fallback;
+  src: url("Text.woff") format("woff"), url("Text.woff2") format("woff2");
+  font-style: normal;
+  font-weight: normal;
+}
+
+:root {
+  --background: black;
+  --foreground: white;
+  --accent: #f52a2a;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: white;
+    --foreground: black;
+    --accent: #f52a2a;
+  }
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  padding: 4em 1em;
+  font-family: "Text", system, -apple-system, "Helvetica Neue", Helvetica,
+    "Segoe UI", "Roboto", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--foreground);
+  background-color: var(--background);
+  cursor: crosshair;
+}
+
+@media (min-width: 30em) {
+  body {
+    padding: 12vw 12vw;
+  }
+}
+
+@media (min-width: 60em) {
+  body {
+    padding: 8vw 12vw;
+  }
+}
+
+h1,
+h2,
+h3,
+p,
+ul {
+  margin: 0;
+  max-width: 30em;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: normal;
+}
+
+h1 {
+  font-size: 1.3em;
+  text-transform: lowercase;
+}
+
+h2,
+h3 {
+  font-size: 1em;
+}
+
+ul {
+  list-style: none;
+  padding: 0 0 0 0.5em;
+}
+
+h2 + p,
+h3 + p,
+p + p,
+ul + p,
+h2 + ul,
+h3 + ul,
+ul + ul {
+  margin-top: 1em;
+}
+
+img {
+  max-width: 100%;
+  margin-bottom: 1em;
+}
+
+a {
+  color: var(--foreground);
+  transition: color 150ms ease-in-out;
+}
+
+a:hover {
+  color: var(--accent);
+  cursor: crosshair;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  display: inline-block;
+  margin-right: 1em;
+}
+
+.hidden {
+  color: transparent;
+}
