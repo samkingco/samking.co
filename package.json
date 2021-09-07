@@ -7,8 +7,11 @@
     "build": "parcel build index.html"
   },
   "staticFiles": {
-    "staticPath": ["avatar.jpg"]
-},
+    "staticPath": [
+      "avatar.jpg",
+      "robots.txt"
+    ]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samkingco/samking.eth.git"
