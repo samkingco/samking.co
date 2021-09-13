@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "description": "Site for info about me",
   "scripts": {
-    "dev": "parcel index.html",
-    "build": "PARCEL_WORKERS=0 parcel build index.html"
+    "dev": "parcel src/index.html",
+    "build": "PARCEL_WORKERS=0 parcel build src/index.html"
+  },
+  "staticFiles": {
+    "staticPath": "src/static"
   },
   "repository": {
     "type": "git",
