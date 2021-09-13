@@ -1,7 +1,8 @@
 @font-face {
   font-family: "Text";
   font-display: fallback;
-  src: url("Text.woff") format("woff"), url("Text.woff2") format("woff2");
+  src: url("fonts/Text.woff") format("woff"),
+    url("fonts/Text.woff2") format("woff2");
   font-style: normal;
   font-weight: normal;
 }
@@ -9,7 +10,8 @@
 @font-face {
   font-family: "Nikolai";
   font-display: fallback;
-  src: url("Nikolai.woff") format("woff"), url("Nikolai.woff2") format("woff2");
+  src: url("fonts/Nikolai.woff") format("woff"),
+    url("fonts/Nikolai.woff2") format("woff2");
   font-style: normal;
   font-weight: bold;
 }
