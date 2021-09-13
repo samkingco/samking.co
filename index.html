@@ -25,12 +25,16 @@
   </head>
   <body>
     <a href="https://twitter.com/samkingco">
-      <img
-        src="avatar.jpg"
-        width="200"
-        height="200"
-        alt="Avatar photo is a self portrait of Sam King. Taken with an old Hasselblad film camera shooting into a mirror."
-      />
+      <picture>
+        <source src="avatar.jpg?as=avif&quality=70" type="image/avif" />
+        <source src="avatar.jpg?as=webp&quality=70" type="image/webp" />
+        <img
+          src="avatar.jpg?quality=70"
+          width="200"
+          height="200"
+          alt="Avatar photo is a self portrait of Sam King. Taken with an old Hasselblad film camera shooting into a mirror."
+        />
+      </picture>
     </a>
 
     <h1>Sam King</h1>
