@@ -160,6 +160,13 @@ hr {
   color: transparent;
 }
 
+.pfp {
+  display: block;
+  max-width: 200px;
+  line-height: 0;
+  cursor: inherit;
+}
+
 .pfp-alt,
 .pfp:hover .pfp-main {
   display: none;
