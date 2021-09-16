@@ -162,6 +162,7 @@ hr {
   line-height: 0;
   cursor: inherit;
   position: relative;
+  z-index: 1;
 }
 
 .pfp-main,
@@ -172,7 +173,7 @@ hr {
 
 .pfp-main {
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .pfp-alt {
@@ -181,22 +182,46 @@ hr {
   left: 0;
   right: 0;
   bottom: 0;
-}
-
-.pfp-alt,
-.pfp:hover .pfp-main {
-  opacity: 0;
+  transform: scale(0.3);
+  transition: transform 500ms cubic-bezier(0.7, 0, 0.1, 1);
 }
 
 .pfp:hover .pfp-alt {
-  opacity: 1;
+  transform: scale(1) translate3d(80%, 0, 0);
+}
+
+.name {
+  position: relative;
+}
+
+.name-alt {
+  position: absolute;
+  top: -1rem;
+  left: 0;
+  transform: translate3d(0, -2rem, 0);
+}
+
+.name-main {
+  display: block;
+  position: relative;
+}
+
+.name-alt,
+.name-main {
+  transition: transform 500ms cubic-bezier(0.7, 0, 0.1, 1),
+    opacity 500ms cubic-bezier(0.7, 0, 0.1, 1);
 }
 
 .name-alt,
 .pfp:hover ~ .name .name-main {
-  display: none;
+  opacity: 0;
+}
+
+.pfp:hover ~ .name .name-main {
+  transform: translate3d(0, 1rem, 0);
 }
 
 .pfp:hover ~ .name .name-alt {
-  display: inline-block;
+  opacity: 1;
+  transform: translate3d(0, 1rem, 0);
 }
