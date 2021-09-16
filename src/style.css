@@ -71,13 +71,7 @@ body {
 
 @media (min-width: 30em) {
   body {
-    padding: 12vw 12vw;
-  }
-}
-
-@media (min-width: 60em) {
-  body {
-    padding: 8vw 12vw;
+    padding: 6em 8vw;
   }
 }
 
@@ -97,7 +91,8 @@ h1 {
 }
 
 h1,
-h2 {
+h2,
+h2 + p {
   margin-top: 0.5em;
 }
 
@@ -123,13 +118,14 @@ ul + h3 {
 
 img {
   max-width: 100%;
+  height: auto;
   line-height: 0;
   margin: 0;
   padding: 0;
 }
 
 a {
-  color: var(--foreground);
+  color: inherit;
 }
 
 a:hover {
@@ -165,13 +161,42 @@ hr {
   max-width: 200px;
   line-height: 0;
   cursor: inherit;
+  position: relative;
+}
+
+.pfp-main,
+.pfp-alt {
+  display: block;
+  transition: opacity 200ms cubic-bezier(0.7, 0, 0.1, 1);
+}
+
+.pfp-main {
+  position: relative;
+  z-index: 1;
+}
+
+.pfp-alt {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .pfp-alt,
 .pfp:hover .pfp-main {
-  display: none;
+  opacity: 0;
 }
 
 .pfp:hover .pfp-alt {
-  display: block;
+  opacity: 1;
+}
+
+.name-alt,
+.pfp:hover ~ .name .name-main {
+  display: none;
+}
+
+.pfp:hover ~ .name .name-alt {
+  display: inline-block;
 }

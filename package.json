@@ -3,11 +3,9 @@
   "version": "1.0.0",
   "description": "Site for info about me",
   "scripts": {
-    "dev": "parcel src/index.html",
-    "build": "cross-env PARCEL_WORKERS=0 parcel build src/index.html"
-  },
-  "staticFiles": {
-    "staticPath": "src/static"
+    "copystatic": "copyfiles -f src/static/* dist",
+    "dev": "parcel serve src/index.html -p 3000",
+    "build": "cross-env PARCEL_WORKERS=0 parcel build src/index.html && npm run copystatic"
   },
   "repository": {
     "type": "git",
@@ -26,8 +24,8 @@
   "devDependencies": {
     "@parcel/config-default": "^2.0.0-rc.0",
     "@parcel/transformer-image": "^2.0.0-rc.0",
+    "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
-    "parcel": "^2.0.0-rc.0",
-    "parcel-reporter-static-files-copy": "^1.3.0"
+    "parcel": "^2.0.0-rc.0"
   }
 }
