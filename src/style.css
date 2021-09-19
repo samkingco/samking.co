@@ -8,6 +8,15 @@
 }
 
 @font-face {
+  font-family: "Text";
+  font-display: fallback;
+  src: url("fonts/TextBold.woff") format("woff"),
+    url("fonts/TextBold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: bold;
+}
+
+@font-face {
   font-family: "Nikolai";
   font-display: fallback;
   src: url("fonts/Nikolai.woff") format("woff"),
@@ -28,21 +37,6 @@
 ::selection {
   background-color: var(--accent);
   color: var(--background);
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --background: rgb(255, 255, 255);
-    --background-alpha: 255, 255, 255;
-    --foreground: rgb(0, 0, 0);
-    --foreground-alpha: 0, 0, 0;
-    --subdued: rgb(88 88 88);
-    --accent: rgb(245, 42, 42);
-  }
-
-  ::selection {
-    color: var(--foreground);
-  }
 }
 
 *,
@@ -111,7 +105,10 @@ ul {
   padding: 0 0 0 0.5em;
 }
 
-p + p,
+p + p {
+  margin-top: 0.5rem;
+}
+
 ul + h3 {
   margin-top: 1em;
 }
@@ -224,4 +221,40 @@ hr {
 .pfp:hover ~ .name .name-alt {
   opacity: 1;
   transform: translate3d(0, 1rem, 0);
+}
+
+.inverted {
+  --background: rgb(255, 255, 255);
+  --background-alpha: 255, 255, 255;
+  --foreground: rgb(0, 0, 0);
+  --foreground-alpha: 0, 0, 0;
+  --subdued: rgb(88 88 88);
+
+  color: var(--foreground);
+  background: var(--background);
+  padding: 1rem;
+  max-width: 30em;
+  margin: 2rem 0;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: rgb(255, 255, 255);
+    --background-alpha: 255, 255, 255;
+    --foreground: rgb(0, 0, 0);
+    --foreground-alpha: 0, 0, 0;
+    --subdued: rgb(88 88 88);
+  }
+
+  ::selection {
+    color: var(--foreground);
+  }
+
+  .inverted {
+    --background: rgb(0, 0, 0);
+    --background-alpha: 0, 0, 0;
+    --foreground: rgb(255, 255, 255);
+    --foreground-alpha: 255, 255, 255;
+    --subdued: rgb(150 150 150);
+  }
 }
