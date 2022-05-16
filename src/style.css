@@ -162,6 +162,13 @@ hr {
   z-index: 1;
 }
 
+.links {
+  flex-wrap: wrap;
+  gap: 2rem 4rem;
+  margin: 2rem 0;
+  display: flex;
+}
+
 .inverted {
   --background: rgb(255, 255, 255);
   --background-alpha: 255, 255, 255;
