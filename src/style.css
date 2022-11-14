@@ -8,20 +8,20 @@
 }
 
 @font-face {
-  font-family: "Text";
+  font-family: "Mono";
   font-display: fallback;
-  src: url("fonts/TextBold.woff") format("woff"),
-    url("fonts/TextBold.woff2") format("woff2");
+  src: url("fonts/Mono.woff") format("woff"),
+    url("fonts/Mono.woff2") format("woff2");
   font-style: normal;
-  font-weight: bold;
+  font-weight: normal;
 }
 
 @font-face {
   font-family: "Nikolai";
   font-display: fallback;
-  src: url("fonts/Nikolai.woff") format("woff"),
-    url("fonts/Nikolai.woff2") format("woff2");
-  font-style: normal;
+  src: url("fonts/Nikolai-Italic.woff") format("woff"),
+    url("fonts/Nikolai-Italic.woff2") format("woff2");
+  font-style: italic;
   font-weight: bold;
 }
 
@@ -32,6 +32,10 @@
   --foreground-alpha: 255, 255, 255;
   --subdued: rgb(150 150 150);
   --accent: rgb(245, 42, 42);
+  --font-sans: "Text", system, -apple-system, "Helvetica Neue", Helvetica,
+    "Segoe UI", "Roboto", sans-serif;
+  --font-mono: "Mono", SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono,
+    monospace;
 }
 
 ::selection {
@@ -43,6 +47,7 @@
 *:before,
 *:after {
   box-sizing: border-box;
+  margin: 0;
 }
 
 html {
@@ -54,8 +59,7 @@ body {
   padding: 0;
   min-height: 100%;
   padding: 4em 1em;
-  font-family: "Text", system, -apple-system, "Helvetica Neue", Helvetica,
-    "Segoe UI", "Roboto", sans-serif;
+  font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.5;
   color: var(--foreground);
@@ -63,7 +67,7 @@ body {
   cursor: crosshair;
 }
 
-@media (min-width: 30em) {
+@media (min-width: 32em) {
   body {
     padding: 6em 8vw;
   }
@@ -74,13 +78,13 @@ h2,
 h3,
 p,
 ul {
-  margin: 0;
   max-width: 30em;
 }
 
 h1 {
   font-family: "Nikolai", serif;
   font-size: 2em;
+  font-style: italic;
   line-height: 1.2;
 }
 
@@ -98,36 +102,44 @@ h3 {
 
 h3 {
   text-decoration: none;
+  font-family: var(--font-mono);
 }
 
 ul {
   list-style: none;
-  padding: 0 0 0 0.5em;
+  padding: 0;
+}
+
+ul + ul {
+  margin-top: 1em;
 }
 
 p + p {
-  margin-top: 0.5rem;
-}
-
-ul + h3 {
-  margin-top: 1em;
+  margin-top: 0.5em;
 }
 
 img {
   max-width: 100%;
   height: auto;
   line-height: 0;
-  margin: 0;
   padding: 0;
 }
 
 a {
   color: inherit;
+  text-decoration-color: rgba(var(--foreground-alpha), 0.4);
+  transition: color 150ms ease, text-decoration-color 150ms ease;
 }
 
 a:hover {
   color: var(--accent);
+  text-decoration-color: var(--accent);
   cursor: crosshair;
+}
+
+a:focus-visible {
+  text-decoration-color: var(--foreground);
+  outline: none;
 }
 
 hr {
@@ -143,10 +155,9 @@ hr {
   color: var(--subdued);
 }
 
-.num {
-  font-variant-numeric: tabular-nums;
-  display: inline-block;
-  margin-right: 1em;
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
 }
 
 .hidden {
@@ -160,27 +171,6 @@ hr {
   cursor: inherit;
   position: relative;
   z-index: 1;
-}
-
-.links {
-  flex-wrap: wrap;
-  gap: 2rem 4rem;
-  margin: 2rem 0;
-  display: flex;
-}
-
-.inverted {
-  --background: rgb(255, 255, 255);
-  --background-alpha: 255, 255, 255;
-  --foreground: rgb(0, 0, 0);
-  --foreground-alpha: 0, 0, 0;
-  --subdued: rgb(88 88 88);
-
-  color: var(--foreground);
-  background: var(--background);
-  padding: 1rem;
-  max-width: 30em;
-  margin: 2rem 0;
 }
 
 @media (prefers-color-scheme: light) {
