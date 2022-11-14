@@ -22,11 +22,11 @@
   },
   "homepage": "https://github.com/samkingco/samking.eth#readme",
   "devDependencies": {
-    "@parcel/config-default": "^2.5.0",
-    "@parcel/transformer-image": "^2.5.0",
-    "copyfiles": "^2.4.1",
-    "cross-env": "^7.0.3",
-    "parcel": "^2.5.0",
-    "sharp": "^0.29.1"
+    "@parcel/config-default": "2.5.0",
+    "@parcel/transformer-image": "2.5.0",
+    "copyfiles": "2.4.1",
+    "cross-env": "7.0.3",
+    "parcel": "2.5.0",
+    "sharp": "0.29.1"
   }
 }
