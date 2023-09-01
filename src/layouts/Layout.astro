@@ -1,0 +1,106 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = "Software Engineer and Designer working from Brighton, UK. Currently freelance and building Refrakt, a new photography platform.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:url" content="https://samking.co" />
+    <meta property="og:site_name" content={title} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content="/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@refrakt_app" />
+    <meta name="generator" content={Astro.generator} />
+  </head>
+  <body class="bg-background text-foreground leading-normal">
+    <main class="mx-auto max-w-48 px-1 pt-6 pb-12 space-y-4">
+      <header>
+        <h1 class="text-headingOne leading-tight font-heading text-foreground">
+          <a href="/">Sam King</a>
+        </h1>
+        <p class="text-secondary-foreground">Software Engineer and Designer</p>
+        <p class="text-secondary-foreground">Brighton, UK</p>
+      </header>
+
+      <hr class="h-[1px] bg-border max-w-[var(--left-col-width)] border-none" />
+
+      <slot />
+    </main>
+  </body>
+</html>
+<style is:global>
+  @font-face {
+    font-family: "Nikolai";
+    src: url("/fonts/Nikolai-Italic.woff2") format("woff2");
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Text";
+    src: url("/fonts/Text.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Mono";
+    src: url("/fonts/Mono.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --background: 230 4% 100%;
+    --foreground: 230 4% 16%;
+    --primary: 230 4% 98%;
+    --primary-foreground: 230 4% 4%;
+    --secondary: 230 4% 80%;
+    --secondary-foreground: 230 4% 38%;
+    --muted: 230 4% 82%;
+    --muted-foreground: 230 4% 60%;
+    --border: 230 4% 90%;
+    --left-col-width: 8rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 230 4% 4%;
+      --foreground: 230 4% 92%;
+      --primary: 230 4% 4%;
+      --primary-foreground: 230 4% 94%;
+      --secondary: 230 4% 8%;
+      --secondary-foreground: 230 4% 80%;
+      --muted: 230 4% 12%;
+      --muted-foreground: 230 4% 64%;
+      --border: 230 4% 12%;
+    }
+  }
+
+  ::selection {
+    background: hsl(var(--muted));
+    color: hsl(var(--primary-foreground));
+  }
+</style>

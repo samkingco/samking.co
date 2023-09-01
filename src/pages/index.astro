@@ -1,0 +1,93 @@
+---
+import { Image } from "astro:assets";
+import Definition from "../components/Definition.astro";
+import Link from "../components/Link.astro";
+import avatarImage from "../images/avatar.jpg";
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Sam King">
+  <section class="space-y-0.5">
+    <article class="flex flex-col sm:flex-row sm:items-start gap-2">
+      <Image
+        src={avatarImage}
+        alt="Sam King"
+        class="w-full h-auto max-w-12 sm:max-w-[var(--left-col-width)]"
+      />
+      <div class="flex-1 space-y-0.5">
+        <p class="text-secondary-foreground">
+          I've never known how to describe what I do, but I'm currently going by
+          Software Engineer and Designer. I've always been interested in both
+          design and code, and I've been lucky enough to work in roles where I
+          can do both. I have over 10 years experience working at small to
+          medium size startups.
+        </p>
+
+        <p class="text-secondary-foreground">
+          I'm currently freelancing while building <Link
+            href="https://refrakt.app"
+            withIcon={false}
+          >
+            Refrakt
+          </Link>, a platform for photographers to share their work in a more
+          meaningful way.
+        </p>
+      </div>
+    </article>
+  </section>
+
+  <Definition label="From Jan 2024">
+    <h3>Open to roles in Canada</h3>
+    <p class="text-secondary-foreground">
+      I'm in the process of moving to Vancouver with my partner some time in
+      January through International Experience Canada. The goal is to apply for
+      permanent residency and stay in Canada long term if we like it. Therefore
+      I'm open to Software Engineering or Product Design roles, either in
+      Vancouver or remote.
+    </p>
+
+    <p class="text-secondary-foreground">
+      <Link href="/cv">View my work history</Link>
+    </p>
+  </Definition>
+
+  <section class="space-y-2 sm:space-y-0.5">
+    <Definition label="Interests">
+      <p class="text-secondary-foreground">
+        Art & Photography, Public goods, Healthcare, Decentralization.
+      </p>
+    </Definition>
+
+    <Definition label="Values">
+      <p class="text-secondary-foreground">
+        Honesty, Authenticity, Curiosity, Accessibility.
+      </p>
+    </Definition>
+  </section>
+
+  <section class="space-y-2 sm:space-y-0.5">
+    <h2 class="mb-2 sr-only">Contact</h2>
+
+    <Definition label="Email">
+      <p><Link href="mailto:mail@samking.co">mail@samking.co</Link></p>
+    </Definition>
+
+    <Definition label="Refrakt">
+      <p><Link href="https://refrakt.app/sk">@sk</Link></p>
+    </Definition>
+
+    <Definition label="Twitter">
+      <p><Link href="https://twitter.com/samkingco">@samkingco</Link></p>
+    </Definition>
+
+    <Definition label="GitHub">
+      <p><Link href="https://github.com/samkingco">@samkingco</Link></p>
+    </Definition>
+
+    <Definition label="LinkedIn">
+      <p>
+        <Link href="https://www.linkedin.com/in/samkingco/">@samkingco</Link>
+      </p>
+    </Definition>
+  </section>
+</Layout>
