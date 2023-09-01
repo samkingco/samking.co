@@ -34,7 +34,9 @@ const {
   <body class="bg-background text-foreground leading-normal">
     <main class="mx-auto max-w-48 px-1 pt-6 pb-12 space-y-4">
       <header>
-        <h1 class="text-headingOne leading-tight font-heading text-foreground">
+        <h1
+          class="text-headingOne leading-tight font-heading italic text-foreground"
+        >
           <a href="/">Sam King</a>
         </h1>
         <p class="text-secondary-foreground">Software Engineer and Designer</p>
@@ -50,9 +52,7 @@ const {
 <style is:global>
   @font-face {
     font-family: "Nikolai";
-    src:
-      url("/fonts/Nikolai-Italic.woff2") format("woff2"),
-      url("/fonts/Nikolai-Italic.woff") format("woff");
+    src: url("/fonts/Nikolai-Italic.woff2") format("woff2");
     font-weight: bold;
     font-style: italic;
     font-display: swap;
@@ -60,9 +60,7 @@ const {
 
   @font-face {
     font-family: "Text";
-    src:
-      url("/fonts/Text.woff2") format("woff2"),
-      url("/fonts/Text.woff") format("woff");
+    src: url("/fonts/Text.woff2") format("woff2");
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -70,9 +68,7 @@ const {
 
   @font-face {
     font-family: "Mono";
-    src:
-      url("/fonts/Mono.woff2") format("woff2"),
-      url("/fonts/Mono.woff") format("woff");
+    src: url("/fonts/Mono.woff2") format("woff2");
     font-weight: normal;
     font-style: normal;
     font-display: swap;
