@@ -1,5 +1,6 @@
 ---
 import { Image } from "astro:assets";
+import ContactItem from "../components/ContactItem.astro";
 import Definition from "../components/Definition.astro";
 import Link from "../components/Link.astro";
 import avatarImage from "../images/avatar.jpg";
@@ -8,7 +9,10 @@ import Layout from "../layouts/Layout.astro";
 
 <Layout title="Sam King">
   <section class="space-y-0.5">
-    <article class="flex flex-col sm:flex-row sm:items-start gap-2">
+    <article
+      class="flex flex-col sm:flex-row sm:items-start gap-2"
+      aria-label="Introduction"
+    >
       <Image
         src={avatarImage}
         alt="Sam King"
@@ -37,7 +41,7 @@ import Layout from "../layouts/Layout.astro";
   </section>
 
   <Definition label="From Jan 2024">
-    <h3>Open to roles in Canada</h3>
+    <h2>Open to roles in Canada</h2>
     <p class="text-secondary-foreground">
       I'm in the process of moving to Vancouver with my partner some time in
       January through International Experience Canada. The goal is to apply for
@@ -65,29 +69,35 @@ import Layout from "../layouts/Layout.astro";
     </Definition>
   </section>
 
-  <section class="space-y-2 sm:space-y-0.5">
+  <section>
     <h2 class="mb-2 sr-only">Contact</h2>
 
-    <Definition label="Email">
-      <p><Link href="mailto:mail@samking.co">mail@samking.co</Link></p>
-    </Definition>
-
-    <Definition label="Refrakt">
-      <p><Link href="https://refrakt.app/sk">@sk</Link></p>
-    </Definition>
-
-    <Definition label="Threads">
-      <p><Link href="https://threads.net/@samkingco">@samkingco</Link></p>
-    </Definition>
-
-    <Definition label="GitHub">
-      <p><Link href="https://github.com/samkingco">@samkingco</Link></p>
-    </Definition>
-
-    <Definition label="LinkedIn">
-      <p>
-        <Link href="https://www.linkedin.com/in/samkingco/">@samkingco</Link>
-      </p>
-    </Definition>
+    <dl class="space-y-0.5">
+      <ContactItem
+        label="Email"
+        href="mailto:mail@samking.co"
+        linkLabel="mail@samking.co"
+      />
+      <ContactItem
+        label="Refrakt"
+        href="https://refrakt.app/sk"
+        linkLabel="@sk"
+      />
+      <ContactItem
+        label="Threads"
+        href="https://threads.net/@samkingco"
+        linkLabel="@samkingco"
+      />
+      <ContactItem
+        label="GitHub"
+        href="https://github.com/samkingco"
+        linkLabel="@samkingco"
+      />
+      <ContactItem
+        label="LinkedIn"
+        href="https://www.linkedin.com/in/samkingco/"
+        linkLabel="@samkingco"
+      />
+    </dl>
   </section>
 </Layout>
