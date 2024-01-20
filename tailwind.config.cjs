@@ -92,7 +92,59 @@ module.exports = {
         48: "48rem",
         64: "64rem",
       },
+      typography: ({ theme }) => ({
+        DEFAULT: {
+          css: {
+            "--tw-prose-body": theme("colors.secondary.foreground"),
+            "--tw-prose-headings": theme("colors.primary.foreground"),
+            "--tw-prose-lead": theme("colors.secondary.foreground"),
+            "--tw-prose-links": theme("colors.primary.foreground"),
+            "--tw-prose-bold": theme("colors.primary.foreground"),
+            "--tw-prose-counters": theme("colors.muted.foreground"),
+            "--tw-prose-bullets": theme("colors.muted.foreground"),
+            "--tw-prose-hr": theme("colors.border"),
+            "--tw-prose-quotes": theme("colors.secondary.foreground"),
+            "--tw-prose-quote-borders": theme("colors.border"),
+            "--tw-prose-captions": theme("colors.secondary.foreground"),
+            "--tw-prose-code": theme("colors.secondary.foreground"),
+            "--tw-prose-pre-code": theme("colors.secondary.foreground"),
+            "--tw-prose-pre-bg": theme("colors.secondary"),
+            "--tw-prose-th-borders": theme("colors.border"),
+            "--tw-prose-td-borders": theme("colors.border"),
+            h1: {
+              fontWeight: "normal",
+            },
+            h2: {
+              fontWeight: "normal",
+              fontSize: theme("fontSize.lg"),
+            },
+            h3: {
+              fontWeight: "normal",
+            },
+            h4: {
+              fontWeight: "normal",
+            },
+            h5: {
+              fontWeight: "normal",
+            },
+            h6: {
+              fontWeight: "normal",
+            },
+            p: {
+              margin: "0",
+            },
+            "p + p": {
+              marginTop: theme("spacing.1"),
+            },
+            blockquote: {
+              fontWeight: "normal",
+              fontStyle: "normal",
+              borderLeftWidth: theme("spacing.px"),
+            },
+          },
+        },
+      }),
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 };

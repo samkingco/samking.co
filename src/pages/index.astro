@@ -1,10 +1,16 @@
 ---
 import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
 import ContactItem from "../components/ContactItem.astro";
 import Definition from "../components/Definition.astro";
 import Link from "../components/Link.astro";
 import avatarImage from "../images/avatar.jpg";
 import Layout from "../layouts/Layout.astro";
+
+const allPosts = await getCollection("posts");
+const posts = allPosts.sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+);
 ---
 
 <Layout title="Sam King">
@@ -44,9 +50,9 @@ import Layout from "../layouts/Layout.astro";
     <h2>Open to roles in Canada</h2>
     <p class="text-secondary-foreground">
       I recently moved to Vancouver, Canada with my partner. The goal is to
-      eventually apply for permanent residency and stay in Canada long term
-      if we like it. Therefore I'm open to Software Engineering or Product
-      Design roles, either in Vancouver or remote.
+      eventually apply for permanent residency and stay in Canada long term if
+      we like it. Therefore I'm open to Software Engineering or Product Design
+      roles, either in Vancouver or remote.
     </p>
 
     <p class="text-secondary-foreground">
@@ -98,5 +104,21 @@ import Layout from "../layouts/Layout.astro";
         linkLabel="@samkingco"
       />
     </dl>
+  </section>
+
+  <section class="space-y-2 sm:space-y-0.5">
+    <Definition label="Journal">
+      <ul class="space-y-0.5">
+        {
+          posts.map((post) => (
+            <li>
+              <p class="text-secondary-foreground">
+                <Link href={`/journal/${post.slug}`}>{post.data.title}</Link>
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+    </Definition>
   </section>
 </Layout>
