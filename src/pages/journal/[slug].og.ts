@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getEntryBySlug } from "astro:content";
+import { getCollection, getEntryBySlug } from "astro:content";
 import { readFileSync } from "fs";
 import satori from "satori";
 import { html } from "satori-html";
@@ -7,6 +7,14 @@ import sharp from "sharp";
 import { formatDate } from "../../utils/dates";
 
 export const prerender = false;
+
+export async function getStaticPaths() {
+  const entries = await getCollection("posts");
+  return entries.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
+}
 
 export const GET: APIRoute = async ({ params }) => {
   const { slug } = params;
