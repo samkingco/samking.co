@@ -5,7 +5,7 @@ excerpt: Since finding out I’m Autistic half way through 2022, I’ve been thi
 date: 2023-01-08
 ---
 
-![An image of two trees of a different species in a fores of pines.](/posts/authentistic.jpg)
+![An image of two trees of a different species in a fores of pines.](../../assets/authentistic.jpg)
 
 Bit of a warning, this gets quite personal and talks about Autism.
 

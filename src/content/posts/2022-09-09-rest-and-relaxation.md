@@ -24,7 +24,7 @@ This was one of the first personal projects I’ve released since going out on m
 
 [ICE64](https://ice64.com) was one of the first projects to use CJ’s work. There are 16 photos, and every photo is an original 1 of 1 NFT, with an accompanying edition of an SVG based artwork. The originals are stored on IPFS and Arweave, and the editions are stored directly on the Ethereum network. Obviously you can’t store a high resolution image on-chain, so the editions are down-scaled to fit within a 64x64px canvas. All of the images in the collection were selected so they would work in both original high resolution, and the smaller on-chain resolution.
 
-![ICE64 #13 high and low resolution versions](/posts/ice64.jpg)
+![ICE64 #13 high and low resolution versions](../../assets/ice64.jpg)
 
 I had a lot of fun building the smart contracts. Each purchase of an original also comes with the edition version too. You can also use a [Roots NFT](https://roots.samking.photo) to claim a free edition, and you can do this from the contract directly. There’s no snapshots or merkle trees which is super nice, and highlights the composable aspect of web3.
 
@@ -40,7 +40,7 @@ Camera issues added a bunch of stress though. My Hasselblad stopped working in N
 
 In the meantime, I managed to find a used Mamiya 7 on Facebook Marketplace, a camera I’d always wanted. It was expensive but I’m so glad I picked it up. It was a pleasure to use and I’m so thankful to [Hayden](https://instagram.com/haydenmyrick) for driving up to Portland to sell it to me, and for letting it go to a new home in the first place! Good news came from Glazer’s but I had no energy to make the 6 hour round trip to Seattle, so I called on one of my [DEF](https://defdao.xyz) friends [Alexi](https://twitter.com/0xalxi), who kindly offered up their address in San Francisco so I could get my fixed Hasselblad shipped there before I arrived a week later.
 
-![Reflection of myself and Annesah in the back of a mirrored truck, taken on my new Mamiya 7](/posts/usa.jpg)
+![Reflection of myself and Annesah in the back of a mirrored truck, taken on my new Mamiya 7](../../assets/usa.jpg)
 
 Then I just had to lug the Hasselblad around for the rest of the trip because the Mamiya was much nicer to use. In total I ended up shooting over 30 rolls of film. I have them all back from the lab now, and I’ve started scanning them but it’s going to be a slog! I feel like there’s another personal project to come out of this work though, so I’m excited to share a bit more about that at a later date.
 
