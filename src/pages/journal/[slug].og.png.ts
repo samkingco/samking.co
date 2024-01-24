@@ -84,7 +84,9 @@ export const GET: APIRoute = async ({ params }) => {
     status: 200,
     headers: {
       "Content-Type": "image/png",
+      "Content-Length": response.byteLength.toString(),
       "Cache-Control": "s-maxage=1, stale-while-revalidate=59",
+      "Content-Disposition": `inline; filename=og_${slug}.png`,
     },
   });
 };
