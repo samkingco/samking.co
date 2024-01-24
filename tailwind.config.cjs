@@ -33,9 +33,13 @@ module.exports = {
         },
       },
       fontFamily: {
-        heading: ["Nikolai", ...defaultTheme.fontFamily.serif],
-        sans: ["Text", ...defaultTheme.fontFamily.sans],
-        mono: ["Mono", ...defaultTheme.fontFamily.mono],
+        heading: [
+          "Nikolai",
+          "Nikolai override",
+          ...defaultTheme.fontFamily.serif,
+        ],
+        sans: ["Text", "Text override", ...defaultTheme.fontFamily.sans],
+        mono: ["Mono", "Mono override", ...defaultTheme.fontFamily.mono],
       },
       fontSize: {
         DEFAULT: "1rem",
