@@ -103,22 +103,7 @@ const posts = allPosts.sort(
         href="https://www.linkedin.com/in/samkingco/"
         linkLabel="@samkingco"
       />
+      <ContactItem label="Journal" href="/journal" linkLabel="Read entries" />
     </dl>
-  </section>
-
-  <section class="space-y-2 sm:space-y-0.5">
-    <Definition label="Journal">
-      <ul class="space-y-0.5">
-        {
-          posts.map((post) => (
-            <li>
-              <p class="text-secondary-foreground">
-                <Link href={`/journal/${post.slug}`}>{post.data.title}</Link>
-              </p>
-            </li>
-          ))
-        }
-      </ul>
-    </Definition>
   </section>
 </Layout>
