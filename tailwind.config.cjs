@@ -121,9 +121,12 @@ module.exports = {
             h2: {
               fontWeight: "normal",
               fontSize: theme("fontSize.lg"),
+              marginTop: theme("spacing.3"),
             },
             h3: {
               fontWeight: "normal",
+              fontSize: theme("fontSize.md"),
+              marginTop: theme("spacing.3"),
             },
             h4: {
               fontWeight: "normal",

@@ -4,9 +4,17 @@ function getLocale() {
 
 export function formatDate(
   date: Date | null | undefined,
+  format: "numeric" | "words" = "numeric",
   locale = getLocale()
 ): string {
   if (!date) return "";
+
+  if (format === "words") {
+    return new Intl.DateTimeFormat(locale, {
+      dateStyle: "medium",
+    }).format(date);
+  }
+
   return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "2-digit",
