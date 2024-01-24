@@ -1,4 +1,7 @@
 ---
+import { ViewTransitions } from "astro:transitions";
+import "./styles.css";
+
 interface Props {
   title: string;
   description?: string;
@@ -35,72 +38,7 @@ const {
     <meta name="twitter:site" content="@refrakt_app" />
     <meta name="generator" content={Astro.generator} />
 
-    <style is:global>
-      @font-face {
-        font-family: "Nikolai";
-        src:
-          url("/fonts/Nikolai-Italic.woff2") format("woff2"),
-          url("/fonts/Nikolai-Italic.woff") format("woff");
-        font-weight: bold;
-        font-style: italic;
-        font-display: swap;
-      }
-
-      @font-face {
-        font-family: "Text";
-        src:
-          url("/fonts/Text.woff2") format("woff2"),
-          url("/fonts/Text.woff") format("woff");
-        font-weight: normal;
-        font-style: normal;
-        font-display: swap;
-      }
-
-      @font-face {
-        font-family: "Mono";
-        src:
-          url("/fonts/Mono.woff2") format("woff2"),
-          url("/fonts/Mono.woff") format("woff");
-        font-weight: normal;
-        font-style: normal;
-        font-display: swap;
-      }
-
-      :root {
-        --background: 230 4% 100%;
-        --foreground: 230 4% 16%;
-        --primary: 230 4% 98%;
-        --primary-foreground: 230 4% 4%;
-        --secondary: 230 4% 80%;
-        --secondary-foreground: 230 4% 38%;
-        --muted: 230 4% 82%;
-        --muted-foreground: 230 4% 60%;
-        --border: 230 4% 90%;
-      }
-
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --background: 230 4% 4%;
-          --foreground: 230 4% 92%;
-          --primary: 230 4% 4%;
-          --primary-foreground: 230 4% 94%;
-          --secondary: 230 4% 8%;
-          --secondary-foreground: 230 4% 80%;
-          --muted: 230 4% 12%;
-          --muted-foreground: 230 4% 64%;
-          --border: 230 4% 12%;
-        }
-
-        body {
-          -webkit-font-smoothing: antialiased;
-        }
-      }
-
-      ::selection {
-        background: hsl(var(--muted));
-        color: hsl(var(--primary-foreground));
-      }
-    </style>
+    <ViewTransitions />
   </head>
   <body
     class="bg-background text-foreground leading-normal sm:[--left-col-width:8rem] [--left-col-width:4rem]"
