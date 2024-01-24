@@ -7,6 +7,11 @@ import sharp from "sharp";
 
 export const prerender = false;
 
+const avatarBase64 = readFileSync(
+  `${process.cwd()}/public/avatar.png`,
+  "base64"
+);
+
 export async function getStaticPaths() {
   const entries = await getCollection("posts");
   return entries.map((entry) => ({
@@ -57,7 +62,7 @@ export const GET: APIRoute = async ({ params }) => {
       </div>
     </div>
 
-    <img src="https://samking.co/avatar.jpg" style="margin-left: 80px;" width="380" height="380" />
+    <img src="data:image/png;base64,${avatarBase64}" style="margin-left: 80px;" width="380" height="380" />
   </div>`);
 
   const svg = await satori(markup, {
