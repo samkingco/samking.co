@@ -7,6 +7,23 @@ import Layout from "../layouts/Layout.astro";
 <Layout title="CV | Sam King">
   <h2 class="sr-only">Work history</h2>
 
+  <Definition label="2024—Now">
+    <h3>Software Engineer at Future Primitive</h3>
+    <p class="text-secondary-foreground">
+      I recently joined FP to work on a new product called <Link
+        href="https://www.per.ma/"
+        withIcon={false}
+      >
+        Perma</Link
+      >. It's really exciting to be working on photography related products.
+      Also really enjoying being in a close-knit team again after being solo for
+      the last two years.
+    </p>
+    <p>
+      <Link href="https://futureprimitive.xyz">futureprimitive.xyz</Link>
+    </p>
+  </Definition>
+
   <Definition label="2023—Now">
     <h3>Founder & Everything at Refrakt</h3>
     <p class="text-secondary-foreground">
@@ -26,15 +43,17 @@ import Layout from "../layouts/Layout.astro";
     </p>
   </Definition>
 
-  <Definition label="2022—Now">
+  <hr class="h-[1px] bg-border max-w-[var(--left-col-width)] border-none" />
+
+  <Definition label="2022—2024">
     <h3>Freelance Software Engineer and Designer</h3>
     <p class="text-secondary-foreground">
       I felt like I needed a break from full-time work and going freelance would
       allow me the opportunity to explore some of my side projects in more
       depth. I taught myself Solidity for programming on the Ethereum Network,
       and I ended up working with some smaller teams and individuals to build
-      games, art projects, and memberships. I've mainly been working as a
-      Software Engineer, but I've dipped my toes in design here and there.
+      games, art projects, and memberships. I mainly worked as a Software
+      Engineer, but I dipped my toes in design here and there.
     </p>
   </Definition>
 

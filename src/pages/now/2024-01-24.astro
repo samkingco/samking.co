@@ -1,8 +1,8 @@
 ---
-import Link from "../components/Link.astro";
-import Prose from "../components/Prose.astro";
-import Layout from "../layouts/Layout.astro";
-import { formatDate } from "../utils/dates";
+import Link from "../../components/Link.astro";
+import Prose from "../../components/Prose.astro";
+import Layout from "../../layouts/Layout.astro";
+import { formatDate } from "../../utils/dates";
 
 const lastUpdated = "2024-01-24";
 ---
@@ -13,9 +13,12 @@ const lastUpdated = "2024-01-24";
       <Link href="https://nownownow.com/about">/now</Link>
     </h1>
     <p class="text-muted-foreground text-sm">
-      Updated <time datetime={lastUpdated}
+      Created <time datetime={lastUpdated}
         >{formatDate(new Date(lastUpdated), "words")}</time
-      > from Vancouver
+      > in Vancouver
+    </p>
+    <p class="text-muted-foreground text-sm">
+      <Link href="/now">View current version</Link>
     </p>
   </div>
 
