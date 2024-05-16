@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ params }) => {
   const { slug } = params;
 
   const title = "Sam King";
-  const excerpt = "Software Engineer and Designer\nVancouver, Canada";
+  const excerpt = "Photography, Software, and Design\nVancouver, Canada";
 
   const displayFontPath = `${process.cwd()}/public/fonts/Nikolai-Italic.woff`;
   const displayFont = readFileSync(displayFontPath);
