@@ -13,7 +13,7 @@ It's a fuzzy question, but I think it's important to think about. There's a broa
 
 But I can't shake that question.
 
-Why do photographers share their work on social media? the answers vary, but most want to get visibility. The hope is that more eyes on their work leads to more sales of their prints, books, zines etc. They grind it out, relentlessly posting to Instagram, or maybe they start a YouTube channel. More exposure is always a good thing, right?
+Why do photographers share their work on social media? The answers vary, but most want to get visibility. The hope is that more eyes on their work leads to more sales of their prints, books, zines etc. They grind it out, relentlessly posting to Instagram, or maybe they start a YouTube channel. More exposure is always a good thing, right?
 
 Yet this grind starts to feel like shouting into the void. Chasing that next hit of dopamine from a like or comment drives people crazy. When your work isn’t even shown to your own followers anymore, the motivation to keep shooting can start to wane.
 
