@@ -23,8 +23,10 @@ I want to share my work with the people genuinely care. I crave a more intimate,
 
 The current state of social media doesn't offer that. I think what I'm describing is more like a photo centric group chat.
 
-Community groups already exist in Discord, Slack, Facebook, etc, but they're not designed with photography in mind. Most are for realtime chats. The photo-viewing experience is clunky, even though the discussions can be richer. These spaces offer something different—room to breathe, no pressure to always post your best work, no engagement metrics looming over the experience. You can actually build rapport with people, and it’s a lot more enjoyable, provided you find the right groups.
+Community groups already exist in Discord, Slack, Facebook, etc, but they're not designed with photography in mind. The photo-viewing experience is clunky, even though the discussions can be richer. However, these spaces offer something different—room to breathe, no pressure to always post your best work, no engagement metrics looming over the experience. You can actually build rapport with people, and it’s a lot more enjoyable, provided you find the right groups.
 
-This might not be for everyone, but I believe there are others like me who would thrive in a more intimate space. If that resonates with you, I’d love to hear your thoughts.
+I want to experiment with this some more. It may be the next iteration of [Refrakt](https://refrakt.app)… or not. I'm still fleshing out ideas.
+
+The spaces I'm describing may not be for everyone, and that's okay, but I believe there are others like me who would thrive in a more intimate space. If that resonates with you, I’d love to hear your thoughts.
 
 Thanks for reading, Sam.
