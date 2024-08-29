@@ -1,16 +1,10 @@
 ---
 import { Image } from "astro:assets";
-import { getCollection } from "astro:content";
 import ContactItem from "../components/ContactItem.astro";
 import Definition from "../components/Definition.astro";
 import Link from "../components/Link.astro";
 import avatarImage from "../images/avatar.jpg";
 import Layout from "../layouts/Layout.astro";
-
-const allPosts = await getCollection("posts");
-const posts = allPosts.sort(
-  (a, b) => b.data.date.getTime() - a.data.date.getTime()
-);
 ---
 
 <Layout title="Sam King">

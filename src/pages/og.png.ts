@@ -20,9 +20,7 @@ export async function getStaticPaths() {
   }));
 }
 
-export const GET: APIRoute = async ({ params }) => {
-  const { slug } = params;
-
+export const GET: APIRoute = async () => {
   const title = "Sam King";
   const excerpt = "Photography, Software, and Design\nVancouver, Canada";
 
