@@ -9,13 +9,14 @@ const tldr = [
 	"Work best with early-stage and creative projects where I can make impact",
 	"Being autistic, I prefer async communication and clear documentation",
 	"Prefer North American timezones if real-time collaboration is required",
+	"Intuition over indecision, curiosity over conformity",
 ];
 ---
 
 <Layout title="Freelance | Sam King">
   <Definition label="Availability">
     <p class="text-secondary-foreground">
-      Available from January 2025.
+      Available starting January 2025.
     </p>
     <p class="text-secondary-foreground">
       Email <Link href="mailto:mail@samking.co">mail@samking.co</Link> to
@@ -24,7 +25,7 @@ const tldr = [
   </Definition>
 
   <Definition label="TLDR;">
-    <ul class="text-secondary-foreground list-square pl-1 space-y-0.5">
+    <ul class="text-secondary-foreground list-square pl-1.5 space-y-0.5">
       {tldr.map(item => (
         <li>
           <p>{item}</p>
@@ -59,6 +60,12 @@ const tldr = [
 
   <Definition label="How I work">
     <p class="text-secondary-foreground">
+      I value intuition over indecision, and curiosity over conformity. My
+      experience allows me to trust my instincts while remaining open to new
+      perspectives.
+    </p>
+
+    <p class="text-secondary-foreground">
       I take a thoughtful, systematic approach to projects. I'll ask lots of
       questions upfront to deeply understand your needs, and I'll keep you
       updated on progress through written updates and video walkthroughs. These
@@ -89,27 +96,33 @@ const tldr = [
       timeline and company setup.
     </p>
 
-    <h3 class="mt-1">Project-based</h3>
+    <div class="mt-1">
+    <h3 class="text-sm text-muted-foreground">Project-based</h3>
     <p class="text-secondary-foreground">
       Best for larger projects or when the scope is more exploratory. We'll
       break the work into clear milestones and agree on deliverables upfront.
       This gives you predictable costs while allowing flexibility in how we
       reach our goals.
     </p>
+    </div>
 
-    <h3 class="mt-1">Day rate</h3>
+    <div class="mt-1">
+    <h3 class="text-sm text-muted-foreground">Day rate</h3>
     <p class="text-secondary-foreground">
       Ideal for smaller, well-defined projects or when you need focused help
       for a specific feature or problem. Days are billed as full days.
     </p>
+    </div>
 
-    <h3 class="mt-1">Retainer</h3>
+    <div class="mt-1">
+    <h3 class="text-sm text-muted-foreground">Retainer</h3>
     <p class="text-secondary-foreground">
       For ongoing collaboration, usually starting at 3 months. You get a set
       number of days each month, with the flexibility to adjust based on your
       needs. This works well for teams who want consistent access to design
       and development support over a longer period.
     </p>
+    </div>
   </Definition>
 
   <Definition label="Post-project">
