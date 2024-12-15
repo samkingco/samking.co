@@ -37,7 +37,7 @@ export const GET: APIRoute = async () => {
     style="height: 100%; width: 100%; padding: 80px; display: flex; flex-direction: row; align-items: flex-end; justify-content: space-between; background-color: rgb(0,0,0);"
   >
     <div style="display: flex; flex-direction: column;">
-      <div style="display: flex; flex-direction: column;">
+      <div style="display: flex; flex-direction: column; padding-bottom: 40px;">
         <div
           style="font-size: 96px; line-height: 1; font-family: Nikolai; display: flex; flex-direction: column; color: white; margin-bottom: 16px;"
         >
@@ -51,13 +51,6 @@ export const GET: APIRoute = async () => {
           ${line}
         </div>`
         )}
-      </div>
-
-      <div
-        style="font-size: 32px; font-family: Text; line-height: 56px; margin-top: 40px; display: flex; flex-direction: column; color: white; opacity: 0.5;"
-      >
-        samking.co
-      </div>
     </div>
 
     <img src="data:image/png;base64,${avatarBase64}" style="margin-left: 80px;" width="380" height="380" />
