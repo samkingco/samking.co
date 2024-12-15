@@ -1,0 +1,137 @@
+---
+import Definition from "../components/Definition.astro";
+import Link from "../components/Link.astro";
+import Layout from "../layouts/Layout.astro";
+
+const tldr = [
+	"Over a decade of experience in both design and engineering at startups",
+	"Can take your idea from zero to production",
+	"Work best with early-stage and creative projects where I can make impact",
+	"Being autistic, I prefer async communication and clear documentation",
+	"Prefer North American timezones if real-time collaboration is required",
+];
+---
+
+<Layout title="Freelance | Sam King">
+  <Definition label="Availability">
+    <p class="text-secondary-foreground">
+      Available from January 2025.
+    </p>
+    <p class="text-secondary-foreground">
+      Email <Link href="mailto:mail@samking.co">mail@samking.co</Link> to
+      discuss your next project.
+    </p>
+  </Definition>
+
+  <Definition label="TLDR;">
+    <ul class="text-secondary-foreground list-square pl-1 space-y-0.5">
+      {tldr.map(item => (
+        <li>
+          <p>{item}</p>
+        </li>
+      ))}
+    </ul>
+  </Definition>
+
+  <hr
+    class="h-[1px] bg-border max-w-[var(--left-col-width)] border-none my-4"
+  />
+
+  <Definition label="What I do">
+    <p class="text-secondary-foreground">
+      I help early-stage teams turn their ideas into reality. With over a
+      decade of experience in both design and engineering at startups, I can
+      handle everything from initial concepts through to production code. This
+      dual expertise means I understand both the user experience and technical
+      implementation details, often catching potential issues before they
+      become problems.
+    </p>
+
+    <p class="text-secondary-foreground">
+      I've worked with teams building creative tools, community platforms,
+      games, and more. Most recently, I've been building <Link
+        href="https://refrakt.app"
+        withIcon={false}
+      >Refrakt</Link>&mdash;a photo sharing platform that gives photographers
+      a more intimate and authentic space to connect and share their work.
+    </p>
+  </Definition>
+
+  <Definition label="How I work">
+    <p class="text-secondary-foreground">
+      I take a thoughtful, systematic approach to projects. I'll ask lots of
+      questions upfront to deeply understand your needs, and I'll keep you
+      updated on progress through written updates and video walkthroughs. These
+      are usually 5 to 15 minutes long, where I can show you what I've built
+      and explain my thinking.
+    </p>
+
+    <p class="text-secondary-foreground">
+      While I'm happy to jump on calls when needed, I find I do my best work
+      when I can focus deeply without interruption. This means fewer meetings,
+      but more meaningful updates and clearer documentation. I typically share
+      progress at the end of each day or when a worthwhile milestone is hit,
+      giving you time to review and provide feedback asynchronously.
+    </p>
+
+    <p class="text-secondary-foreground">
+      My schedule isn't the typical 9-5. I prefer to work when I'm most
+      productive, which tends to be afternoons and evenings. Working
+      asynchronously means timezone differences aren't usually an issue, but
+      if you need more real-time collaboration, North American timezones
+      work best.
+    </p>
+  </Definition>
+
+  <Definition label="Pricing">
+    <p class="text-secondary-foreground">
+      I offer different ways of working together based on your project needs,
+      timeline and company setup.
+    </p>
+
+    <h3 class="mt-1">Project-based</h3>
+    <p class="text-secondary-foreground">
+      Best for larger projects or when the scope is more exploratory. We'll
+      break the work into clear milestones and agree on deliverables upfront.
+      This gives you predictable costs while allowing flexibility in how we
+      reach our goals.
+    </p>
+
+    <h3 class="mt-1">Day rate</h3>
+    <p class="text-secondary-foreground">
+      Ideal for smaller, well-defined projects or when you need focused help
+      for a specific feature or problem. Days are billed as full days.
+    </p>
+
+    <h3 class="mt-1">Retainer</h3>
+    <p class="text-secondary-foreground">
+      For ongoing collaboration, usually starting at 3 months. You get a set
+      number of days each month, with the flexibility to adjust based on your
+      needs. This works well for teams who want consistent access to design
+      and development support over a longer period.
+    </p>
+  </Definition>
+
+  <Definition label="Post-project">
+    <p class="text-secondary-foreground">
+      You'll own all deliverables outright. I'll help set up any necessary
+      accounts for hosting etc. in your name, ensuring you have complete
+      control over your project. This makes it easier if you need to work
+      with other people in the future or want to maintain things internally.
+    </p>
+
+    <p class="text-secondary-foreground">
+      I'm happy to provide documentation and training to help your team take
+      over, or we can discuss ongoing maintenance if you'd prefer that support.
+    </p>
+  </Definition>
+
+  <Definition label="Let's talk">
+    <p class="text-secondary-foreground">
+      If this all sounds good to you, I'd love to hear about what you're
+      building. Send an email to
+      <Link href="mailto:mail@samking.co">mail@samking.co</Link> and we can
+      take it from there.
+    </p>
+  </Definition>
+</Layout>

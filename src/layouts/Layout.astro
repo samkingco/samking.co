@@ -1,17 +1,18 @@
 ---
 import { ViewTransitions } from "astro:transitions";
 import "./styles.css";
+import Link from "../components/Link.astro";
 
 interface Props {
-  title: string;
-  description?: string;
-  ogImage?: string;
+	title: string;
+	description?: string;
+	ogImage?: string;
 }
 
 const {
-  title,
-  description = "Former photographer turned designer turned software engineer, living in Vancouver, Canada. Currently building Refrakt, a new photography platform.",
-  ogImage = "/og.png",
+	title,
+	description = "Freelance designer and developer with over a decade of startup experience. Specializing in early-stage projects, from concept to production, with a focus on creative and community platforms. Based in Vancouver, Canada.",
+	ogImage = "/og.png",
 } = Astro.props;
 ---
 
@@ -35,7 +36,7 @@ const {
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={`https://samking.co${ogImage}`} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@refrakt_app" />
+    <meta name="twitter:site" content="@samkingco" />
     <meta name="generator" content={Astro.generator} />
     <link
       rel="alternate"
@@ -57,7 +58,7 @@ const {
           <a href="/">Sam King</a>
         </h1>
         <p class="text-secondary-foreground">
-          Photography, Software, and Design
+          <Link href="/freelance">Freelance Software Engineer &amp; Designer</Link>
         </p>
         <p class="text-secondary-foreground">Vancouver, Canada</p>
       </header>

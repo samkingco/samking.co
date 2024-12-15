@@ -16,32 +16,47 @@ import Layout from "../layouts/Layout.astro";
       <Image
         src={avatarImage}
         alt="Sam King"
-        class="w-full h-auto max-w-12 sm:max-w-[var(--left-col-width)]"
+        class="w-full h-auto max-w-12 sm:max-w-[var(--left-col-width)] mt-[2px]"
       />
       <div class="flex-1 space-y-0.5">
         <p class="text-secondary-foreground">
-          Former photographer turned designer turned software engineer.
-          Photography will always be my first love, and I'm enjoying the process
-          of building a more consistent practice. Professionally though, I write
-          code. I love making things that I would use myself, which is usually
-          something photography related.
+          I'm a freelance software engineer and designer, bridging art and
+          technology. I love exploring nature with a camera in hand,
+          reconnecting with my roots as a photographer and deepening my
+          connection to the world through a more intentional art practice.
+          Being autistic helps me bring a different perspective to both my
+          creative and technical work.
         </p>
-
         <p class="text-secondary-foreground">
-          In 2023, I started building <Link
+          In my spare time, you can find me working on <Link
             href="https://refrakt.app"
             withIcon={false}
-          >
-            Refrakt
-          </Link>, a platform for photographers to share their work in a more
-          meaningful way.
+          >Refrakt</Link>&mdash;a photo sharing platform that gives
+          photographers a more intimate and authentic space to connect and
+          share their work.
         </p>
-
         <p class="text-secondary-foreground">
           <Link href="/now" withIcon={false}>/now</Link>
         </p>
       </div>
     </article>
+  </section>
+
+  <section class="space-y-2 sm:space-y-0.5">
+    <Definition label="Freelance">
+      <p>
+        Availability starting January 2025.
+      </p>
+      <p class="text-secondary-foreground">
+        With over a decade of experience in both design and engineering, I help
+        early-stage teams turn their ideas into reality. I take a pragmatic
+        approach that prioritizes getting functional products to market
+        quickly, while maintaining thoughtful design and code quality.
+      </p>
+      <p class="text-secondary-foreground">
+        <Link href="/freelance" withIcon={false}>/freelance</Link>
+      </p>
+    </Definition>
   </section>
 
   <section class="space-y-2 sm:space-y-0.5">
@@ -87,8 +102,8 @@ import Layout from "../layouts/Layout.astro";
         href="https://www.linkedin.com/in/samkingco/"
         linkLabel="@samkingco"
       />
-      <ContactItem label="CV" href="/cv" linkLabel="View work history" />
-      <ContactItem label="Journal" href="/journal" linkLabel="Read entries" />
+      <ContactItem label="Writing" href="/journal" linkLabel="/journal" />
+      <ContactItem label="Work history" href="/cv" linkLabel="/cv" />
     </dl>
   </section>
 </Layout>
