@@ -51,6 +51,7 @@ export const GET: APIRoute = async () => {
           ${line}
         </div>`
         )}
+      </div>
     </div>
 
     <img src="data:image/png;base64,${avatarBase64}" style="margin-left: 80px;" width="380" height="380" />
