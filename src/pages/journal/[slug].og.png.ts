@@ -54,7 +54,7 @@ export const GET: APIRoute = async ({ params }) => {
     </div>
 
     <div
-      style="font-size: 32px; font-family: Mono; line-height: 56px; margin-top: 16px; display: flex; flex-direction: column; color: white; opacity: 0.5;"
+      style="font-size: 32px; font-family: Text; line-height: 56px; margin-top: 16px; display: flex; flex-direction: column; color: white; opacity: 0.5;"
     >
       samking.co
     </div>
