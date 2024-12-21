@@ -1,21 +1,25 @@
 ---
 import { getCollection } from "astro:content";
+import { getEntry } from "astro:content";
 import Link from "../components/Link.astro";
 import { formatDate } from "../utils/dates";
 import Layout from "./Layout.astro";
 
 const { frontmatter } = Astro.props;
 const { slug } = Astro.params;
-const filename = `src/content/posts/${formatDate(frontmatter.date)}-${slug}.md`;
+if (!slug) throw new Error("slug is required");
+
+const post = await getEntry("posts", slug);
+if (!post) throw new Error(`Post ${slug} not found`);
 
 const allPosts = await getCollection("posts");
 const posts = allPosts.sort(
-  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+	(a, b) => b.data.date.getTime() - a.data.date.getTime(),
 );
 
 const currIndex = allPosts.findIndex((post) => post.slug === slug);
 const readNext =
-  currIndex === posts.length - 1 ? posts[0] : posts[currIndex + 1];
+	currIndex === posts.length - 1 ? posts[0] : posts[currIndex + 1];
 ---
 
 <Layout
@@ -48,7 +52,7 @@ const readNext =
     <p class="text-sm text-muted-foreground">Found a mistake?</p>
     <p>
       <Link
-        href={`https://github.com/samkingco/samking.co/blob/main/${filename}`}
+        href={`https://github.com/samkingco/samking.co/blob/main/${post.filePath ?? ""}`}
       >
         Edit on GitHub
       </Link>
