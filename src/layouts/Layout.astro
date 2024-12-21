@@ -1,5 +1,5 @@
 ---
-import { ViewTransitions } from "astro:transitions";
+import { ClientRouter } from "astro:transitions";
 import "./styles.css";
 import Link from "../components/Link.astro";
 
@@ -45,7 +45,7 @@ const {
       href="https://samking.co/rss.xml"
     />
 
-    <ViewTransitions />
+    <ClientRouter />
   </head>
   <body
     class="bg-background text-foreground leading-normal sm:[--left-col-width:8rem] [--left-col-width:4rem]"

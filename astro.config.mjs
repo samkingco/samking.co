@@ -1,12 +1,12 @@
-import tailwind from "@astrojs/tailwind"
-import { defineConfig } from "astro/config"
-import { FontaineTransform } from "fontaine"
+import sitemap from "@astrojs/sitemap";
+import tailwind from "@astrojs/tailwind";
+import { defineConfig } from "astro/config";
+import { FontaineTransform } from "fontaine";
 
-// https://astro.build/config
 export default defineConfig({
-	integrations: [tailwind()],
+	site: "https://samking.co",
 	output: "static",
-	trailingSlash: "never",
+	integrations: [tailwind(), sitemap()],
 	vite: {
 		plugins: [
 			FontaineTransform.vite({
@@ -15,4 +15,4 @@ export default defineConfig({
 			}),
 		],
 	},
-})
+});
