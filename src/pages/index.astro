@@ -4,7 +4,7 @@ import ContactItem from "../components/ContactItem.astro";
 import Definition from "../components/Definition.astro";
 import Link from "../components/Link.astro";
 import avatarImage from "../images/avatar.jpg";
-import Layout from "../layouts/Layout.astro";
+import Layout from "../layouts/Default.astro";
 ---
 
 <Layout title="Sam King">
@@ -17,6 +17,7 @@ import Layout from "../layouts/Layout.astro";
         src={avatarImage}
         alt="Sam King"
         class="w-full h-auto max-w-12 sm:max-w-[var(--left-col-width)] mt-[2px]"
+        loading="eager"
       />
       <div class="flex-1 space-y-0.5">
         <p class="text-secondary-foreground">

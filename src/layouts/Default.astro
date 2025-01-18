@@ -1,0 +1,31 @@
+---
+import Link from "../components/Link.astro";
+import RootLayout from "./Root.astro";
+
+interface Props {
+	title: string;
+	description?: string;
+	ogImage?: string;
+}
+const props = Astro.props;
+---
+
+<RootLayout {...props}>
+  <main class="mx-auto max-w-48 px-1 pt-6 pb-12 space-y-4">
+    <header>
+      <h1
+        class="text-headingOne leading-tight font-heading italic text-foreground"
+      >
+        <a href="/">Sam King</a>
+      </h1>
+      <p class="text-secondary-foreground">
+        <Link href="/freelance">Freelance Software Engineer &amp; Designer</Link>
+      </p>
+      <p class="text-secondary-foreground">Vancouver, Canada</p>
+    </header>
+
+    <hr class="h-[1px] bg-border max-w-[var(--left-col-width)] border-none" />
+
+    <slot />
+  </main>
+</RootLayout>

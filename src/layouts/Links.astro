@@ -1,0 +1,17 @@
+---
+import RootLayout from "./Root.astro";
+
+interface Props {
+	title: string;
+	description?: string;
+	ogImage?: string;
+}
+
+const props = Astro.props;
+---
+
+<RootLayout {...props}>
+  <main class="mx-auto max-w-32 px-1 pt-6 pb-12 space-y-2">
+    <slot />
+  </main>
+</RootLayout>

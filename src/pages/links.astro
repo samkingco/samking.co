@@ -1,0 +1,127 @@
+---
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+import Link from "../components/Link.astro";
+import { siteConfig } from "../content/config";
+import avatarImage from "../images/avatar.jpg";
+import Layout from "../layouts/Links.astro";
+import { getLatestVideoInfo } from "../utils/youtube";
+
+type PublicLink = {
+	title: string;
+	href: string;
+};
+
+type Section = {
+	title: string;
+	links: PublicLink[];
+};
+
+const photographySection: Section = {
+	title: "Photography",
+	links: [
+		{
+			title: "Refrakt",
+			href: `https://refrakt.app/${siteConfig.refrakt.handle}`,
+		},
+	],
+};
+
+const latestVideo = await getLatestVideoInfo(siteConfig.youtube.channelId);
+const youtubeSection: Section = {
+	title: "Latest YouTube video",
+	links: [
+		{
+			title: latestVideo.title,
+			href: latestVideo.watchUrl,
+		},
+	],
+};
+
+const allPosts = await getCollection("posts");
+const latestPost = allPosts
+	.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+	.at(0);
+
+const creativeSection: Section = {
+	title: "Latest journal entry",
+	links: [
+		latestPost && {
+			title: latestPost.data.title,
+			href: `/journal/${latestPost.slug}`,
+		},
+	].filter((i) => !!i),
+};
+
+const socialSection: Section = {
+	title: "Social",
+	links: [
+		{
+			title: "YouTube",
+			href: `https://www.youtube.com/@${siteConfig.youtube.handle}`,
+		},
+		{
+			title: "Bluesky",
+			href: `https://bsky.app/profile/${siteConfig.bluesky.handle}`,
+		},
+		{
+			title: "Threads",
+			href: `https://threads.net/@${siteConfig.instagram.handle}`,
+		},
+		{
+			title: "GitHub",
+			href: `https://github.com/${siteConfig.github.handle}`,
+		},
+		{
+			title: "LinkedIn",
+			href: `https://linkedin.com/in/${siteConfig.linkedin.handle}`,
+		},
+	],
+};
+
+const sections: Section[] = [
+	photographySection,
+	youtubeSection,
+	creativeSection,
+	socialSection,
+];
+---
+
+<Layout title="Links | Sam King">
+  <header class="flex flex-col xs:flex-row-reverse gap-2 xs:items-end">
+    <Image
+      src={avatarImage}
+      alt="Sam King"
+      class="w-full h-auto max-w-4 sm:max-w-6"
+      loading="eager"
+    />
+    <div class="flex-1">
+      <h1
+        class="text-foreground"
+      >
+        <Link href="/">Sam King</Link>
+      </h1>
+      <p class="text-sm text-muted-foreground">Photography, software, and design</p>
+      <p class="text-sm text-muted-foreground">Vancouver, Canada</p>
+    </div>
+  </header>
+
+  <hr class="h-[1px] bg-border max-w-[var(--left-col-width)] border-none" />
+
+  <h2 class="sr-only">Links</h2>
+
+  {sections.map(section => (
+    <section>
+      <p class="text-sm text-muted-foreground tabular-nums slashed-zero">
+        {section.title}
+      </p>
+      {section.links.map(link => (
+        <div>
+          <p>
+            <Link href={link.href}>{link.title}</Link>
+          </p>
+        </div>
+      ))}
+    </section>
+  ))}
+</Layout>

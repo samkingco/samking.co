@@ -3,7 +3,7 @@ import { getCollection } from "astro:content";
 import { getEntry } from "astro:content";
 import Link from "../components/Link.astro";
 import { formatDate } from "../utils/dates";
-import Layout from "./Layout.astro";
+import DefaultLayout from "./Default.astro";
 
 const { frontmatter } = Astro.props;
 const { slug } = Astro.params;
@@ -22,7 +22,7 @@ const readNext =
 	currIndex === posts.length - 1 ? posts[0] : posts[currIndex + 1];
 ---
 
-<Layout
+<DefaultLayout
   title={`${frontmatter.title} | Sam King`}
   description={frontmatter.excerpt}
   ogImage={`/journal/${slug}.og.png`}
@@ -58,4 +58,4 @@ const readNext =
       </Link>
     </p>
   </footer>
-</Layout>
+</DefaultLayout>
