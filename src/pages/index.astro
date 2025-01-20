@@ -3,8 +3,45 @@ import { Image } from "astro:assets";
 import ContactItem from "../components/ContactItem.astro";
 import Definition from "../components/Definition.astro";
 import Link from "../components/Link.astro";
+import { siteConfig } from "../content/config";
 import avatarImage from "../images/avatar.jpg";
 import Layout from "../layouts/Default.astro";
+
+type PublicLink = {
+	title: string;
+	href: string;
+};
+
+const socialLinks: PublicLink[] = [
+	{
+		title: "Refrakt",
+		href: `https://refrakt.app/${siteConfig.refrakt.handle}`,
+	},
+	{
+		title: "YouTube",
+		href: `https://www.youtube.com/@${siteConfig.youtube.handle}`,
+	},
+	{
+		title: "Bluesky",
+		href: `https://bsky.app/profile/${siteConfig.bluesky.handle}`,
+	},
+	{
+		title: "Threads",
+		href: `https://threads.net/@${siteConfig.instagram.handle}`,
+	},
+	{
+		title: "Substack",
+		href: `https://${siteConfig.substack.handle}.substack.com`,
+	},
+	{
+		title: "GitHub",
+		href: `https://github.com/${siteConfig.github.handle}`,
+	},
+	{
+		title: "LinkedIn",
+		href: `https://linkedin.com/in/${siteConfig.linkedin.handle}`,
+	},
+];
 ---
 
 <Layout title="Sam King">
@@ -79,26 +116,13 @@ import Layout from "../layouts/Default.astro";
         href="mailto:mail@samking.co"
         linkLabel="mail@samking.co"
       />
-      <ContactItem
-        label="Refrakt"
-        href="https://refrakt.app/sk"
-        linkLabel="@sk"
-      />
-      <ContactItem
-        label="Threads"
-        href="https://threads.net/@samkingco"
-        linkLabel="@samkingco"
-      />
-      <ContactItem
-        label="GitHub"
-        href="https://github.com/samkingco"
-        linkLabel="@samkingco"
-      />
-      <ContactItem
-        label="LinkedIn"
-        href="https://www.linkedin.com/in/samkingco/"
-        linkLabel="@samkingco"
-      />
+      <Definition label="Social">
+        {socialLinks.map(link => (
+          <p>
+            <Link href={link.href}>{link.title}</Link>
+          </p>
+        ))}
+      </Definition>
       <ContactItem label="Writing" href="/journal" linkLabel="/journal" />
       <ContactItem label="Work" href="/cv" linkLabel="/cv" />
     </dl>
