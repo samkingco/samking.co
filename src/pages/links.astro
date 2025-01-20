@@ -13,11 +13,13 @@ type PublicLink = {
 };
 
 type Section = {
+	id: string;
 	title: string;
 	links: PublicLink[];
 };
 
 const photographySection: Section = {
+	id: "photography",
 	title: "Photography",
 	links: [
 		{
@@ -29,6 +31,7 @@ const photographySection: Section = {
 
 const latestVideo = await getLatestVideoInfo(siteConfig.youtube.channelId);
 const youtubeSection: Section = {
+	id: "youtube",
 	title: "Latest YouTube video",
 	links: [
 		{
@@ -44,6 +47,7 @@ const latestPost = allPosts
 	.at(0);
 
 const creativeSection: Section = {
+	id: "journal",
 	title: "Latest journal entry",
 	links: [
 		latestPost && {
@@ -54,6 +58,7 @@ const creativeSection: Section = {
 };
 
 const socialSection: Section = {
+	id: "social",
 	title: "Social",
 	links: [
 		{
@@ -122,7 +127,16 @@ const sections: Section[] = [
       {section.links.map(link => (
         <div>
           <p>
-            <Link href={link.href}>{link.title}</Link>
+            <Link href={link.href}>
+              {section.id === "youtube"
+                ? <span class="inline-block">
+                    {link.title.split("|").map(segment => (
+                      <span class="block">{segment}</span>
+                    ))}
+                  </span>
+                : link.title
+              }
+            </Link>
           </p>
         </div>
       ))}

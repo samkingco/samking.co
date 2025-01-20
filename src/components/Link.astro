@@ -1,7 +1,7 @@
 ---
 interface Props {
-  href: string;
-  withIcon?: boolean;
+	href: string;
+	withIcon?: boolean;
 }
 
 const { href, withIcon = true } = Astro.props;
@@ -9,7 +9,7 @@ const { href, withIcon = true } = Astro.props;
 
 <a
   href={href}
-  class="inline-flex items-center gap-0.25 underline underline-offset-[0.2em] decoration-border text-primary-foreground hover:decoration-primary-foreground motion-safe:transition-colors motion-safe:duration-200 group"
+  class="inline-flex items-start gap-0.25 underline underline-offset-[0.2em] decoration-border text-primary-foreground hover:decoration-primary-foreground motion-safe:transition-colors motion-safe:duration-200 group"
 >
   <slot />{
     href.startsWith("http") && withIcon && (
@@ -20,7 +20,7 @@ const { href, withIcon = true } = Astro.props;
         stroke="none"
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
-        class="relative flex-shrink-0 mt-0.125 w-1 h-1 opacity-0 group-hover:opacity-100 motion-safe:transition-opacity motion-safe:duration-200"
+        class="relative flex-shrink-0 mt-[0.3125rem] w-1 h-1 opacity-0 group-hover:opacity-100 motion-safe:transition-opacity motion-safe:duration-200"
       >
         <path d="m5.4 20.1-1.5-1.5L15.425 7.075h-6.6v-2.15h10.25v10.25h-2.15v-6.6Z" />
       </svg>
