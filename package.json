@@ -7,7 +7,8 @@
 		"start": "astro dev",
 		"build": "astro build",
 		"preview": "astro preview",
-		"astro": "astro"
+		"astro": "astro",
+		"ship": "pnpm build && wrangler pages deploy"
 	},
 	"dependencies": {
 		"@astrojs/rss": "^4.0.11",
