@@ -29,6 +29,9 @@ export const siteConfig = {
 	bluesky: {
 		handle: "samking.co",
 	},
+	substack: {
+		handle: "practiceprocess",
+	},
 	github: {
 		handle: "samkingco",
 	},
