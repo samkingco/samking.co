@@ -30,7 +30,7 @@ export const siteConfig = {
 		handle: "samking.co",
 	},
 	substack: {
-		handle: "practiceprocess",
+		handle: "samkingco",
 	},
 	github: {
 		handle: "samkingco",
