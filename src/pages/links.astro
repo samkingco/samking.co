@@ -127,15 +127,8 @@ const sections: Section[] = [
       {section.links.map(link => (
         <div>
           <p>
-            <Link href={link.href}>
-              {section.id === "youtube"
-                ? <span class="inline-block">
-                    {link.title.split("|").map(segment => (
-                      <span class="block">{segment}</span>
-                    ))}
-                  </span>
-                : link.title
-              }
+            <Link href={link.href} withIcon={section.id !== "youtube"}>
+              {link.title}
             </Link>
           </p>
         </div>
