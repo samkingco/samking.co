@@ -2,9 +2,9 @@
 import Link from "../components/Link.astro";
 
 interface Props {
-  label: string;
-  href: string;
-  linkLabel: string;
+	label: string;
+	href: string;
+	linkLabel: string;
 }
 
 const { label, href, linkLabel } = Astro.props;
@@ -16,5 +16,5 @@ const { label, href, linkLabel } = Astro.props;
   >
     {label}
   </dt>
-  <dd class="flex-1"><Link href={href}>{linkLabel}</Link></dd>
+  <dd class="flex-1"><Link href={href} rel="me">{linkLabel}</Link></dd>
 </div>

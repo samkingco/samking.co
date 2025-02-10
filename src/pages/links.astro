@@ -127,7 +127,11 @@ const sections: Section[] = [
       {section.links.map(link => (
         <div>
           <p>
-            <Link href={link.href} withIcon={section.id !== "youtube"}>
+            <Link
+              href={link.href}
+              withIcon={section.id !== "youtube"}
+              rel={section.id === "social" ? "me" : undefined}
+            >
               {link.title}
             </Link>
           </p>

@@ -119,7 +119,7 @@ const socialLinks: PublicLink[] = [
       <Definition label="Social">
         {socialLinks.map(link => (
           <p>
-            <Link href={link.href}>{link.title}</Link>
+            <Link rel="me" href={link.href}>{link.title}</Link>
           </p>
         ))}
       </Definition>
