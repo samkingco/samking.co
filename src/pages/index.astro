@@ -109,22 +109,31 @@ const socialLinks: PublicLink[] = [
 
   <section>
     <h2 class="mb-2 sr-only">Contact</h2>
-
-    <dl class="space-y-0.5">
-      <ContactItem
-        label="Email"
-        href="mailto:mail@samking.co"
-        linkLabel="mail@samking.co"
-      />
-      <Definition label="Social">
+    <div class="space-y-0.5">
+      <ContactItem label="Email">
+        <Link href="mailto:mail@samking.co" rel="me">
+          mail@samking.co
+        </Link>
+      </ContactItem>
+      <ContactItem label="Social">
+        <ul class="flex-1 flex flex-col gap-0.5">
         {socialLinks.map(link => (
-          <p>
+          <li>
             <Link rel="me" href={link.href}>{link.title}</Link>
-          </p>
+          </li>
         ))}
-      </Definition>
-      <ContactItem label="Writing" href="/journal" linkLabel="/journal" />
-      <ContactItem label="Work" href="/cv" linkLabel="/cv" />
-    </dl>
+        </ul>
+      </ContactItem>
+      <ContactItem label="Writing">
+        <Link href="/journal" rel="me">
+          /journal
+        </Link>
+      </ContactItem>
+      <ContactItem label="Work">
+        <Link href="/cv" rel="me">
+          /cv
+        </Link>
+      </ContactItem>
+    </div>
   </section>
 </Layout>
