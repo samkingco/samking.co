@@ -7,11 +7,11 @@ const { label } = Astro.props;
 ---
 
 <article class="flex flex-col gap-0.25 sm:flex-row sm:gap-2 items-baseline">
-  <p
+  <h3
     class="w-full sm:max-w-[--left-col-width] text-sm text-muted-foreground tabular-nums slashed-zero"
   >
     {label}
-  </p>
+  </h3>
   <section class="flex-1 flex flex-col gap-0.5">
     <slot />
   </section>
