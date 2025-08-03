@@ -33,26 +33,12 @@ module.exports = {
         },
       },
       fontFamily: {
-        heading: ["Nikolai", "Nikolai override", ...defaultTheme.fontFamily.serif],
-        sans: ["Text", "Text override", ...defaultTheme.fontFamily.sans],
-        mono: ["Mono", "Mono override", ...defaultTheme.fontFamily.mono],
+        sans: ["CommitMono", ...defaultTheme.fontFamily.mono],
+        serif: ["CommitMono", ...defaultTheme.fontFamily.mono],
+        mono: ["CommitMono", ...defaultTheme.fontFamily.mono],
       },
       fontSize: {
-        DEFAULT: "1rem",
-        headingOne: "2rem",
-        lg: "1.125rem",
-        md: "1rem",
-        sm: "0.875rem",
-        root: "16px",
-      },
-      lineHeight: {
-        none: "0",
-        one: "1",
-        tight: "1.25",
-        snug: "1.375",
-        normal: "1.5",
-        relaxed: "1.625",
-        loose: "2",
+        base: ["12px", { lineHeight: "20px" }],
       },
       listStyleType: {
         square: "square",
@@ -94,73 +80,11 @@ module.exports = {
         40: "40rem",
         48: "48rem",
         64: "64rem",
+        "1lh": "20px",
+        "2lh": "40px",
+        "3lh": "60px",
       },
-      typography: ({ theme }) => ({
-        DEFAULT: {
-          css: {
-            "--tw-prose-body": theme("colors.secondary.foreground"),
-            "--tw-prose-headings": theme("colors.primary.foreground"),
-            "--tw-prose-lead": theme("colors.secondary.foreground"),
-            "--tw-prose-links": theme("colors.primary.foreground"),
-            "--tw-prose-bold": theme("colors.primary.foreground"),
-            "--tw-prose-counters": theme("colors.muted.foreground"),
-            "--tw-prose-bullets": theme("colors.muted.foreground"),
-            "--tw-prose-hr": theme("colors.border"),
-            "--tw-prose-quotes": theme("colors.secondary.foreground"),
-            "--tw-prose-quote-borders": theme("colors.border"),
-            "--tw-prose-captions": theme("colors.secondary.foreground"),
-            "--tw-prose-code": theme("colors.secondary.foreground"),
-            "--tw-prose-pre-code": theme("colors.secondary.foreground"),
-            "--tw-prose-pre-bg": theme("colors.secondary"),
-            "--tw-prose-th-borders": theme("colors.border"),
-            "--tw-prose-td-borders": theme("colors.border"),
-            h1: {
-              fontWeight: "normal",
-            },
-            h2: {
-              fontWeight: "normal",
-              fontSize: theme("fontSize.lg"),
-              marginTop: theme("spacing.3"),
-            },
-            h3: {
-              fontWeight: "normal",
-              fontSize: theme("fontSize.md"),
-              marginTop: theme("spacing.3"),
-            },
-            h4: {
-              fontWeight: "normal",
-            },
-            h5: {
-              fontWeight: "normal",
-            },
-            h6: {
-              fontWeight: "normal",
-            },
-            p: {
-              margin: "0",
-            },
-            "p + p": {
-              marginTop: theme("spacing.1"),
-            },
-            blockquote: {
-              fontWeight: "normal",
-              fontStyle: "normal",
-              borderLeftWidth: theme("spacing.px"),
-            },
-            figure: {
-              marginTop: theme("spacing.2"),
-              marginBottom: theme("spacing.2"),
-            },
-            figcaption: {
-              fontSize: theme("fontSize.sm"),
-              color: theme("colors.muted.foreground"),
-              marginTop: theme("spacing.0.5"),
-              textAlign: "center",
-            },
-          },
-        },
-      }),
     },
   },
-  plugins: [require("@tailwindcss/typography")],
+  plugins: [],
 };

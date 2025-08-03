@@ -1,25 +1,23 @@
 ---
 import { getCollection } from "astro:content";
-import Definition from "../../components/Definition.astro";
 import Link from "../../components/Link.astro";
 import Layout from "../../layouts/Default.astro";
 import { formatDate } from "../../utils/dates";
 
 const allPosts = await getCollection("posts");
-const posts = allPosts.sort(
-	(a, b) => b.data.date.getTime() - a.data.date.getTime(),
-);
+const posts = allPosts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 ---
 
 <Layout title="Journal">
   {
     posts.map((post) => (
-      <Definition label={formatDate(post.data.date)}>
+      <article>
+        <h3 class="text-muted-foreground">{formatDate(post.data.date)}</h3>
         <Link href={`/journal/${post.slug}/`}>
-          <h2>{post.data.title}</h2>
+          <h2 class="font-bold">{post.data.title}</h2>
         </Link>
-        <p class="text-secondary-foreground">{post.data.excerpt}</p>
-      </Definition>
+        <p>{post.data.excerpt}</p>
+      </article>
     ))
   }
 </Layout>

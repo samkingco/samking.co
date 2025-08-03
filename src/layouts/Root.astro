@@ -3,15 +3,15 @@ import { ClientRouter } from "astro:transitions";
 import "./styles.css";
 
 interface Props {
-	title: string;
-	description?: string;
-	ogImage?: string;
+  title: string;
+  description?: string;
+  ogImage?: string;
 }
 
 const {
-	title,
-	description = "Freelance software engineer and designer with over a decade of startup experience. Specializing in early-stage and creative projects, from concept to production. Based in Vancouver, Canada.",
-	ogImage = "/og.png",
+  title,
+  description = "Freelance software engineer and designer with over a decade of startup experience. Specializing in early-stage and creative projects, from concept to production. Based in Vancouver, Canada.",
+  ogImage = "/og.png",
 } = Astro.props;
 ---
 
@@ -46,9 +46,7 @@ const {
 
     <ClientRouter />
   </head>
-  <body
-    class="bg-background text-foreground leading-normal sm:[--left-col-width:8rem] [--left-col-width:4rem]"
-  >
+  <body class="bg-background text-foreground">
     <slot />
   </body>
 </html>

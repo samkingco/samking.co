@@ -1,6 +1,5 @@
 ---
 import { getCollection } from "astro:content";
-import Prose from "../../components/Prose.astro";
 import Journal from "../../layouts/Journal.astro";
 
 export async function getStaticPaths() {
@@ -18,7 +17,7 @@ const { Content } = await entry.render();
 ---
 
 <Journal frontmatter={entry.data}>
-  <Prose>
+  <div class="markdown">
     <Content />
-  </Prose>
+  </div>
 </Journal>

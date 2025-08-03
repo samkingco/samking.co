@@ -1,6 +1,5 @@
 ---
 import Link from "../../components/Link.astro";
-import Prose from "../../components/Prose.astro";
 import Layout from "../../layouts/Default.astro";
 import { formatDate } from "../../utils/dates";
 
@@ -10,21 +9,21 @@ const lastUpdated = "2025-08-03";
 
 <Layout title="/now | Sam King">
   <div>
-    <h1 class="text-lg">
+    <h1>
       <Link href="https://nownownow.com/about">/now</Link>
     </h1>
-    <p class="text-muted-foreground text-sm">
+    <p class="text-muted-foreground">
       Updated <time datetime={lastUpdated}>{formatDate(new Date(lastUpdated), "words")}</time> from the
       road (Medicine Hat currently)
     </p>
-    <p class="text-muted-foreground text-sm">
+    <p class="text-muted-foreground">
       <Link href={`/now/${previousVersion}`}>Previous version</Link>
     </p>
   </div>
 
-  <Prose>
+  <div class="markdown">
     <article>
-      <h3>Location</h3>
+      <h2>Location</h2>
       <p>
         My partner and I left Vancouver at the end of May and have been traveling across Canada for
         the past two months. Everything we own is in the car. We're staying in Airbnbs along the
@@ -48,7 +47,7 @@ const lastUpdated = "2025-08-03";
         real.
       </p>
 
-      <h3>Photography</h3>
+      <h2>Photography</h2>
       <p>
         The hard drives are filling up, almost too many photos to process. Mostly mountains, which
         is becoming a problem. Every view feels worth capturing but they all start looking the same.
@@ -57,7 +56,7 @@ const lastUpdated = "2025-08-03";
         The prairies have already been a bit of novelty.
       </p>
 
-      <h3>Work</h3>
+      <h2>Work</h2>
       <p>
         Still freelancing, mostly when I get time. Working from our Airbnbs when we stop for a few
         days, or when the weather turns and being inside feels less like waste. The "mountains over
@@ -65,7 +64,7 @@ const lastUpdated = "2025-08-03";
         stretch of gas and motels.
       </p>
 
-      <h3>Projects</h3>
+      <h2>Projects</h2>
       <p>
         I'm thinking of winding down <Link href="https://refrakt.app" withIcon={false}>Refrakt</Link
         >. Haven't touched the code in about a year. Built it solo without VC or a team, working on
@@ -81,7 +80,7 @@ const lastUpdated = "2025-08-03";
         making, privately or publicly, always with care.
       </p>
 
-      <h3>What's next</h3>
+      <h2>What's next</h2>
       <p>
         Still figuring it out. Rough plan: finish crossing Canada, maybe fly back to the UK in
         October to meet my nephew (with another on the way). After that, who knows? A year in a van
@@ -93,5 +92,5 @@ const lastUpdated = "2025-08-03";
         comes next.
       </p>
     </article>
-  </Prose>
+  </div>
 </Layout>

@@ -13,13 +13,10 @@ const post = await getEntry("posts", slug);
 if (!post) throw new Error(`Post ${slug} not found`);
 
 const allPosts = await getCollection("posts");
-const posts = allPosts.sort(
-	(a, b) => b.data.date.getTime() - a.data.date.getTime(),
-);
+const posts = allPosts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 
 const currIndex = allPosts.findIndex((post) => post.slug === slug);
-const readNext =
-	currIndex === posts.length - 1 ? posts[0] : posts[currIndex + 1];
+const readNext = currIndex === posts.length - 1 ? posts[0] : posts[currIndex + 1];
 ---
 
 <DefaultLayout
@@ -29,31 +26,27 @@ const readNext =
 >
   <article>
     <header class="mb-3">
-      <p class="text-sm text-muted-foreground tabular-nums slashed-zero">
+      <p class="text-muted-foreground tabular-nums slashed-zero">
         {formatDate(frontmatter.date)}
       </p>
-      <h1 class="text-lg">{frontmatter.title}</h1>
+      <h1 class="font-bold">{frontmatter.title}</h1>
     </header>
     <slot />
   </article>
 
-  <hr
-    class="h-[1px] bg-border max-w-[var(--left-col-width)] border-none my-4"
-  />
+  <hr class="h-[1px] bg-border max-w-[20ch] border-none my-4" />
 
   <nav>
-    <p class="text-sm text-muted-foreground">Read next</p>
+    <p class="text-muted-foreground">Read next</p>
     <p>
       <Link href={`/journal/${readNext.slug}`}>{readNext.data.title}</Link>
     </p>
   </nav>
 
   <footer>
-    <p class="text-sm text-muted-foreground">Found a mistake?</p>
+    <p class="text-muted-foreground">Found a mistake?</p>
     <p>
-      <Link
-        href={`https://github.com/samkingco/samking.co/blob/main/${post.filePath ?? ""}`}
-      >
+      <Link href={`https://github.com/samkingco/samking.co/blob/main/${post.filePath ?? ""}`}>
         Edit on GitHub
       </Link>
     </p>
