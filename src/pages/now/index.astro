@@ -4,8 +4,8 @@ import Prose from "../../components/Prose.astro";
 import Layout from "../../layouts/Default.astro";
 import { formatDate } from "../../utils/dates";
 
-const previousVersion = "2024-01-24";
-const lastUpdated = "2024-05-15";
+const previousVersion = "2024-05-15";
+const lastUpdated = "2025-08-03";
 ---
 
 <Layout title="/now | Sam King">
@@ -14,9 +14,8 @@ const lastUpdated = "2024-05-15";
       <Link href="https://nownownow.com/about">/now</Link>
     </h1>
     <p class="text-muted-foreground text-sm">
-      Updated <time datetime={lastUpdated}
-        >{formatDate(new Date(lastUpdated), "words")}</time
-      > from Vancouver
+      Updated <time datetime={lastUpdated}>{formatDate(new Date(lastUpdated), "words")}</time> from the
+      road (Medicine Hat currently)
     </p>
     <p class="text-muted-foreground text-sm">
       <Link href={`/now/${previousVersion}`}>Previous version</Link>
@@ -27,68 +26,71 @@ const lastUpdated = "2024-05-15";
     <article>
       <h3>Location</h3>
       <p>
-        I moved to Vancouver in January 2024. My partner Annesah and I have been
-        exploring the city and beyond. We've circled back to where we first
-        landed in X̱ats'alanexw (Kitsilano), and we&apos;re enjoying it loads.
-        The sun is currently out, the flowers are blooming, and we&apos;re close
-        to the beach. It&apos;s actually a little like our old hometown in the
-        UK, but with the mountains in the distance.
+        My partner and I left Vancouver at the end of May and have been traveling across Canada for
+        the past two months. Everything we own is in the car. We're staying in Airbnbs along the
+        way, finding our rhythm as we go.
+      </p>
+      <p>
+        We've zigzagged across BC and Alberta, chasing weather and whims. The Sea to Sky corridor
+        through Squamish and Whistler to Lillooet. Wine country in the Okanagan—Vernon, Kelowna,
+        Summerland for my partner's birthday. Nelson and the Kootenays with their endless mountain
+        roads. Revelstoke and Glacier National Park were personal highlights. The touristy trio of
+        Jasper, Banff, and the Icefields Parkway. Calgary for supplies. Dinosaur country in
+        Drumheller and the badlands.
+      </p>
+      <p>
+        Currently writing from Medicine Hat. Next: Saskatoon and Regina, then the long prairie
+        stretches to Toronto or Montreal.
+      </p>
+      <p>
+        The mountains have been everything I imagined as a teenager scrolling Tumblr—low clouds
+        catching on peaks, impossible highways carved through wilderness, lakes that don't look
+        real.
       </p>
 
-      <h3>Practice</h3>
+      <h3>Photography</h3>
       <p>
-        I&apos;ve been getting out and taking more photos recently. More than I
-        care to process. I've been posting the ones I like the most to my
-        profile on <Link href="https://refrakt.app/sk" withIcon={false}>
-          Refrakt
-        </Link>. I&apos;ve found it&apos;s been a great way to get to know
-        Vancouver. I wander out for an hour most days with my GRIII in my
-        pocket, no real direction, just going down new streets. It feels good to
-        be shooting more than I have the last few years, and I&apos;m starting
-        to see more themes in what I shoot, or at least I&apos;m paying more
-        attention to them.
+        The hard drives are filling up, almost too many photos to process. Mostly mountains, which
+        is becoming a problem. Every view feels worth capturing but they all start looking the same.
+        I keep reminding myself to shoot the small things: the things I'm eating, motel signs, the
+        incidentals that make a place real. The small towns coming up should help break the pattern.
+        The prairies have already been a bit of novelty.
       </p>
 
       <h3>Work</h3>
       <p>
-        I&apos;ve joined the team at <Link
-          href="https://futureprimitive.xyz"
-          withIcon={false}
-        >
-          Future Primitive
-        </Link> here in Vancouver. I&apos;m working on a new product called <Link
-          href="https://www.per.ma/"
-          withIcon={false}
-        >
-          Perma</Link
-        > which is going to be really fun. It&apos;s also my first legit software
-        engineering role since I transitioned away from product design. It feels
-        nice to be back in a team environment instead of solo.
+        Still freelancing, mostly when I get time. Working from our Airbnbs when we stop for a few
+        days, or when the weather turns and being inside feels less like waste. The "mountains over
+        money" philosophy is holding, though I'll need to hunker down soon to afford the next
+        stretch of gas and motels.
       </p>
 
-      <h3>Refrakt</h3>
+      <h3>Projects</h3>
       <p>
-        For the last year, I've been working on <Link
-          href="https://refrakt.app"
-          withIcon={false}
-        >
-          Refrakt
-        </Link>, a platform for photographers to share their work. It combines
-        my love of photography, design, and engineering. I'm really enjoying
-        learning some software engineering concepts in more depth. It's hard
-        work building it all by myself, but it's very rewarding and I can't wait
-        to see where it goes.
+        I'm thinking of winding down <Link href="https://refrakt.app" withIcon={false}>Refrakt</Link
+        >. Haven't touched the code in about a year. Built it solo without VC or a team, working on
+        it in spare moments. Despite its brief life, I'm proud it became a home for photographers I
+        admire. Without intentional dopamine loops, it's hard to grow platforms. People come, post,
+        then drift back to the big ones.
+      </p>
+      <p>
+        So I'm building <Link href="https://akkeri.app" withIcon={false}>akkeri</Link> instead. A digital
+        mailroom for creative work. You don't post to feeds, you send mail. Small bundles of words and
+        images, delivered the next day. Everything's slower, more intentional. It's not a performance
+        but a conversation. A quiet space for artists, photographers, and writers to share what they're
+        making, privately or publicly, always with care.
       </p>
 
-      <h3>Hobbies and interests</h3>
+      <h3>What's next</h3>
       <p>
-        Over the summer of 2023, I went on a pottery course back in the UK. I
-        loved it! It was so nice making something with my hands instead of a
-        keyboard and mouse. Something about being away from a screen was also
-        lovely. I haven't done much research yet, but I'd love to do another
-        course here in Vancouver. Eventually I'd like to make some small wares
-        for myself, and new friends I make here. If you know of any calm studios
-        for hire in Vancouver, please let me know!
+        Still figuring it out. Rough plan: finish crossing Canada, maybe fly back to the UK in
+        October to meet my nephew (with another on the way). After that, who knows? A year in a van
+        back in BC, or a year back in the UK. The recent state of things there makes me want to stay
+        away, but family pulls.
+      </p>
+      <p>
+        For now, it's just the road ahead. Saskatoon, then the long prairie stretches, then whatever
+        comes next.
       </p>
     </article>
   </Prose>
