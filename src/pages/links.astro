@@ -6,104 +6,113 @@ import DefaultLayout from "../layouts/Default.astro";
 import { getLatestVideoInfo } from "../utils/youtube";
 
 type PublicLink = {
-  title: string;
-  href: string;
+	title: string;
+	href: string;
 };
 
 type Section = {
-  id: string;
-  title: string;
-  links: PublicLink[];
+	id: string;
+	title: string;
+	links: PublicLink[];
 };
 
 const photographySection: Section = {
-  id: "photography",
-  title: "Photography",
-  links: [
-    {
-      title: "Refrakt",
-      href: `https://refrakt.app/${siteConfig.refrakt.handle}`,
-    },
-  ],
+	id: "photography",
+	title: "Photography",
+	links: [
+		{
+			title: "Refrakt",
+			href: `https://refrakt.app/${siteConfig.refrakt.handle}`,
+		},
+	],
 };
 
 const latestVideo = await getLatestVideoInfo(siteConfig.youtube.channelId);
 const youtubeSection: Section = {
-  id: "youtube",
-  title: "Latest YouTube video",
-  links: [
-    {
-      title: latestVideo.title,
-      href: latestVideo.watchUrl,
-    },
-  ],
+	id: "youtube",
+	title: "Latest YouTube video",
+	links: [
+		{
+			title: latestVideo.title,
+			href: latestVideo.watchUrl,
+		},
+	],
 };
 
 const allPosts = await getCollection("posts");
-const latestPost = allPosts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime()).at(0);
+const latestPost = allPosts
+	.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+	.at(0);
 
 const creativeSection: Section = {
-  id: "journal",
-  title: "Latest journal entry",
-  links: [
-    latestPost && {
-      title: latestPost.data.title,
-      href: `/journal/${latestPost.slug}`,
-    },
-  ].filter((i) => !!i),
+	id: "journal",
+	title: "Latest journal entry",
+	links: [
+		latestPost && {
+			title: latestPost.data.title,
+			href: `/journal/${latestPost.slug}`,
+		},
+	].filter((i) => !!i),
 };
 
 const socialSection: Section = {
-  id: "social",
-  title: "Social",
-  links: [
-    {
-      title: "Bluesky",
-      href: `https://bsky.app/profile/${siteConfig.bluesky.handle}`,
-    },
-    {
-      title: "GitHub",
-      href: `https://github.com/${siteConfig.github.handle}`,
-    },
-    {
-      title: "YouTube",
-      href: `https://www.youtube.com/@${siteConfig.youtube.handle}`,
-    },
-    {
-      title: "Substack",
-      href: `https://${siteConfig.substack.handle}.substack.com`,
-    },
-    {
-      title: "LinkedIn",
-      href: `https://linkedin.com/in/${siteConfig.linkedin.handle}`,
-    },
-  ],
+	id: "social",
+	title: "Social",
+	links: [
+		{
+			title: "Bluesky",
+			href: `https://bsky.app/profile/${siteConfig.bluesky.handle}`,
+		},
+		{
+			title: "GitHub",
+			href: `https://github.com/${siteConfig.github.handle}`,
+		},
+		{
+			title: "YouTube",
+			href: `https://www.youtube.com/@${siteConfig.youtube.handle}`,
+		},
+		{
+			title: "Substack",
+			href: `https://${siteConfig.substack.handle}.substack.com`,
+		},
+		{
+			title: "LinkedIn",
+			href: `https://linkedin.com/in/${siteConfig.linkedin.handle}`,
+		},
+	],
 };
 
-const sections: Section[] = [photographySection, youtubeSection, creativeSection, socialSection];
+const sections: Section[] = [
+	photographySection,
+	youtubeSection,
+	creativeSection,
+	socialSection,
+];
 ---
 
 <DefaultLayout title="Links | Sam King">
-  <h2 class="sr-only">Links</h2>
+	<h2 class="sr-only">Links</h2>
 
-  {
-    sections.map((section) => (
-      <section>
-        <p class="text-muted-foreground tabular-nums slashed-zero">{section.title}</p>
-        {section.links.map((link) => (
-          <div>
-            <p>
-              <Link
-                href={link.href}
-                withIcon={section.id !== "youtube"}
-                rel={section.id === "social" ? "me" : undefined}
-              >
-                {link.title}
-              </Link>
-            </p>
-          </div>
-        ))}
-      </section>
-    ))
-  }
+	{
+		sections.map((section) => (
+			<section>
+				<p class="text-muted-foreground tabular-nums slashed-zero">
+					{section.title}
+				</p>
+				{section.links.map((link) => (
+					<div>
+						<p>
+							<Link
+								href={link.href}
+								withIcon={section.id !== "youtube"}
+								rel={section.id === "social" ? "me" : undefined}
+							>
+								{link.title}
+							</Link>
+						</p>
+					</div>
+				))}
+			</section>
+		))
+	}
 </DefaultLayout>

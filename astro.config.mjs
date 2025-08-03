@@ -1,6 +1,6 @@
 import sitemap from "@astrojs/sitemap";
-import { defineConfig } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "astro/config";
 import { FontaineTransform } from "fontaine";
 import { rehypeImageCaptions } from "./src/utils/rehype-image-captions.mjs";
 

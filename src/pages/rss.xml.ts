@@ -9,15 +9,15 @@ import sanitizeHtml from "sanitize-html";
 const markdownParser = new MarkdownIt();
 
 const imagesGlob = import.meta.glob<{ default: ImageMetadata }>(
-	"/src/assets/**/*.{jpeg,jpg,png,gif}",
+	"/src/assets/**/*.{jpeg,jpg,png,gif}"
 );
 
-export async function GET(context: APIContext) {
+export async function GET(_context: APIContext) {
 	const site = "https://samking.co";
 
 	const allPosts = await getCollection("posts");
 	const posts = allPosts.sort(
-		(a, b) => b.data.date.getTime() - a.data.date.getTime(),
+		(a, b) => b.data.date.getTime() - a.data.date.getTime()
 	);
 
 	const items: RSSFeedItem[] = [];
@@ -32,7 +32,7 @@ export async function GET(context: APIContext) {
 			if (!src) continue;
 			const assetSrc = src.replace(/^(\.{1,2}\/)*/, "/src/");
 			const imagePath = await imagesGlob[assetSrc]()?.then(
-				(res) => res.default,
+				(res) => res.default
 			);
 
 			if (imagePath) {

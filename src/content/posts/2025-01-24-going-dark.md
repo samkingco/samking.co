@@ -16,6 +16,7 @@ This ties back to something I've been thinking about with photography platforms 
 I should acknowledge my perspective here… I'm in the fortunate position where I don't rely on social media for client work or business growth. This gives me the freedom to think about platforms differently than photographers who need that visibility for their livelihood.
 
 What I'm actually craving instead:
+
 - A place to organise projects and work in progress
 - A place to share half-formed thoughts about said projects
 - A place that's private and collaborative, and less performative
@@ -29,7 +30,6 @@ This past year, and especially more recently, I've had this nagging feeling that
 
 Right now, Refrakt contributes to the fragmentation because it's trying to occupy a similar space to Instagram, Glass, or Foto—but it's not different enough to carve out its own identity. People come to Refrakt with the same expectations they bring to other platforms, hoping it might be the next big thing that drives engagement or virality or generates business leads. That was never the point.
 
-
 What I'm realising is that Refrakt (or something new) needs to be more of a collaborative tool than social network. Think less Instagram, more like a hybrid of Are.na and Discord. An actual home for your photography practice where the focus is on organisation and meaningful connection rather than viral potential. Sure, we could add features later that help with public visibility, like beautiful website views of your work or email newsletters based on spaces, but that would be secondary to the core purpose—creating a space where photographers can actually work with their medium, not just promote it.
 
 It's not a bad thing that Refrakt isn't there right now, I just think there's a better and more interesting, authentic way forward.
@@ -37,7 +37,6 @@ It's not a bad thing that Refrakt isn't there right now, I just think there's a 
 ![A screenshot of this new version of Refrakt I've been talking about, showing a space feed with a chat on the side.](../../assets/refrakt-2.0.png)
 
 I've been working on a vision for something new—whether that's a new version of Refrakt or an entirely different platform (open to name suggestions). It's become a lot more solid and vivid in my mind. I've touched on this in previous posts, and you're probably tired of hearing about it. But this new direction focuses on smaller communities built around shared interests and genuine connections. Communities that elevate each other through photography, where collaboration and raw creativity are celebrated. A space where you can choose to share publicly or work entirely in private, or even to just bounce ideas around with a friend.
-
 
 So I'm stepping back from social. I'll maintain my presence on [YouTube](https://youtube.com/@samkingco) & [Refrakt](https://refrakt.app/sk), and I'll share links to new content on [Bluesky](https://bsky.app/profile/samking.co), but I'm done with the scrolling. I'm tired of reading heated debates about things that ultimately don't matter much (like the latest Instagram grid update). Instead, I'm channeling that energy into my craft and building out the backend for this new vision, and I'll share some more concrete updates soon.
 

@@ -1,75 +1,75 @@
 ---
 import { Image } from "astro:assets";
-import Link from "../components/Link.astro";
 import avatarImage from "../assets/avatar.jpg";
+import Link from "../components/Link.astro";
 import Layout from "../layouts/Default.astro";
-
-type PublicLink = {
-  title: string;
-  href: string;
-};
 ---
 
 <Layout title="Sam King">
-  <section class="space-y-5">
-    <article aria-label="Introduction" class="space-y-5">
-      <Image
-        src={avatarImage}
-        alt="Sam King"
-        class="w-full h-auto max-w-[96px]"
-        loading="eager"
-        width="96"
-        height="96"
-      />
-      <p>
-        I'm a freelance software engineer and designer, bridging art and technology. I love
-        exploring nature with a camera in hand, reconnecting with my roots as a photographer and
-        deepening my connection to the world through a more intentional art practice. Being autistic
-        helps me bring a different perspective to both my creative and technical work.
-      </p>
-      <p>
-        In my spare time, you can find me working on <Link
-          href="https://refrakt.app"
-          withIcon={false}>Refrakt</Link
-        >&mdash;a photo sharing platform that gives photographers a more intimate and authentic
-        space to connect and share their work.
-      </p>
-    </article>
+	<section class="space-y-5">
+		<article aria-label="Introduction" class="space-y-5">
+			<Image
+				src={avatarImage}
+				alt="Sam King"
+				class="w-full h-auto max-w-[96px]"
+				loading="eager"
+				width="96"
+				height="96"
+			/>
+			<p>
+				I'm a freelance software engineer and designer, bridging art and
+				technology. I love exploring nature with a camera in hand, reconnecting
+				with my roots as a photographer and deepening my connection to the world
+				through a more intentional art practice. Being autistic helps me bring a
+				different perspective to both my creative and technical work.
+			</p>
+			<p>
+				In my spare time, you can find me working on <Link
+					href="https://refrakt.app"
+					withIcon={false}>Refrakt</Link
+				>&mdash;a photo sharing platform that gives photographers a more
+				intimate and authentic space to connect and share their work.
+			</p>
+		</article>
 
-    <article>
-      <h3 class="text-muted-foreground">Interests</h3>
-      <p>Art & Photography, Forests & Mountains, Healthcare, Decentralization.</p>
-    </article>
+		<article>
+			<h3 class="text-muted-foreground">Interests</h3>
+			<p>
+				Art & Photography, Forests & Mountains, Healthcare, Decentralization.
+			</p>
+		</article>
 
-    <article>
-      <h3 class="text-muted-foreground">Values</h3>
-      <p>Honesty, Authenticity, Curiosity, Accessibility.</p>
-    </article>
+		<article>
+			<h3 class="text-muted-foreground">Values</h3>
+			<p>Honesty, Authenticity, Curiosity, Accessibility.</p>
+		</article>
 
-    <article>
-      <h3 class="text-muted-foreground">Email</h3>
-      <p><Link href="mailto:mail@samking.co" rel="me"> mail@samking.co </Link></p>
-    </article>
+		<article>
+			<h3 class="text-muted-foreground">Email</h3>
+			<p>
+				<Link href="mailto:mail@samking.co" rel="me"> mail@samking.co </Link>
+			</p>
+		</article>
 
-    <article>
-      <h3 class="text-muted-foreground">Slashes</h3>
-      <ul>
-        <li>
-          <Link href="/now" rel="me">/now</Link>
-        </li>
-        <li>
-          <Link href="/freelance" rel="me">/freelance</Link>
-        </li>
-        <li>
-          <Link href="/journal" rel="me">/journal</Link>
-        </li>
-        <li>
-          <Link href="/links" rel="me">/links</Link>
-        </li>
-        <li>
-          <Link href="/cv" rel="me">/cv</Link>
-        </li>
-      </ul>
-    </article>
-  </section>
+		<article>
+			<h3 class="text-muted-foreground">Slashes</h3>
+			<ul>
+				<li>
+					<Link href="/now" rel="me">/now</Link>
+				</li>
+				<li>
+					<Link href="/freelance" rel="me">/freelance</Link>
+				</li>
+				<li>
+					<Link href="/journal" rel="me">/journal</Link>
+				</li>
+				<li>
+					<Link href="/links" rel="me">/links</Link>
+				</li>
+				<li>
+					<Link href="/cv" rel="me">/cv</Link>
+				</li>
+			</ul>
+		</article>
+	</section>
 </Layout>

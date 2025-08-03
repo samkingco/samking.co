@@ -7,7 +7,9 @@ import { formatDate } from "../../utils/dates";
 export const prerender = true;
 
 const allNowEntries = await getCollection("now");
-const sortedEntries = allNowEntries.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const sortedEntries = allNowEntries.sort(
+	(a, b) => b.data.date.getTime() - a.data.date.getTime()
+);
 const latestEntry = sortedEntries[0];
 const { Content } = await latestEntry.render();
 
@@ -15,27 +17,29 @@ const previousEntry = sortedEntries.length > 1 ? sortedEntries[1] : null;
 ---
 
 <Layout title="/now | Sam King">
-  <section>
-    <h1>
-      <Link href="https://nownownow.com/about">/now</Link>
-    </h1>
-    <p class="text-muted-foreground">
-      Updated
-      <time datetime={latestEntry.data.date.toISOString()}>{formatDate(latestEntry.data.date, "words")}</time>
-      {latestEntry.data.location}
-    </p>
-    {
-      previousEntry && (
-        <p class="text-muted-foreground">
-          <Link href={`/now/${previousEntry.slug}`}>Previous version</Link>
-        </p>
-      )
-    }
-  </section>
+	<section>
+		<h1>
+			<Link href="https://nownownow.com/about">/now</Link>
+		</h1>
+		<p class="text-muted-foreground">
+			Updated
+			<time datetime={latestEntry.data.date.toISOString()}
+				>{formatDate(latestEntry.data.date, "words")}</time
+			>
+			{latestEntry.data.location}
+		</p>
+		{
+			previousEntry && (
+				<p class="text-muted-foreground">
+					<Link href={`/now/${previousEntry.slug}`}>Previous version</Link>
+				</p>
+			)
+		}
+	</section>
 
-  <section class="markdown">
-    <article>
-      <Content />
-    </article>
-  </section>
+	<section class="markdown">
+		<article>
+			<Content />
+		</article>
+	</section>
 </Layout>

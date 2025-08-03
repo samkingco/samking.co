@@ -4,7 +4,7 @@ export async function getLatestVideoInfo(channelId: string): Promise<{
 	publishedAt: number;
 }> {
 	const response = await fetch(
-		`https://samkingco-youtubelatestvideoinfo.web.val.run?channelId=${channelId}`,
+		`https://samkingco-youtubelatestvideoinfo.web.val.run?channelId=${channelId}`
 	);
 	if (!response.ok) {
 		throw new Error("Failed to fetch latest video info");
