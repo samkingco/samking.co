@@ -1,6 +1,18 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(230 4% 100%);
+  --color-foreground: hsl(230 4% 16%);
+  --color-muted: hsl(230 4% 82%);
+  --color-muted-foreground: hsl(230 4% 60%);
+  --color-border: hsl(230 4% 90%);
+
+  --font-mono:
+    "CommitMono", ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo,
+    monospace;
+
+  --text-base: 0.75rem;
+}
 
 @layer base {
   @font-face {
@@ -11,21 +23,18 @@
     font-display: block;
   }
 
-  :root {
-    --background: 230 4% 100%;
-    --foreground: 230 4% 16%;
-    --primary: 230 4% 98%;
-    --primary-foreground: 230 4% 4%;
-    --secondary: 230 4% 80%;
-    --secondary-foreground: 230 4% 38%;
-    --muted: 230 4% 82%;
-    --muted-foreground: 230 4% 60%;
-    --border: 230 4% 90%;
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-background: hsl(230 4% 4%);
+      --color-foreground: hsl(230 4% 92%);
+      --color-muted: hsl(230 4% 12%);
+      --color-muted-foreground: hsl(230 4% 64%);
+      --color-border: hsl(230 4% 16%);
+    }
   }
 
   body {
-    @apply text-base;
-    font-family: "CommitMono", monospace;
+    @apply bg-background text-foreground text-base leading-5 font-mono;
     font-variation-settings: "wght" 400;
     font-feature-settings: "ss03", "ss04", "ss05";
   }
@@ -44,33 +53,20 @@
     font-variation-settings: "wght" 700;
   }
 
-  /* Utility for bold with variable font */
   .font-bold {
     font-weight: normal !important;
     font-variation-settings: "wght" 700 !important;
   }
 
   @media (prefers-color-scheme: dark) {
-    :root {
-      --background: 230 4% 4%;
-      --foreground: 230 4% 92%;
-      --primary: 230 4% 4%;
-      --primary-foreground: 230 4% 94%;
-      --secondary: 230 4% 8%;
-      --secondary-foreground: 230 4% 80%;
-      --muted: 230 4% 12%;
-      --muted-foreground: 230 4% 64%;
-      --border: 230 4% 12%;
-    }
-
     body {
       -webkit-font-smoothing: antialiased;
     }
   }
 
   ::selection {
-    background: hsl(var(--muted));
-    color: hsl(var(--primary-foreground));
+    background: var(--color-foreground);
+    color: var(--color-background);
   }
 }
 
@@ -83,7 +79,7 @@
   .markdown ol + p,
   .markdown blockquote,
   .markdown blockquote + p {
-    @apply mt-1lh;
+    @apply mt-5;
   }
 
   .markdown h1,
@@ -92,7 +88,7 @@
   .markdown h4,
   .markdown h5,
   .markdown h6 {
-    @apply font-bold mt-2lh mb-1lh;
+    @apply font-bold mt-10 mb-5;
   }
 
   .markdown h1:first-child,
@@ -143,7 +139,7 @@
   }
 
   .markdown blockquote p + p {
-    @apply mt-1lh;
+    @apply mt-5;
   }
 
   /* Lists with markdown-style prefixes */
@@ -184,7 +180,7 @@
 
   /* Images/figures */
   .markdown figure {
-    @apply my-2lh;
+    @apply my-10;
   }
 
   .markdown img {
@@ -197,20 +193,20 @@
 
   /* Links */
   .markdown a {
-    @apply underline underline-offset-[0.2em] decoration-border text-primary-foreground transition-colors;
+    @apply underline underline-offset-[0.125em] decoration-muted-foreground decoration-dotted text-foreground transition-colors;
   }
 
   .markdown a:hover {
-    @apply decoration-primary-foreground;
+    @apply decoration-foreground;
   }
 
   /* Code */
   .markdown code {
-    @apply bg-secondary px-0.25 py-0.125 rounded-xs;
+    @apply bg-muted px-1 py-0.5 rounded-xs;
   }
 
   .markdown pre {
-    @apply bg-secondary p-1 rounded-sm overflow-x-auto my-1lh;
+    @apply bg-muted p-1 rounded-sm overflow-x-auto my-5;
   }
 
   .markdown pre code {
@@ -219,6 +215,7 @@
 
   /* Horizontal rules */
   .markdown hr {
-    @apply h-px bg-border border-none my-2lh;
+    @apply h-px border-none my-10;
+    background-color: var(--color-border);
   }
 }

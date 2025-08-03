@@ -11,26 +11,25 @@
     "ship": "pnpm build && wrangler pages deploy"
   },
   "dependencies": {
-    "@astrojs/rss": "^4.0.11",
-    "@astrojs/sitemap": "^3.2.1",
-    "@astrojs/tailwind": "^5.1.4",
-    "@astrojs/vercel": "^8.0.2",
-    "astro": "^5.1.7",
+    "@astrojs/rss": "^4.0.12",
+    "@astrojs/sitemap": "^3.4.2",
+    "@tailwindcss/vite": "^4.0.0-beta.2",
+    "astro": "^5.12.8",
     "fontaine": "^0.5.0",
     "markdown-it": "^14.1.0",
     "node-html-parser": "^6.1.13",
-    "sanitize-html": "^2.14.0",
+    "sanitize-html": "^2.17.0",
     "satori": "^0.12.0",
     "satori-html": "^0.3.2",
-    "sharp": "^0.33.5",
-    "tailwindcss": "^3.4.17",
+    "sharp": "^0.34.3",
+    "tailwindcss": "^4.1.11",
     "unist-util-visit-parents": "^6.0.1"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.15",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.10.2",
-    "@types/sanitize-html": "^2.13.0",
-    "wrangler": "^3.99.0"
+    "@types/sanitize-html": "^2.16.0",
+    "wrangler": "^4.27.0"
   }
 }
