@@ -8,48 +8,45 @@ import avatarImage from "../images/avatar.jpg";
 import Layout from "../layouts/Default.astro";
 
 type PublicLink = {
-	title: string;
-	href: string;
+  title: string;
+  href: string;
 };
 
 const socialLinks: PublicLink[] = [
-	{
-		title: "Refrakt",
-		href: `https://refrakt.app/${siteConfig.refrakt.handle}`,
-	},
-	{
-		title: "YouTube",
-		href: `https://www.youtube.com/@${siteConfig.youtube.handle}`,
-	},
-	{
-		title: "Bluesky",
-		href: `https://bsky.app/profile/${siteConfig.bluesky.handle}`,
-	},
-	{
-		title: "Threads",
-		href: `https://threads.net/@${siteConfig.instagram.handle}`,
-	},
-	{
-		title: "Substack",
-		href: `https://${siteConfig.substack.handle}.substack.com`,
-	},
-	{
-		title: "GitHub",
-		href: `https://github.com/${siteConfig.github.handle}`,
-	},
-	{
-		title: "LinkedIn",
-		href: `https://linkedin.com/in/${siteConfig.linkedin.handle}`,
-	},
+  {
+    title: "Refrakt",
+    href: `https://refrakt.app/${siteConfig.refrakt.handle}`,
+  },
+  {
+    title: "YouTube",
+    href: `https://www.youtube.com/@${siteConfig.youtube.handle}`,
+  },
+  {
+    title: "Bluesky",
+    href: `https://bsky.app/profile/${siteConfig.bluesky.handle}`,
+  },
+  {
+    title: "Threads",
+    href: `https://threads.net/@${siteConfig.instagram.handle}`,
+  },
+  {
+    title: "Substack",
+    href: `https://${siteConfig.substack.handle}.substack.com`,
+  },
+  {
+    title: "GitHub",
+    href: `https://github.com/${siteConfig.github.handle}`,
+  },
+  {
+    title: "LinkedIn",
+    href: `https://linkedin.com/in/${siteConfig.linkedin.handle}`,
+  },
 ];
 ---
 
 <Layout title="Sam King">
   <section class="space-y-0.5">
-    <article
-      class="flex flex-col sm:flex-row sm:items-start gap-2"
-      aria-label="Introduction"
-    >
+    <article class="flex flex-col sm:flex-row sm:items-start gap-2" aria-label="Introduction">
       <Image
         src={avatarImage}
         alt="Sam King"
@@ -60,81 +57,71 @@ const socialLinks: PublicLink[] = [
       />
       <div class="flex-1 space-y-0.5">
         <p class="text-secondary-foreground">
-          I'm a freelance software engineer and designer, bridging art and
-          technology. I love exploring nature with a camera in hand,
-          reconnecting with my roots as a photographer and deepening my
-          connection to the world through a more intentional art practice.
-          Being autistic helps me bring a different perspective to both my
-          creative and technical work.
+          I'm a freelance software engineer and designer, bridging art and technology. I love
+          exploring nature with a camera in hand, reconnecting with my roots as a photographer and
+          deepening my connection to the world through a more intentional art practice. Being
+          autistic helps me bring a different perspective to both my creative and technical work.
         </p>
         <p class="text-secondary-foreground">
           In my spare time, you can find me working on <Link
             href="https://refrakt.app"
-            withIcon={false}
-          >Refrakt</Link>&mdash;a photo sharing platform that gives
-          photographers a more intimate and authentic space to connect and
-          share their work.
+            withIcon={false}>Refrakt</Link
+          >&mdash;a photo sharing platform that gives photographers a more intimate and authentic
+          space to connect and share their work.
         </p>
       </div>
     </article>
   </section>
 
   <section class="space-y-2 sm:space-y-0.5">
-    <Definition label="Freelance">
-      <p>
-        Limited availability, get in touch for details.
-      </p>
-      <p class="text-secondary-foreground">
-        With over a decade of experience in both design and engineering, I help
-        early-stage teams turn their ideas into reality. I can handle
-        everything from initial concepts through to production code.
-      </p>
-      <p class="text-secondary-foreground">
-        <Link href="/freelance" withIcon={false}>/freelance</Link>
-      </p>
-    </Definition>
-  </section>
-
-  <section class="space-y-2 sm:space-y-0.5">
     <Definition label="Interests">
       <p class="text-secondary-foreground">
-        Art & Photography, Public goods, Healthcare, Decentralization.
+        Art & Photography, Forests & Mountains, Healthcare, Decentralization.
       </p>
     </Definition>
 
     <Definition label="Values">
-      <p class="text-secondary-foreground">
-        Honesty, Authenticity, Curiosity, Accessibility.
-      </p>
+      <p class="text-secondary-foreground">Honesty, Authenticity, Curiosity, Accessibility.</p>
     </Definition>
+  </section>
+
+  <section class="space-y-2 sm:space-y-0.5">
+    <ContactItem label="Currently">
+      <Link href="/now" rel="me">/now</Link>
+    </ContactItem>
+    <ContactItem label="Writing">
+      <Link href="/journal" rel="me">/journal</Link>
+    </ContactItem>
+    <ContactItem label="Freelance">
+      <ul class="flex-1 flex flex-col gap-0.5">
+        <li>
+          <Link href="/freelance" rel="me">/freelance</Link>
+        </li>
+        <li>
+          <Link href="/cv" rel="me">/cv</Link>
+        </li>
+      </ul>
+    </ContactItem>
   </section>
 
   <section>
     <h2 class="mb-2 sr-only">Contact</h2>
     <div class="space-y-0.5">
       <ContactItem label="Email">
-        <Link href="mailto:mail@samking.co" rel="me">
-          mail@samking.co
-        </Link>
+        <Link href="mailto:mail@samking.co" rel="me"> mail@samking.co </Link>
       </ContactItem>
       <ContactItem label="Social">
         <ul class="flex-1 flex flex-col gap-0.5">
-        {socialLinks.map(link => (
-          <li>
-            <Link rel="me" href={link.href}>{link.title}</Link>
-          </li>
-        ))}
+          {
+            socialLinks.map((link) => (
+              <li>
+                <Link rel="me" href={link.href}>
+                  {link.title}
+                </Link>
+              </li>
+            ))
+          }
         </ul>
-      </ContactItem>
-      <ContactItem label="Writing">
-        <Link href="/journal" rel="me">
-          /journal
-        </Link>
-      </ContactItem>
-      <ContactItem label="Work">
-        <Link href="/cv" rel="me">
-          /cv
-        </Link>
       </ContactItem>
     </div>
   </section>
