@@ -9,8 +9,17 @@ const postsCollection = defineCollection({
 	}),
 });
 
+const nowCollection = defineCollection({
+	type: "content",
+	schema: z.object({
+		date: z.date(),
+		location: z.string(),
+	}),
+});
+
 export const collections = {
 	posts: postsCollection,
+	now: nowCollection,
 };
 
 export const siteConfig = {

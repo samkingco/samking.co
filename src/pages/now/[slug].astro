@@ -1,0 +1,62 @@
+---
+import { getCollection } from "astro:content";
+import Link from "../../components/Link.astro";
+import Layout from "../../layouts/Default.astro";
+import { formatDate } from "../../utils/dates";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("now");
+  return entries.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
+}
+
+export const prerender = true;
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+
+const allEntries = await getCollection("now");
+const sortedEntries = allEntries.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const currentIndex = sortedEntries.findIndex((e) => e.slug === entry.slug);
+const previousEntry =
+  currentIndex < sortedEntries.length - 1 ? sortedEntries[currentIndex + 1] : null;
+const isLatest = currentIndex === 0;
+
+const updateText = isLatest ? "Updated" : "Created";
+---
+
+<Layout title="/now | Sam King">
+  <section>
+    <h1>
+      <Link href="https://nownownow.com/about">/now</Link>
+    </h1>
+    <p class="text-muted-foreground">
+      {updateText}
+      <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date, "words")}</time>
+      {entry.data.location}
+    </p>
+    {
+      previousEntry && (
+        <p class="text-muted-foreground">
+          <Link href={`/now/${previousEntry.slug}`}>Previous version</Link>
+        </p>
+      )
+    }
+    {
+      !isLatest && (
+        <p class="text-muted-foreground">
+          <Link href="/now">Current version</Link>
+        </p>
+      )
+    }
+  </section>
+
+  <section class="markdown">
+    <article>
+      <Content />
+    </article>
+  </section>
+</Layout>

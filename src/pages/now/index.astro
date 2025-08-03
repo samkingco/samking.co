@@ -1,96 +1,41 @@
 ---
+import { getCollection } from "astro:content";
 import Link from "../../components/Link.astro";
 import Layout from "../../layouts/Default.astro";
 import { formatDate } from "../../utils/dates";
 
-const previousVersion = "2024-05-15";
-const lastUpdated = "2025-08-03";
+export const prerender = true;
+
+const allNowEntries = await getCollection("now");
+const sortedEntries = allNowEntries.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const latestEntry = sortedEntries[0];
+const { Content } = await latestEntry.render();
+
+const previousEntry = sortedEntries.length > 1 ? sortedEntries[1] : null;
 ---
 
 <Layout title="/now | Sam King">
-  <div>
+  <section>
     <h1>
       <Link href="https://nownownow.com/about">/now</Link>
     </h1>
     <p class="text-muted-foreground">
-      Updated <time datetime={lastUpdated}>{formatDate(new Date(lastUpdated), "words")}</time> from the
-      road (Medicine Hat currently)
+      Updated
+      <time datetime={latestEntry.data.date.toISOString()}>{formatDate(latestEntry.data.date, "words")}</time>
+      {latestEntry.data.location}
     </p>
-    <p class="text-muted-foreground">
-      <Link href={`/now/${previousVersion}`}>Previous version</Link>
-    </p>
-  </div>
+    {
+      previousEntry && (
+        <p class="text-muted-foreground">
+          <Link href={`/now/${previousEntry.slug}`}>Previous version</Link>
+        </p>
+      )
+    }
+  </section>
 
-  <div class="markdown">
+  <section class="markdown">
     <article>
-      <h2>Location</h2>
-      <p>
-        My partner and I left Vancouver at the end of May and have been traveling across Canada for
-        the past two months. Everything we own is in the car. We're staying in Airbnbs along the
-        way, finding our rhythm as we go.
-      </p>
-      <p>
-        We've zigzagged across BC and Alberta, chasing weather and whims. The Sea to Sky corridor
-        through Squamish and Whistler to Lillooet. Wine country in the Okanagan—Vernon, Kelowna,
-        Summerland for my partner's birthday. Nelson and the Kootenays with their endless mountain
-        roads. Revelstoke and Glacier National Park were personal highlights. The touristy trio of
-        Jasper, Banff, and the Icefields Parkway. Calgary for supplies. Dinosaur country in
-        Drumheller and the badlands.
-      </p>
-      <p>
-        Currently writing from Medicine Hat. Next: Saskatoon and Regina, then the long prairie
-        stretches to Toronto or Montreal.
-      </p>
-      <p>
-        The mountains have been everything I imagined as a teenager scrolling Tumblr—low clouds
-        catching on peaks, impossible highways carved through wilderness, lakes that don't look
-        real.
-      </p>
-
-      <h2>Photography</h2>
-      <p>
-        The hard drives are filling up, almost too many photos to process. Mostly mountains, which
-        is becoming a problem. Every view feels worth capturing but they all start looking the same.
-        I keep reminding myself to shoot the small things: the things I'm eating, motel signs, the
-        incidentals that make a place real. The small towns coming up should help break the pattern.
-        The prairies have already been a bit of novelty.
-      </p>
-
-      <h2>Work</h2>
-      <p>
-        Still freelancing, mostly when I get time. Working from our Airbnbs when we stop for a few
-        days, or when the weather turns and being inside feels less like waste. The "mountains over
-        money" philosophy is holding, though I'll need to hunker down soon to afford the next
-        stretch of gas and motels.
-      </p>
-
-      <h2>Projects</h2>
-      <p>
-        I'm thinking of winding down <Link href="https://refrakt.app" withIcon={false}>Refrakt</Link
-        >. Haven't touched the code in about a year. Built it solo without VC or a team, working on
-        it in spare moments. Despite its brief life, I'm proud it became a home for photographers I
-        admire. Without intentional dopamine loops, it's hard to grow platforms. People come, post,
-        then drift back to the big ones.
-      </p>
-      <p>
-        So I'm building <Link href="https://akkeri.app" withIcon={false}>akkeri</Link> instead. A digital
-        mailroom for creative work. You don't post to feeds, you send mail. Small bundles of words and
-        images, delivered the next day. Everything's slower, more intentional. It's not a performance
-        but a conversation. A quiet space for artists, photographers, and writers to share what they're
-        making, privately or publicly, always with care.
-      </p>
-
-      <h2>What's next</h2>
-      <p>
-        Still figuring it out. Rough plan: finish crossing Canada, maybe fly back to the UK in
-        October to meet my nephew (with another on the way). After that, who knows? A year in a van
-        back in BC, or a year back in the UK. The recent state of things there makes me want to stay
-        away, but family pulls.
-      </p>
-      <p>
-        For now, it's just the road ahead. Saskatoon, then the long prairie stretches, then whatever
-        comes next.
-      </p>
+      <Content />
     </article>
-  </div>
+  </section>
 </Layout>
