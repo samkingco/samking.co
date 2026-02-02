@@ -5,23 +5,13 @@ title: "Freelance | Sam King"
 
 ## Availability
 
-Taking on select projects due to limited availability.
+Taking on very select projects due to limited availability.
 
 I'd love to hear about your idea or what you're building. Send an email to [mail@samking.co](mailto:mail@samking.co) to see how I can work with you.
 
-## TLDR;
-
-- Over a decade of experience in both design and engineering at startups
-- Can take your idea from zero to production
-- Work best with early-stage and creative projects, but have experience with "big-tech"
-- Being autistic, I prefer async communication and clear documentation
-- Prefer North American timezones if real-time collaboration is required
-- Intuition over indecision, curiosity over conformity
-- Project-based, day rate, or retainer pricing options
-
 ## What I do
 
-I help early-stage teams turn their ideas into reality. With over a decade of experience in both design and engineering at startups, I can handle everything from initial concepts through to production code. This dual expertise means I understand both the user experience and technical implementation details, often catching potential issues before they become problems.
+I help early-stage teams turn their ideas into reality. With over 15 years of experience in both design and engineering at startups, I can handle everything from initial concepts through to production code. This dual expertise means I understand both the user experience and technical implementation details, often catching potential issues before they become problems.
 
 I've worked with teams building creative tools, community platforms, games, and more. Most recently, I've been building [Refrakt](https://refrakt.app)—a photo sharing platform that gives photographers a more intimate and authentic space to connect and share their work.
 
