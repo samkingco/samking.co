@@ -1,166 +1,45 @@
 ---
+import { getCollection } from "astro:content";
 import Link from "../components/Link.astro";
 import Layout from "../layouts/Default.astro";
+
+export const prerender = true;
+
+const allRoles = await getCollection("cv");
+const roles = allRoles.sort((a, b) => b.data.sortYear - a.data.sortYear);
 ---
 
 <Layout title="CV | Sam King">
 	<h2 class="sr-only">Work history</h2>
 
-	<article>
-		<p class="text-muted-foreground">2023—Now</p>
-		<h3 class="font-bold">Founder at Refrakt</h3>
-		<p class="mt-5">
-			Refrakt is a platform for photographers to share their work in a more
-			meaningful way beyond the vanity metrics of current social media. The goal
-			is to allow photographers to better connect with each other, inspire, and
-			help each other to make their best work.
-		</p>
-		<p class="mt-5">
-			Building everything as a solo developer has been challenging at times, but
-			I've learnt so much about what it really takes to architect such systems.
-			I've gone much deeper on backend and infrastructure than I've done before,
-			and now feel like I can build pretty much anything which is awesome.
-		</p>
-		<p class="mt-5">
-			<Link href="https://refrakt.app">refrakt.app</Link>
-		</p>
-	</article>
-
-	<hr class="h-[1px] bg-border border-none" />
-
-	<article>
-		<p class="text-muted-foreground">2024</p>
-		<h3 class="font-bold">Software Engineer at Future Primitive</h3>
-		<p class="mt-5">
-			I joined FP to work on a new product called <Link
-				href="https://www.per.ma/"
-				withIcon={false}>Perma</Link
-			>, a photo sharing app geared towards emulating film photography. I helped
-			launch an initial version of the app in React Native, along with an image
-			processing pipeline using shaders to turn iPhone photos into film-like
-			images. I also built an internal tool to help the team generate new
-			effects and filters for the app using the same shader tech.
-		</p>
-		<p class="mt-5">
-			<Link href="https://futureprimitive.xyz">futureprimitive.xyz</Link>
-		</p>
-	</article>
-
-	<article>
-		<p class="text-muted-foreground">2022—2024</p>
-		<h3 class="font-bold">Freelance Software Engineer and Designer</h3>
-		<p class="mt-5">
-			I took a break from full-time work and went freelance to allow me the
-			opportunity to explore some of my side projects in more depth. I taught
-			myself Solidity for programming on the Ethereum Network, and I ended up
-			working with some smaller teams and individuals to build games, art
-			projects, and memberships. I mainly worked as a Software Engineer, but
-			still I dipped my toes in design here and there.
-		</p>
-	</article>
-
-	<article>
-		<p class="text-muted-foreground">2021—2022</p>
-		<h3 class="font-bold">Senior Product Designer at Plain</h3>
-		<p class="mt-5">
-			Plain is an API first customer support platform. Plain was partly inspired
-			by learnings from building the customer support tool at LloydsDirect.
-			There weren't any good customer support platforms with really good API's
-			at the time. I joined Plain to help build the early version of the support
-			application used by agents to resolve customer issues. I also worked on a
-			very early version of the Design System for Plain.
-		</p>
-		<p class="mt-5">
-			<Link href="https://plain.com">plain.com</Link>
-		</p>
-	</article>
-
-	<article>
-		<p class="text-muted-foreground">2019—2021</p>
-		<h3 class="font-bold">
-			Senior Product Designer at LloydsDirect (formerly Echo)
-		</h3>
-		<p class="mt-5">
-			LloydsDirect is a service that allows NHS patients to get their
-			presciptions delivered to their home without having to go to a physical
-			pharmacy. Initially I worked on warehouse tooling for delivering medicine,
-			but moved to the Patient team to improve the web and mobile apps for
-			patients. We had a huge number of new patients in 2020, so this was a big
-			priority for the business at the time. The goal was to reduce anxiety and
-			streamline the experience. We did this by being more transparent about the
-			process in app, and building a tailored customer service tool to allow our
-			agents to work more efficiently during this period of rapid growth.
-		</p>
-		<p class="mt-5">
-			<Link href="https://lloydsdirect.co.uk">lloydsdirect.co.uk</Link>
-		</p>
-	</article>
-
-	<article>
-		<p class="text-muted-foreground">2017—2019</p>
-		<h3 class="font-bold">Product Designer at Deliveroo</h3>
-		<p class="mt-5">
-			Deliveroo delivers the food you love, straight to your door. I was part of
-			the Restaurants team building apps and tools to make their experience
-			better on the platform. I worked on products like the app used to accept
-			and manage orders in the restaurant, alongside analytics dashboards and
-			menu management tools. This also meant I worked closely with the Design
-			Infrastructure team to build and maintain the React component library for
-			all internal tools at Deliveroo.
-		</p>
-		<p class="mt-5">
-			<Link href="https://deliveroo.co.uk">deliveroo.co.uk</Link>
-		</p>
-	</article>
-
-	<article>
-		<p class="text-muted-foreground">2016—2017</p>
-		<h3 class="font-bold">Freelance Product Designer at MutualArt</h3>
-		<p class="mt-5">
-			MutualArt aims to connect collectors of art with private sellers while
-			also providing in depth art market analysis. I came on to help to polish
-			the site after an external agency redesign, and introduce some new
-			features like auction analytics and a new artist detail page. I also
-			worked on designs for an exhibition finding app on iOS.
-		</p>
-	</article>
-
-	<article>
-		<p class="text-muted-foreground">2014—2016</p>
-		<h3 class="font-bold">Product Designer at Lyst</h3>
-		<p class="mt-5">
-			Lyst is a global fashion aggregator, where you can shop over 9 million
-			items in one place. I worked on the web experience where our goal was to
-			make the sheer number of products more discoverable without being
-			overwhelming. This was also the first role where I was able to put some of
-			my software engineering knowledge to use, and I contributed new frontend
-			features on the website, and built internal tools and dashboards for the
-			marketing and sales teams.
-		</p>
-		<p class="mt-5">
-			<Link href="https://lyst.com">lyst.com</Link>
-		</p>
-	</article>
-
-	<article>
-		<p class="text-muted-foreground">2012—2014</p>
-		<h3 class="font-bold">Product Designer at RetailMeNot</h3>
-		<p class="mt-5">
-			I worked for the UK branch of the money saving website, RetailMeNot. This
-			was my first full-time design role where I helped design the in-store
-			coupon experience which was both print and mobile. I also worked on
-			various parts of the website, designing seasonal campaigns and marketing
-			collateral.
-		</p>
-	</article>
-
-	<article>
-		<p class="text-muted-foreground">2008—2012</p>
-		<h3 class="font-bold">Freelance Photographer & Designer</h3>
-		<p class="mt-5">
-			I co-founded a small photography, design, and software agency. I worked
-			with BMX magazines and brands on the photography side, and with local
-			businesses on the design and software side.
-		</p>
-	</article>
+	{
+		roles.map(async (role, i) => {
+			const { Content } = await role.render();
+			const title = role.data.company
+				? `${role.data.role} at ${role.data.company}`
+				: role.data.role;
+			const urlDisplay = role.data.url
+				? new URL(role.data.url).hostname
+				: null;
+			return (
+				<>
+					<article>
+						<p class="text-muted-foreground">{role.data.period}</p>
+						<h3 class="font-bold">{title}</h3>
+						<div class="mt-5 space-y-5">
+							<Content />
+						</div>
+						{role.data.url && (
+							<p class="mt-5">
+								<Link href={role.data.url}>{urlDisplay}</Link>
+							</p>
+						)}
+					</article>
+					{i < roles.length - 1 && (
+						<hr class="h-[1px] bg-border border-none" />
+					)}
+				</>
+			);
+		})
+	}
 </Layout>

@@ -1,6 +1,5 @@
 ---
-layout: ../layouts/Markdown.astro
-title: "Freelance | Sam King"
+title: Freelance
 ---
 
 ## Availability
@@ -11,7 +10,7 @@ I'd love to hear about your idea or what you're building. Send an email to [mail
 
 ## What I do
 
-I help early-stage teams turn their ideas into reality. With over 15 years of experience in both design and engineering at startups, I can handle everything from initial concepts through to production code. This dual expertise means I understand both the user experience and technical implementation details, often catching potential issues before they become problems.
+I help early-stage teams turn their ideas into reality. With over 15 years of experience in both design and engineering at startups, I use both my taste and my technical instincts to build things that feel great and work well.
 
 I've worked with teams building creative tools, community platforms, games, and more. Most recently, I've been building [Refrakt](https://refrakt.app)—a photo sharing platform that gives photographers a more intimate and authentic space to connect and share their work.
 

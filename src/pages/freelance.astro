@@ -1,0 +1,13 @@
+---
+import { getEntry } from "astro:content";
+import Markdown from "../layouts/Markdown.astro";
+
+export const prerender = true;
+
+const entry = await getEntry("freelance", "index");
+const { Content } = await entry.render();
+---
+
+<Markdown title="Freelance | Sam King">
+	<Content />
+</Markdown>

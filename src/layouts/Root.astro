@@ -1,5 +1,6 @@
 ---
 import { ClientRouter } from "astro:transitions";
+import { siteConfig } from "../content/config";
 import "./styles.css";
 
 interface Props {
@@ -10,8 +11,8 @@ interface Props {
 
 const {
 	title,
-	description = "Freelance software engineer and designer with over a decade of startup experience. Specializing in early-stage and creative projects, from concept to production. Based in Vancouver, Canada.",
-	ogImage = "/og.png",
+	description = siteConfig.description,
+	ogImage = siteConfig.ogImage,
 } = Astro.props;
 ---
 
