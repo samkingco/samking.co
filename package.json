@@ -12,27 +12,27 @@
 		"format": "prettier --write ."
 	},
 	"dependencies": {
-		"@astrojs/rss": "^4.0.15",
-		"@astrojs/sitemap": "^3.7.0",
-		"@tailwindcss/vite": "^4.1.18",
-		"astro": "^5.17.1",
+		"@astrojs/rss": "^4.0.18",
+		"@astrojs/sitemap": "^3.7.2",
+		"@tailwindcss/vite": "^4.2.2",
+		"astro": "^5.18.1",
 		"fontaine": "^0.8.0",
-		"markdown-it": "^14.1.0",
-		"node-html-parser": "^7.0.2",
-		"sanitize-html": "^2.17.0",
-		"satori": "^0.19.1",
+		"markdown-it": "^14.1.1",
+		"node-html-parser": "^7.1.0",
+		"sanitize-html": "^2.17.2",
+		"satori": "^0.19.3",
 		"satori-html": "^0.3.2",
 		"sharp": "^0.34.5",
-		"tailwindcss": "^4.1.18",
+		"tailwindcss": "^4.2.2",
 		"unist-util-visit-parents": "^6.0.2"
 	},
 	"devDependencies": {
 		"@tailwindcss/typography": "^0.5.19",
 		"@types/markdown-it": "^14.1.2",
-		"@types/node": "^25.2.0",
-		"@types/sanitize-html": "^2.16.0",
-		"prettier": "^3.8.1",
+		"@types/node": "^25.6.0",
+		"@types/sanitize-html": "^2.16.1",
+		"prettier": "^3.8.2",
 		"prettier-plugin-astro": "^0.14.1",
-		"wrangler": "^4.61.1"
+		"wrangler": "^4.82.2"
 	}
 }
