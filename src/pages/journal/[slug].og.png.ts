@@ -18,7 +18,7 @@ const commitMonoBold = readFileSync(
 export async function getStaticPaths() {
 	const entries = await getCollection("posts");
 	return entries.map((entry) => ({
-		params: { slug: entry.slug },
+		params: { slug: entry.id },
 		props: { entry },
 	}));
 }
@@ -85,7 +85,7 @@ export const GET: APIRoute = async ({ props }) => {
 			"Content-Type": "image/png",
 			"Content-Length": png.byteLength.toString(),
 			"Cache-Control": "s-maxage=1, stale-while-revalidate=59",
-			"Content-Disposition": `inline; filename=og_${post.slug}.png`,
+			"Content-Disposition": `inline; filename=og_${post.id}.png`,
 		},
 	});
 };

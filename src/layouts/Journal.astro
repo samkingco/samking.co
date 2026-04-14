@@ -16,7 +16,7 @@ const posts = allPosts.sort(
 	(a, b) => b.data.date.getTime() - a.data.date.getTime()
 );
 
-const currIndex = allPosts.findIndex((post) => post.slug === slug);
+const currIndex = allPosts.findIndex((post) => post.id === slug);
 const readNext =
 	currIndex === posts.length - 1 ? posts[0] : posts[currIndex + 1];
 ---
@@ -41,7 +41,7 @@ const readNext =
 	<nav>
 		<p class="text-muted-foreground">Read next</p>
 		<p>
-			<Link href={`/journal/${readNext.slug}`}>{readNext.data.title}</Link>
+			<Link href={`/journal/${readNext.id}`}>{readNext.data.title}</Link>
 		</p>
 	</nav>
 

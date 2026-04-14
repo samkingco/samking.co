@@ -1,5 +1,5 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
 import Link from "../../components/Link.astro";
 import Layout from "../../layouts/Default.astro";
 import { formatDate } from "../../utils/dates";
@@ -7,7 +7,7 @@ import { formatDate } from "../../utils/dates";
 export async function getStaticPaths() {
 	const entries = await getCollection("now");
 	return entries.map((entry) => ({
-		params: { slug: entry.slug },
+		params: { slug: entry.id },
 		props: { entry },
 	}));
 }
@@ -15,14 +15,14 @@ export async function getStaticPaths() {
 export const prerender = true;
 
 const { entry } = Astro.props;
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 
 const allEntries = await getCollection("now");
 const sortedEntries = allEntries.sort(
 	(a, b) => b.data.date.getTime() - a.data.date.getTime()
 );
 
-const currentIndex = sortedEntries.findIndex((e) => e.slug === entry.slug);
+const currentIndex = sortedEntries.findIndex((e) => e.id === entry.id);
 const previousEntry =
 	currentIndex < sortedEntries.length - 1
 		? sortedEntries[currentIndex + 1]
@@ -47,7 +47,7 @@ const updateText = isLatest ? "Updated" : "Created";
 		{
 			previousEntry && (
 				<p class="text-muted-foreground">
-					<Link href={`/now/${previousEntry.slug}`}>Previous version</Link>
+					<Link href={`/now/${previousEntry.id}`}>Previous version</Link>
 				</p>
 			)
 		}

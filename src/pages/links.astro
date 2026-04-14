@@ -1,7 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Link from "../components/Link.astro";
-import { siteConfig } from "../content/config";
+import { siteConfig } from "../site.config";
 import DefaultLayout from "../layouts/Default.astro";
 import { getLatestVideoInfo } from "../utils/youtube";
 
@@ -50,7 +50,7 @@ const creativeSection: Section = {
 	links: [
 		latestPost && {
 			title: latestPost.data.title,
-			href: `/journal/${latestPost.slug}`,
+			href: `/journal/${latestPost.id}`,
 		},
 	].filter((i) => !!i),
 };

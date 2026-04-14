@@ -15,7 +15,7 @@
 		"@astrojs/rss": "^4.0.18",
 		"@astrojs/sitemap": "^3.7.2",
 		"@tailwindcss/vite": "^4.2.2",
-		"astro": "^5.18.1",
+		"astro": "^6.1.6",
 		"fontaine": "^0.8.0",
 		"markdown-it": "^14.1.1",
 		"node-html-parser": "^7.1.0",

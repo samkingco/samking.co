@@ -1,5 +1,5 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
 import Link from "../../components/Link.astro";
 import Layout from "../../layouts/Default.astro";
 import { formatDate } from "../../utils/dates";
@@ -11,7 +11,7 @@ const sortedEntries = allNowEntries.sort(
 	(a, b) => b.data.date.getTime() - a.data.date.getTime()
 );
 const latestEntry = sortedEntries[0];
-const { Content } = await latestEntry.render();
+const { Content } = await render(latestEntry);
 
 const previousEntry = sortedEntries.length > 1 ? sortedEntries[1] : null;
 ---
@@ -31,7 +31,7 @@ const previousEntry = sortedEntries.length > 1 ? sortedEntries[1] : null;
 		{
 			previousEntry && (
 				<p class="text-muted-foreground">
-					<Link href={`/now/${previousEntry.slug}`}>Previous version</Link>
+					<Link href={`/now/${previousEntry.id}`}>Previous version</Link>
 				</p>
 			)
 		}

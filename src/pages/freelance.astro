@@ -1,11 +1,12 @@
 ---
-import { getEntry } from "astro:content";
+import { getEntry, render } from "astro:content";
 import Markdown from "../layouts/Markdown.astro";
 
 export const prerender = true;
 
 const entry = await getEntry("freelance", "index");
-const { Content } = await entry.render();
+if (!entry) throw new Error("freelance/index not found");
+const { Content } = await render(entry);
 ---
 
 <Markdown title="Freelance | Sam King">

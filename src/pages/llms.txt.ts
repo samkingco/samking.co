@@ -1,6 +1,6 @@
 import { getCollection, getEntry } from "astro:content";
 import type { APIContext } from "astro";
-import { siteConfig } from "../content/config";
+import { siteConfig } from "../site.config";
 
 function downscaleHeadings(markdown: string): string {
 	return markdown.replace(/^(#{1,5}) /gm, "$1# ");
@@ -30,14 +30,14 @@ export async function GET(_context: APIContext) {
 	const latestPostsList = latestPosts
 		.map((post) => {
 			const date = post.data.date.toISOString().split("T")[0];
-			return `- [${post.data.title}](${site}/journal/${post.slug}/): ${post.data.excerpt} (${date})`;
+			return `- [${post.data.title}](${site}/journal/${post.id}/): ${post.data.excerpt} (${date})`;
 		})
 		.join("\n");
 
 	const olderPostsList = olderPosts
 		.map((post) => {
 			const date = post.data.date.toISOString().split("T")[0];
-			return `- [${post.data.title}](${site}/journal/${post.slug}/) (${date})`;
+			return `- [${post.data.title}](${site}/journal/${post.id}/) (${date})`;
 		})
 		.join("\n");
 

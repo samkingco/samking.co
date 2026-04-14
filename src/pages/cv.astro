@@ -1,5 +1,5 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
 import Link from "../components/Link.astro";
 import Layout from "../layouts/Default.astro";
 
@@ -14,7 +14,7 @@ const roles = allRoles.sort((a, b) => b.data.sortYear - a.data.sortYear);
 
 	{
 		roles.map(async (role, i) => {
-			const { Content } = await role.render();
+			const { Content } = await render(role);
 			const title = role.data.company
 				? `${role.data.role} at ${role.data.company}`
 				: role.data.role;

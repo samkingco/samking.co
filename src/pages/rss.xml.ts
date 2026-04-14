@@ -46,7 +46,7 @@ export async function GET(_context: APIContext) {
 			description: post.data.excerpt,
 			pubDate: post.data.date,
 			author: "mail@samking.co (Sam King)",
-			link: `${site}/journal/${post.slug}/`,
+			link: `${site}/journal/${post.id}/`,
 			content: sanitizeHtml(html.toString(), {
 				allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
 			}),
