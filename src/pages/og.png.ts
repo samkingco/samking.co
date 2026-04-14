@@ -17,7 +17,7 @@ export const GET: APIRoute = async () => {
 	const markup = html(`<div
     style="height: 100%; width: 100%; padding: 80px; display: flex; flex-direction: column; gap: 60px; background-color: rgb(0,0,0); justify-content: flex-end;"
   >
-    <img src="data:image/png;base64,${avatarBase64}" width="240" height="240" />
+    <img src="data:image/png;base64,${avatarBase64}" style="width: 240px; height: 240px;" />
     <div style="display: flex; flex-direction: column;">
       <div style="display: flex; flex-direction: column;">
         <div
