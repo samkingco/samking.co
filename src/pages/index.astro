@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import avatarImage from "../assets/avatar.jpg";
 import Link from "../components/Link.astro";
+import Markdown from "../components/Markdown.astro";
 import { siteConfig } from "../site.config";
 import Layout from "../layouts/Default.astro";
 ---
@@ -17,17 +18,17 @@ import Layout from "../layouts/Default.astro";
 				width="96"
 				height="96"
 			/>
-			{siteConfig.bio.map((paragraph) => <p>{paragraph}</p>)}
+			{siteConfig.bio.map((paragraph) => <Markdown content={paragraph} />)}
 		</article>
 
 		<article>
 			<h3 class="text-muted-foreground">Core values</h3>
-			<p>{siteConfig.coreValues}</p>
+			<Markdown content={siteConfig.coreValues} />
 		</article>
 
 		<article>
 			<h3 class="text-muted-foreground">Big fan of</h3>
-			<p>{siteConfig.bigFanOf}</p>
+			<Markdown content={siteConfig.bigFanOf} />
 		</article>
 
 		<article>

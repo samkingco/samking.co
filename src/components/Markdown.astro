@@ -1,0 +1,16 @@
+---
+import MarkdownIt from "markdown-it";
+
+interface Props {
+	content: string;
+	inline?: boolean;
+}
+
+const { content, inline = true } = Astro.props;
+
+const md = new MarkdownIt();
+const html = inline ? md.renderInline(content) : md.render(content);
+const Tag = inline ? "p" : "div";
+---
+
+<Tag class="markdown" set:html={html} />
