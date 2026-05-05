@@ -5,6 +5,7 @@ import type { APIContext } from "astro";
 import MarkdownIt from "markdown-it";
 import { parse as htmlParser } from "node-html-parser";
 import sanitizeHtml from "sanitize-html";
+import { siteConfig } from "../site.config";
 
 const markdownParser = new MarkdownIt();
 
@@ -55,8 +56,7 @@ export async function GET(_context: APIContext) {
 
 	return rss({
 		title: "Sam King's Journal",
-		description:
-			"Former photographer turned designer turned software engineer, living in Vancouver, Canada. Currently building Refrakt, a new photography platform.",
+		description: siteConfig.description,
 		site,
 		items,
 		xmlns: {
