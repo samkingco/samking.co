@@ -1,0 +1,17 @@
+---
+import { getEntry, render } from "astro:content";
+import Markdown from "../../layouts/Markdown.astro";
+
+export const prerender = true;
+
+const entry = await getEntry("rights", "photos");
+if (!entry) throw new Error("rights/photos not found");
+const { Content } = await render(entry);
+---
+
+<Markdown
+	title="Photography rights and licensing | Sam King"
+	description="Copyright, usage, AI, and licensing terms for photographs by Sam King."
+>
+	<Content />
+</Markdown>

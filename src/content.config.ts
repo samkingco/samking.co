@@ -25,6 +25,13 @@ const freelanceCollection = defineCollection({
 	}),
 });
 
+const rightsCollection = defineCollection({
+	loader: glob({ pattern: "**/*.md", base: "./src/content/rights" }),
+	schema: z.object({
+		title: z.string(),
+	}),
+});
+
 const cvCollection = defineCollection({
 	loader: glob({ pattern: "**/*.md", base: "./src/content/cv" }),
 	schema: z.object({
@@ -40,5 +47,6 @@ export const collections = {
 	posts: postsCollection,
 	now: nowCollection,
 	freelance: freelanceCollection,
+	rights: rightsCollection,
 	cv: cvCollection,
 };
