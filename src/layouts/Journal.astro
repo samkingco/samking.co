@@ -18,7 +18,8 @@ const posts = allPosts.sort(
 
 const currIndex = allPosts.findIndex((post) => post.id === slug);
 const readNext =
-	currIndex === posts.length - 1 ? posts[0] : posts[currIndex + 1];
+	currIndex === posts.length - 1 ? undefined : posts[currIndex + 1];
+const readPrev = currIndex === 0 ? undefined : posts[currIndex - 1];
 ---
 
 <DefaultLayout
@@ -36,30 +37,35 @@ const readNext =
 		<slot />
 	</article>
 
-	<hr class="h-[1px] bg-border border-none" />
+	<hr class="h-px bg-border border-none" />
 
-	<nav>
-		<p class="text-muted-foreground">Read next</p>
-		<p>
-			<Link href={`/journal/${readNext.id}`}>{readNext.data.title}</Link>
-		</p>
+	<nav class="space-y-10">
+		{
+			readNext && (
+				<div>
+					<p class="text-muted-foreground">Read next</p>
+					<p>
+						<Link href={`/journal/${readNext.id}`}>{readNext.data.title}</Link>
+					</p>
+				</div>
+			)
+		}
+		{
+			readPrev && (
+				<div>
+					<p class="text-muted-foreground">Previous entry</p>
+					<p>
+						<Link href={`/journal/${readPrev.id}`}>{readPrev.data.title}</Link>
+					</p>
+				</div>
+			)
+		}
 	</nav>
 
-	<section>
+	<footer>
 		<p class="text-muted-foreground">Like this post?</p>
 		<p>
 			<Link href="/rss.xml">Subscribe via RSS</Link>
-		</p>
-	</section>
-
-	<footer>
-		<p class="text-muted-foreground">Found a mistake?</p>
-		<p>
-			<Link
-				href={`https://github.com/samkingco/samking.co/blob/main/${post.filePath ?? ""}`}
-			>
-				Edit on GitHub
-			</Link>
 		</p>
 	</footer>
 </DefaultLayout>
