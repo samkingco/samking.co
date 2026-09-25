@@ -7,7 +7,7 @@ date: 2024-01-20
 
 ![Calgary layover](../../assets/calgary-layover.jpg)
 
-My writing cadence is more sporadic than I hoped. I thought having a proper space for these journal entries would make me write more, but maybe I just don't have much to say all the time. I've moved all my entries from [samking.blog](https://samking.blog) into this site. I was a bit hesitant initially since this is my "professional" space, and my journal entries so far have been pretty personal and sometimes intense, but fuck it.
+My writing cadence is more sporadic than I hoped. I thought having a proper space for these journal entries would make me write more, but maybe I just don't have much to say all the time. I've moved all my entries from my old blog into this site. I was a bit hesitant initially since this is my "professional" space, and my journal entries so far have been pretty personal and sometimes intense, but fuck it.
 
 The last entry from six months ago was about my state of mind at the time. I wasn't in a great place. My mind was scattered, and some pretty bad things were swirling. I felt hopeless. I'm doing better now. I still have my days of course, but I feel good.
 
@@ -23,7 +23,7 @@ I'm very impulsive, but not good at dealing with big changes. Annesah is someone
 
 ## Valley of despair
 
-We began selling and donating most of our furniture and belongings, and then put the rest in storage. I loathe moving. I find it so hard. The last two times I've moved, I was on my own and it was hell. At least I could just chuck everything in boxes and be done with it. This time, I had to sift through and decide what I was doing with my things. I found it so hard. It took up so much space in my head, I could feel I was getting overwhelmed.
+We began selling and donating most of our furniture and belongings, and then put the rest in storage. I loathe moving. I find it so hard. The last two times I've moved, I was on my own and it was hell. At least I could just chuck everything in boxes and be done with it. This time, I had to sift through and decide what I was doing with my things. It took up so much space in my head, I could feel I was getting overwhelmed.
 
 The thought of "wtf are we doing?!" crossed my mind a lot. I hated it.
 

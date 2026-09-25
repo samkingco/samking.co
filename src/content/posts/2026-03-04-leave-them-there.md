@@ -13,9 +13,7 @@ I grew up in the UK, I now live in Canada and pay tax here. I've been watching t
 
 ## The tax argument
 
-It doesn't hold up. The UK and UAE have had a formal double taxation agreement since 2016. Both governments signed it. Not paying UK income tax while living in the UAE isn't dodging anything, it's literally what the agreement is designed to produce. The same goes for Canada, Australia, most places British people actually move to. HMRC knows you left. You filed the forms. The system worked as intended.
-
-That's almost beside the point. The tax thing is just the reason that got reached for, but the feeling came first.
+The UK and UAE have had a formal double taxation agreement since 2016. Both governments signed it. Not paying UK income tax while living in the UAE isn't dodging anything, it's literally what the agreement is designed for. The same goes for Canada, Australia, most places British people move to. HMRC knows you left. You filed the forms, and now you don't have to pay tax twice.
 
 ## Dubai isn't even a country
 
@@ -23,13 +21,13 @@ Most people in this conversation keep saying Dubai like it's a country. It's not
 
 The actual 300,000 people stranded aren't mostly influencers. They're just people who moved somewhere and built a life.
 
-Dubai is shorthand for a type of person the British public has decided to be annoyed at. That's doing a lot of work in this conversation.
+Dubai is shorthand for a type of person the British public has decided to be annoyed at, it's doing a lot of work in the conversation.
 
-## Words doing work
+## Expats _ahem_ immigrants
 
 Every headline calls them expats. British expats in Dubai. Stranded expats.
 
-A British person moves to Dubai for work and a better life, expat. A Zimbabwean person moves to the UK for work and a better life, immigrant. Same decision, completely different word, and the word does a lot before any argument is even made. A Nigerian doctor in London is an immigrant. A British accountant in Lagos is an expat. It has almost nothing to do with what you do and almost everything to do with where you're from.
+A British person moves to Dubai for work and a better life, expat. A Zimbabwean person moves to the UK for work and a better life, immigrant. Same decision, completely different word, and that word does a lot before any argument is even made. A Nigerian doctor in London is an immigrant. A British accountant in Lagos is an expat. It's as if it has almost nothing to do with what you do and almost everything to do with where you're from. So stupid.
 
 If the headlines said "300,000 British immigrants stranded in Gulf states" which is accurate, I think the reaction would have looked different.
 
@@ -39,7 +37,7 @@ The UK is genuinely miserable right now. Wages stagnant, housing unaffordable, c
 
 But the anger goes sideways. Not up at the systems and decisions that caused it, rather sideways at whoever seems to have found a way out. Benefits claimants, asylum seekers, people who moved to Dubai. Anyone who appears to be getting something without suffering for it the right way.
 
-A lot of the people who left for the UAE are working class people who just did the maths. UK wages, UK housing, UK prospects, and then looked at what they could earn somewhere else and made a decision. That's it. But the cultural message is that you're not supposed to do that. You stay, you struggle alongside everyone else, and if you leave, you've forfeited something.
+A lot of the people who left for the UAE are working class people. UK wages, UK housing, UK prospects, and then they looked at what they could earn somewhere else and made a decision. That's it. But the cultural message is that you're not supposed to do that. You stay, you struggle alongside everyone else, and if you leave, you've forfeited something.
 
 Follow that logic and see where it ends up. Can you get a doctor's appointment if you're unemployed, because you're not currently paying tax? Can you claim housing benefit if you took a year out? The principle is never actually applied consistently because nobody really believes it as a principle. It only gets applied to people they've already decided to resent.
 
@@ -61,7 +59,7 @@ It's collective self-harm dressed up as fiscal responsibility. Keep everyone poo
 
 The right has spent years attacking asylum seekers for draining UK taxpayers, people coming in who haven't contributed. Now the left is saying people who left to make more money somewhere else don't deserve help, people going out who stopped contributing. The logic is identical. The target just changed.
 
-Both sides have drawn a circle around who counts. Neither seems to notice they're running the same argument.
+Both sides have drawn a circle around who counts. Neither seems to notice they're using the same argument.
 
 ## Nobody said this about Ukraine
 
@@ -75,7 +73,7 @@ People's lives in the UAE aren't affecting anyone back in the UK. Nobody in Birm
 
 The UK has been involved in Iranian affairs for decades. It's been funding and supporting the very conflict that put these people in danger. The conversation about who deserves a flight home is happening in almost complete ignorance of that context.
 
-## The passport is a promise
+## Your passport is a promise
 
 The people stranded haven't renounced their citizenship. They have British passports. That's supposed to mean something in terms of consular protection when you're in trouble abroad, regardless of where you chose to live or what tax bracket you're in.
 

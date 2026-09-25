@@ -13,9 +13,9 @@ It's been fifteen months since I arrived in Vancouver in the chill of winter. Th
 
 I used to be able to do more. In my early twenties, I was unstoppable. One-hour train ride into London? Perfect for coding. Work 10am-7pm at a startup, train home coding, break for dinner, then work until 3am on some animation detail nobody would notice. Up at 7 to do it again. My body could take it. My brain craved it.
 
-Now, at thirty-something, my brain still wants those marathons but my body stages a quiet rebellion. The spirit is willing but the flesh is exhausted. And the guilt is suffocating.
+Now, at thirty-something, my brain still wants those marathons but my body says otherwise. The spirit is willing but the flesh is exhausted. The guilt is suffocating.
 
-In May of 2024, I joined a small startup. Structure, I thought. Routine. The team was welcoming, the work engaging. We flew to LA, pulled long days before launches, built things that were fun. Classic startup energy, intoxicating until it isn't.
+In May of 2024, I joined a small startup. Structure, I thought. Routine. The team was welcoming, the work engaging. We flew to LA, pulled long days before launches, built things that were fun. Classic startup energy, intoxicating.
 
 Then October came, and my Nan passed. Being 4,500 miles away while my family grieved felt like watching life through frosted glass. The funeral trip was strange—a brief return to a life that no longer felt like mine. When I came back to Vancouver, back to the startup grind, something had shifted. The job felt too heavy to carry. By December, the exhaustion was bone-deep and I quit.
 
@@ -23,13 +23,13 @@ These past few months have been different. Back to freelance with some old frien
 
 ![Snow-capped mountains rising above forested valleys](../../assets/squamish-mountains.jpg "The mountains that kept calling - somewhere near Squamish")
 
-There's this thing about being autistic that I don't talk about much. Not because I'm ashamed, but because the world isn't always kind to difference, and visa applications don't have a checkbox for "functions differently but contributes meaningfully". It makes the traditional work environment feel like wearing a suit two sizes too small. Collaborative work can be energizing, but it drains me in ways I'm only now understanding. I'll lose ten hours to hyperfocus, forget to eat, then wonder why I'm shattered for days afterward.
+There's this thing about being autistic that I don't talk about much. Not because I'm ashamed, but because the world isn't always kind to difference, and visa applications don't have a checkbox for "functions differently but contributes meaningfully". It makes the traditional work environment feel like wearing a suit two sizes too small. Collaborative work can be energizing, but it drains me in ways I'm only now understanding. When I work alone, I'll lose ten hours to hyperfocus, forget to eat, then wonder why I'm shattered for days afterward.
 
-So I started building [akkeri](https://akkeri.app) on weekends. It was originally Refrakt V2, now its own thing. It's everything I wanted Refrakt to become: spaces for actual conversation, collaboration without performance, a place to plan trips with friends to go shoot together. No migration anxiety, no burden of existing users' expectations. Just building for the joy of building.
+I started building [akkeri](https://akkeri.app) on weekends. It was originally Refrakt V2, now its own thing. It's everything I wanted Refrakt to become: spaces for actual conversation, collaboration without performance, a place to plan trips with friends to go shoot together. No platform migration anxiety, no burden of existing users' expectations. Just building for the joy of building.
 
 My photography has shifted too. SD cards pile up like film rolls, waiting for their moment. There's something honest about delayed gratification in our instant world. The images exist, captured, patient. They'll be there when I'm ready. Same with YouTube where I'll film things that may never see an edit. The channel sits dormant, not abandoned, just resting. Maybe video is something that comes and goes throughout my life, like everything else. I'm consistently inconsistent, and I'm learning that's okay.
 
-The other day, I threw my first pot in two years. Just a two-hour workshop, nothing fancy. My hands remembered the clay even if my mind had forgotten. It came out pretty good but rough around the edges. But it existed. I had made something with my hands that nobody could automate, no AI could replicate. There's a productivity in that, in being present with materials that push back.
+The other day, I threw my first pot in two years. Just a two-hour workshop, nothing fancy. My hands remembered the clay even if my mind had forgotten. It came out pretty good. A bit rough around the edges, but it existed. I had made something with my hands that nobody could automate, no AI could replicate. There's a productivity in that, in being present with materials and using your hands.
 
 I'm prepping to leave Vancouver at the end of May and head east across Canada. Start on the island up north, hit the towns between here and the Rockies, maybe Calgary, then further east. There's this tension, the impulse to film and photograph every moment is at odds with the desire to just exist in these places without the pressure of output.
 
