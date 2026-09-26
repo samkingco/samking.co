@@ -1,0 +1,115 @@
+---
+import {getCollection} from "astro:content"
+import * as v from "valibot"
+import SiteHeader from "../../components/SiteHeader.astro"
+import PhotoHoverPreview from "../../components/PhotoHoverPreview.astro"
+import PhotoFilterLinks from "../../components/PhotoFilterLinks.astro"
+import PhotoPageBar from "../../components/PhotoPageBar.astro"
+import Layout from "../../layouts/Root.astro"
+import {buildPhotoGroups, type PhotoGroup} from "../../photos/groups.ts"
+import {
+	type PhotoEntry,
+	PhotoEntrySchema,
+	PhotoSetEntrySchema,
+} from "../../photos/schema.ts"
+
+type IndexItem = {
+	href: string
+	label: string
+	count: number
+	previews: PhotoEntry[]
+}
+
+const photos = (await getCollection("photos"))
+	.map((entry) => v.parse(PhotoEntrySchema, entry.data))
+	.sort((left, right) => right.position - left.position)
+const sets = (await getCollection("photoSets"))
+	.map((entry) => v.parse(PhotoSetEntrySchema, entry.data))
+	.sort((left, right) => left.position - right.position)
+const groups = buildPhotoGroups(photos, sets)
+
+const indexItem = (group: PhotoGroup): IndexItem => ({
+	href: group.path,
+	label: group.label,
+	count: group.photos.length,
+	previews: group.photos.slice(0, 3),
+})
+const facetItems = (items: PhotoGroup[]): IndexItem[] =>
+	items
+		.map(indexItem)
+		.sort((left, right) => left.label.localeCompare(right.label))
+
+const dateGroups = groups.dates.map((group) => ({
+	year: indexItem(group.year),
+	months: group.months.map(indexItem),
+}))
+const setItems = groups.sets.map(indexItem)
+const tagItems = facetItems(groups.tags)
+const cameraItems = facetItems(groups.cameras)
+const lensItems = facetItems(groups.lenses)
+---
+
+<Layout title="Browse | Photos | Sam King" ogImage={photos[0]?.ogUrl}>
+	<main class="pt-10 pb-40">
+		<div class="px-5 md:px-10">
+			<SiteHeader />
+		</div>
+		<section class="mt-8 space-y-8">
+			<PhotoPageBar
+				crumbs={[
+					{label: "Photos", href: "/photos/", count: photos.length},
+					{label: "Browse"},
+				]}
+				views={false}
+			/>
+			<div
+				class="grid items-start gap-x-10 gap-y-10 px-5 md:grid-cols-12 md:px-10"
+				data-photo-index
+			>
+				<section
+					id="sets"
+					class="min-w-0 scroll-m-10 space-y-3 md:col-span-4 lg:col-span-2"
+				>
+					<h2 class="text-muted-foreground">Sets</h2>
+					<PhotoFilterLinks items={setItems} />
+				</section>
+				<section
+					id="tags"
+					class="min-w-0 scroll-m-10 space-y-3 md:col-span-8 lg:col-span-5"
+				>
+					<h2 class="text-muted-foreground">Tags</h2>
+					<PhotoFilterLinks items={tagItems} inline />
+				</section>
+				<section
+					id="date"
+					class="min-w-0 scroll-m-10 space-y-3 md:col-span-4 lg:col-span-2"
+				>
+					<h2 class="text-muted-foreground">Date</h2>
+					<div>
+						{
+							dateGroups.map((group) => (
+								<div>
+									<PhotoFilterLinks items={[group.year]} />
+									<div class="pl-2">
+										<PhotoFilterLinks items={group.months} inline />
+									</div>
+								</div>
+							))
+						}
+					</div>
+				</section>
+				<div class="min-w-0 space-y-10 md:col-span-8 lg:col-span-3">
+					<section id="cameras" class="scroll-m-10 space-y-3">
+						<h2 class="text-muted-foreground">Cameras</h2>
+						<PhotoFilterLinks items={cameraItems} />
+					</section>
+					<section id="lenses" class="scroll-m-10 space-y-3">
+						<h2 class="text-muted-foreground">Lenses</h2>
+						<PhotoFilterLinks items={lensItems} />
+					</section>
+				</div>
+				<PhotoHoverPreview />
+			</div>
+		</section>
+	</main>
+</Layout>

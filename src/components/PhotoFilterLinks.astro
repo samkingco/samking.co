@@ -1,0 +1,44 @@
+---
+import type {PhotoEntry} from "../photos/schema"
+
+interface PhotoFilterLink {
+	href: string
+	label: string
+	count: number
+	previews: PhotoEntry[]
+}
+
+interface Props {
+	items: PhotoFilterLink[]
+	inline?: boolean
+}
+
+const {items, inline = false} = Astro.props
+---
+
+<ul class="min-w-0 max-w-full list-none leading-6">
+	{
+		items.map((item) => (
+			<li
+				class:list={[
+					"min-w-0 max-w-full",
+					inline ? "inline mr-2" : "block w-fit",
+				]}
+			>
+				<a
+					href={item.href}
+					class="group focus-visible:outline-none"
+					data-photo-previews={JSON.stringify(
+						item.previews.map((photo) => photo.thumbUrl),
+					)}
+				>
+					<span
+						class="underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted group-hover:decoration-solid group-hover:decoration-foreground group-focus-visible:decoration-solid group-focus-visible:decoration-foreground group-active:decoration-solid group-active:decoration-foreground motion-safe:transition-colors motion-safe:duration-100"
+						set:text={item.label}
+					/>
+					<span class="text-muted-foreground">{item.count}</span>
+				</a>
+			</li>
+		))
+	}
+</ul>

@@ -1,13 +1,13 @@
 ---
-import { getCollection } from "astro:content";
-import Link from "../../components/Link.astro";
-import Layout from "../../layouts/Default.astro";
-import { formatDate } from "../../utils/dates";
+import {getCollection} from "astro:content"
+import Link from "../../components/Link.astro"
+import Layout from "../../layouts/Default.astro"
+import {formatDate} from "../../utils/dates"
 
-const allPosts = await getCollection("posts");
+const allPosts = await getCollection("posts")
 const posts = allPosts.sort(
-	(a, b) => b.data.date.getTime() - a.data.date.getTime()
-);
+	(a, b) => b.data.date.getTime() - a.data.date.getTime(),
+)
 ---
 
 <Layout title="Journal">

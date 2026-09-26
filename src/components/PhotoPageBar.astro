@@ -1,0 +1,54 @@
+---
+import Link from "./Link.astro"
+import PhotoLayoutControls from "./PhotoLayoutControls.astro"
+
+interface Crumb {
+	label: string
+	href?: string
+	count?: number
+}
+
+interface Props {
+	crumbs: Crumb[]
+	views?: boolean
+}
+
+const {crumbs, views = true} = Astro.props
+---
+
+<div
+	class="sticky top-0 z-40 bg-background px-5 py-2 md:px-10 flex flex-col items-start justify-center gap-y-2 md:flex-row md:items-center md:justify-between"
+	data-photo-layout-bar
+>
+	<nav
+		aria-label="Breadcrumb"
+		class="scrollbar-none max-w-full overflow-x-auto"
+	>
+		<ol class="flex items-baseline whitespace-nowrap">
+			{
+				crumbs.map((crumb, index) => (
+					<li class="flex items-baseline">
+						{index > 0 && (
+							<span class="mx-2 text-muted-foreground/60" aria-hidden="true">
+								/
+							</span>
+						)}
+						{crumb.href ? (
+							<span class="[&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_a:focus-visible]:text-foreground [&_a:active]:text-foreground">
+								<Link href={crumb.href}>{crumb.label}</Link>
+							</span>
+						) : (
+							<h1 class="inline" aria-current="page">
+								{crumb.label}
+							</h1>
+						)}
+						{crumb.count !== undefined && (
+							<span class="ml-2 text-muted-foreground">{crumb.count}</span>
+						)}
+					</li>
+				))
+			}
+		</ol>
+	</nav>
+	{views && <PhotoLayoutControls />}
+</div>

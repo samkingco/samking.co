@@ -1,19 +1,39 @@
-export async function getLatestVideoInfo(channelId: string): Promise<{
-	title: string;
-	watchUrl: string;
-	publishedAt: number;
-}> {
-	const response = await fetch(
-		`https://samkingco-youtubelatestvideoinfo.web.val.run?channelId=${channelId}`
-	);
-	if (!response.ok) {
-		throw new Error("Failed to fetch latest video info");
+interface LatestVideoInfo {
+	title: string
+	watchUrl: string
+}
+
+function parseLatestVideoInfo(value: unknown): LatestVideoInfo | null {
+	if (
+		typeof value !== "object" ||
+		value === null ||
+		!("title" in value) ||
+		typeof value.title !== "string" ||
+		!("watchUrl" in value) ||
+		typeof value.watchUrl !== "string"
+	) {
+		return null
 	}
-	const json = await response.json();
-	const latestVideo = {
-		title: json.title,
-		watchUrl: json.watchUrl,
-		publishedAt: json.publishedAt,
-	};
-	return latestVideo;
+
+	return {
+		title: value.title,
+		watchUrl: value.watchUrl,
+	}
+}
+
+export async function getLatestVideoInfo(
+	channelId: string,
+): Promise<LatestVideoInfo | null> {
+	const url = new URL("https://samkingco-youtubelatestvideoinfo.web.val.run")
+	url.searchParams.set("channelId", channelId)
+
+	try {
+		const response = await fetch(url)
+		if (!response.ok) {
+			return null
+		}
+		return parseLatestVideoInfo(await response.json())
+	} catch {
+		return null
+	}
 }

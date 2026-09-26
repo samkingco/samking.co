@@ -1,0 +1,68 @@
+---
+import type {PhotoContextReference} from "../photos/context.ts"
+import type {PhotoEntry} from "../photos/schema.ts"
+import PhotoGrid from "./PhotoGrid.astro"
+import PhotoIndex from "./PhotoIndex.astro"
+import PhotoScroll from "./PhotoScroll.astro"
+
+interface Props {
+	photos: PhotoEntry[]
+	context?: PhotoContextReference
+}
+
+const {photos, context} = Astro.props
+---
+
+<section data-photo-browser data-photo-layout="grid">
+	<PhotoGrid photos={photos} context={context} />
+	<PhotoScroll photos={photos} context={context} />
+	<PhotoIndex photos={photos} context={context} />
+
+	<script is:inline data-astro-rerun>
+		;(() => {
+			const browser = document.currentScript?.closest("[data-photo-browser]")
+			if (!(browser instanceof HTMLElement)) {
+				return
+			}
+
+			let layout = "grid"
+			try {
+				const saved = localStorage.getItem("photo-layout")
+				if (saved === "index" || saved === "grid" || saved === "scroll") {
+					layout = saved
+				}
+			} catch {
+				// Use the default when browser storage is unavailable.
+			}
+
+			browser.dataset.photoLayout = layout
+
+			for (const view of browser.querySelectorAll("[data-photo-view]")) {
+				if (!(view instanceof HTMLElement)) {
+					continue
+				}
+
+				const active = view.dataset.photoView === layout
+				view.hidden = !active
+
+				for (const link of view.querySelectorAll("[data-photo-id]")) {
+					if (!(link instanceof HTMLAnchorElement)) {
+						continue
+					}
+
+					const photoId = link.dataset.photoId
+					if (active && photoId) {
+						link.id = `photo-${photoId}`
+					} else {
+						link.removeAttribute("id")
+					}
+				}
+			}
+		})()
+	</script>
+
+	<script>
+		import {registerPhotoNavigation} from "../photos/photo-detail.client.ts"
+		registerPhotoNavigation()
+	</script>
+</section>

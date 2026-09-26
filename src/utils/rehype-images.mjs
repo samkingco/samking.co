@@ -1,4 +1,4 @@
-import { visitParents } from "unist-util-visit-parents";
+import {visitParents} from "unist-util-visit-parents"
 
 export function rehypeImages() {
 	return (tree) => {
@@ -6,9 +6,9 @@ export function rehypeImages() {
 			if (node.tagName === "img") {
 				// Auto uses the rendered width, including the content column's cap.
 				// Older browsers fall back to the viewport width.
-				node.properties.loading ??= "lazy";
+				node.properties.loading ??= "lazy"
 				if (node.properties.loading === "lazy") {
-					node.properties.sizes ??= "auto, 100vw";
+					node.properties.sizes ??= "auto, 100vw"
 				}
 			}
 
@@ -19,13 +19,13 @@ export function rehypeImages() {
 				node.children[0].type === "element" &&
 				node.children[0].tagName === "img"
 			) {
-				const img = node.children[0];
-				const title = img.properties?.title;
+				const img = node.children[0]
+				const title = img.properties?.title
 
 				if (title) {
-					delete img.properties.title;
+					delete img.properties.title
 
-					node.tagName = "figure";
+					node.tagName = "figure"
 					node.children.push({
 						type: "element",
 						tagName: "figcaption",
@@ -35,9 +35,9 @@ export function rehypeImages() {
 								value: title,
 							},
 						],
-					});
+					})
 				}
 			}
-		});
-	};
+		})
+	}
 }

@@ -1,19 +1,19 @@
 ---
-import { getCollection, render } from "astro:content";
-import Link from "../../components/Link.astro";
-import Layout from "../../layouts/Default.astro";
-import { formatDate } from "../../utils/dates";
+import {getCollection, render} from "astro:content"
+import Link from "../../components/Link.astro"
+import Layout from "../../layouts/Default.astro"
+import {formatDate} from "../../utils/dates"
 
-export const prerender = true;
+export const prerender = true
 
-const allNowEntries = await getCollection("now");
+const allNowEntries = await getCollection("now")
 const sortedEntries = allNowEntries.sort(
-	(a, b) => b.data.date.getTime() - a.data.date.getTime()
-);
-const latestEntry = sortedEntries[0];
-const { Content } = await render(latestEntry);
+	(a, b) => b.data.date.getTime() - a.data.date.getTime(),
+)
+const latestEntry = sortedEntries[0]
+const {Content} = await render(latestEntry)
 
-const previousEntry = sortedEntries.length > 1 ? sortedEntries[1] : null;
+const previousEntry = sortedEntries.length > 1 ? sortedEntries[1] : null
 ---
 
 <Layout title="/now | Sam King">

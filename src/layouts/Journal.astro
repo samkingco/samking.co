@@ -1,25 +1,25 @@
 ---
-import { getCollection, getEntry } from "astro:content";
-import Link from "../components/Link.astro";
-import { formatDate } from "../utils/dates";
-import DefaultLayout from "./Default.astro";
+import {getCollection, getEntry} from "astro:content"
+import Link from "../components/Link.astro"
+import {formatDate} from "../utils/dates"
+import DefaultLayout from "./Default.astro"
 
-const { frontmatter } = Astro.props;
-const { slug } = Astro.params;
-if (!slug) throw new Error("slug is required");
+const {frontmatter} = Astro.props
+const {slug} = Astro.params
+if (!slug) throw new Error("slug is required")
 
-const post = await getEntry("posts", slug);
-if (!post) throw new Error(`Post ${slug} not found`);
+const post = await getEntry("posts", slug)
+if (!post) throw new Error(`Post ${slug} not found`)
 
-const allPosts = await getCollection("posts");
+const allPosts = await getCollection("posts")
 const posts = allPosts.sort(
-	(a, b) => b.data.date.getTime() - a.data.date.getTime()
-);
+	(a, b) => b.data.date.getTime() - a.data.date.getTime(),
+)
 
-const currIndex = allPosts.findIndex((post) => post.id === slug);
+const currIndex = allPosts.findIndex((entry) => entry.id === slug)
 const readNext =
-	currIndex === posts.length - 1 ? undefined : posts[currIndex + 1];
-const readPrev = currIndex === 0 ? undefined : posts[currIndex - 1];
+	currIndex === posts.length - 1 ? undefined : posts[currIndex + 1]
+const readPrev = currIndex === 0 ? undefined : posts[currIndex - 1]
 ---
 
 <DefaultLayout

@@ -1,0 +1,205 @@
+---
+import type {PhotoContextReference} from "../photos/context.ts"
+import {photoDetailHref} from "../photos/context.ts"
+import type {PhotoEntry} from "../photos/schema.ts"
+import {
+	exposureSortValue,
+	formatAperture,
+	formatFocalLength,
+	formatPhotoDate,
+	formatShutter,
+	photoTitle,
+} from "../photos/presentation.ts"
+import PhotoHoverPreview from "./PhotoHoverPreview.astro"
+
+interface Props {
+	photos: PhotoEntry[]
+	context?: PhotoContextReference
+}
+
+const {photos, context} = Astro.props
+
+const sortButtonClass =
+	"cursor-pointer text-left underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted hover:text-foreground hover:decoration-solid hover:decoration-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:decoration-solid focus-visible:decoration-foreground active:decoration-solid active:decoration-foreground aria-pressed:text-foreground"
+
+const indexColumnsClass =
+	"min-w-full grid-cols-[--spacing(6)_minmax(--spacing(8),1fr)_minmax(0,4fr)_minmax(--spacing(32),2fr)_minmax(--spacing(40),2fr)_minmax(--spacing(64),2fr)_minmax(--spacing(16),1fr)_minmax(--spacing(16),1fr)_minmax(--spacing(16),1fr)_minmax(--spacing(10),1fr)] items-center gap-x-4 px-2 text-left"
+---
+
+<div
+	id="photo-view-index"
+	class="scroll-mt-20"
+	hidden
+	data-photo-view="index"
+	data-photo-index
+>
+	<div
+		class="scrollbar-none sticky top-(--photo-layout-bar-height) z-40 overflow-x-auto overscroll-x-contain bg-background px-5 md:px-10"
+		data-photo-index-header-viewport
+	>
+		<div
+			class:list={[
+				"grid border-b border-border py-2 text-muted-foreground",
+				indexColumnsClass,
+			]}
+		>
+			<span aria-hidden="true"></span>
+			<button
+				type="button"
+				class={sortButtonClass}
+				aria-pressed="false"
+				data-photo-sort="position"
+			>
+				No.<span class="ml-1" data-photo-sort-indicator aria-hidden="true"
+				></span>
+			</button>
+			<button
+				type="button"
+				class={sortButtonClass}
+				aria-pressed="false"
+				data-photo-sort="title"
+			>
+				Title<span class="ml-1" data-photo-sort-indicator aria-hidden="true"
+				></span>
+			</button>
+			<button
+				type="button"
+				class={sortButtonClass}
+				aria-pressed="false"
+				data-photo-sort="date"
+			>
+				Date<span class="ml-1" data-photo-sort-indicator aria-hidden="true"
+				></span>
+			</button>
+			<button
+				type="button"
+				class={sortButtonClass}
+				aria-pressed="false"
+				data-photo-sort="camera"
+			>
+				Camera<span class="ml-1" data-photo-sort-indicator aria-hidden="true"
+				></span>
+			</button>
+			<button
+				type="button"
+				class={sortButtonClass}
+				aria-pressed="false"
+				data-photo-sort="lens"
+			>
+				Lens<span class="ml-1" data-photo-sort-indicator aria-hidden="true"
+				></span>
+			</button>
+			<button
+				type="button"
+				class={sortButtonClass}
+				aria-pressed="false"
+				data-photo-sort="focal"
+			>
+				Focal<span class="ml-1" data-photo-sort-indicator aria-hidden="true"
+				></span>
+			</button>
+			<button
+				type="button"
+				class={sortButtonClass}
+				aria-pressed="false"
+				data-photo-sort="aperture"
+			>
+				Aperture<span class="ml-1" data-photo-sort-indicator aria-hidden="true"
+				></span>
+			</button>
+			<button
+				type="button"
+				class={sortButtonClass}
+				aria-pressed="false"
+				data-photo-sort="shutter"
+			>
+				Shutter<span class="ml-1" data-photo-sort-indicator aria-hidden="true"
+				></span>
+			</button>
+			<button
+				type="button"
+				class={sortButtonClass}
+				aria-pressed="false"
+				data-photo-sort="iso"
+			>
+				ISO<span class="ml-1" data-photo-sort-indicator aria-hidden="true"
+				></span>
+			</button>
+		</div>
+	</div>
+
+	<div
+		class="scrollbar-none overflow-x-auto overscroll-x-contain px-5 md:px-10"
+		data-photo-index-viewport
+	>
+		<ul
+			class="group/index min-w-full list-none"
+			role="grid"
+			aria-label="Photos"
+			aria-colcount="1"
+			aria-rowcount={photos.length}
+			data-photo-index-collection
+		>
+			{
+				photos.map((photo, index) => (
+					<li
+						class="border-b border-border"
+						role="row"
+						aria-rowindex={index + 1}
+						data-photo-sort-position={photo.position}
+						data-photo-sort-title={photoTitle(photo)}
+						data-photo-sort-camera={photo.cameraName ?? ""}
+						data-photo-sort-lens={photo.lensName ?? ""}
+						data-photo-sort-date={photo.metadata.capturedAt ?? ""}
+						data-photo-sort-focal={exposureSortValue(photo.displayFocalLength)}
+						data-photo-sort-aperture={exposureSortValue(
+							photo.metadata.aperture,
+						)}
+						data-photo-sort-shutter={exposureSortValue(photo.metadata.shutter)}
+						data-photo-sort-iso={photo.metadata.iso ?? ""}
+					>
+						<a
+							href={photoDetailHref(photo.id, context)}
+							data-photo-id={photo.id}
+							class="group/link block min-h-8 scroll-mt-20 py-1 outline-none focus-visible:bg-muted not-focus-visible:hover:bg-muted/60"
+							role="gridcell"
+							aria-colindex="1"
+							tabindex={index === 0 ? 0 : -1}
+							data-photo-previews={JSON.stringify([photo.thumbUrl])}
+						>
+							<span class:list={["grid", indexColumnsClass]}>
+								<img
+									src={photo.thumbUrl}
+									width="24"
+									height="24"
+									alt=""
+									aria-hidden="true"
+									loading="lazy"
+									class="size-6 object-contain"
+								/>
+								<span>{photo.position}</span>
+								<span class="min-w-0 truncate">{photoTitle(photo)}</span>
+								<span>{formatPhotoDate(photo.metadata.capturedAt)}</span>
+								<span>{photo.cameraName ?? "—"}</span>
+								<span>{photo.lensName ?? "—"}</span>
+								<span>
+									{formatFocalLength(photo.displayFocalLength) ?? "—"}
+								</span>
+								<span>{formatAperture(photo.metadata.aperture) ?? "—"}</span>
+								<span>{formatShutter(photo.metadata.shutter) ?? "—"}</span>
+								<span>{photo.metadata.iso ?? "—"}</span>
+							</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+
+	<PhotoHoverPreview />
+</div>
+
+<script>
+	import {registerPhotoIndexes} from "./PhotoIndex.client.ts"
+	registerPhotoIndexes()
+</script>

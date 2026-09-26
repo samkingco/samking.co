@@ -1,0 +1,30 @@
+---
+import {getCollection} from "astro:content"
+import * as v from "valibot"
+import PhotoCollection from "../../components/PhotoCollection.astro"
+import PhotoPageBar from "../../components/PhotoPageBar.astro"
+import SiteHeader from "../../components/SiteHeader.astro"
+import Layout from "../../layouts/Root.astro"
+import {PhotoEntrySchema} from "../../photos/schema.ts"
+
+const photos = (await getCollection("photos"))
+	.map((entry) => v.parse(PhotoEntrySchema, entry.data))
+	.sort((left, right) => right.position - left.position)
+---
+
+<Layout title="Photos | Sam King" ogImage={photos[0]?.ogUrl}>
+	<main class="pt-10 pb-40">
+		<div class="px-5 md:px-10">
+			<SiteHeader />
+		</div>
+		<section class="mt-8 space-y-8">
+			<PhotoPageBar
+				crumbs={[
+					{label: "Photos", count: photos.length},
+					{label: "Browse", href: "/photos/browse/"},
+				]}
+			/>
+			<PhotoCollection photos={photos} />
+		</section>
+	</main>
+</Layout>

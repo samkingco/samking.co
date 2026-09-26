@@ -1,18 +1,20 @@
 function getLocale() {
-	return typeof window === "undefined" ? "en-GB" : navigator.language;
+	return typeof window === "undefined" ? "en-GB" : navigator.language
 }
 
 export function formatDate(
 	date: Date | null | undefined,
 	format: "numeric" | "words" = "numeric",
-	locale = getLocale()
+	locale = getLocale(),
 ): string {
-	if (!date) return "";
+	if (!date) {
+		return ""
+	}
 
 	if (format === "words") {
 		return new Intl.DateTimeFormat(locale, {
 			dateStyle: "medium",
-		}).format(date);
+		}).format(date)
 	}
 
 	return new Intl.DateTimeFormat(locale, {
@@ -23,5 +25,5 @@ export function formatDate(
 		.formatToParts(date)
 		.reverse()
 		.map((part) => (part.type === "literal" ? "-" : part.value))
-		.join("");
+		.join("")
 }

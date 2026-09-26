@@ -1,0 +1,345 @@
+---
+import {getCollection} from "astro:content"
+import * as v from "valibot"
+import Link from "../../components/Link.astro"
+import Layout from "../../layouts/Root.astro"
+import {photoDetailHref} from "../../photos/context.ts"
+import {
+	buildPhotoContexts,
+	buildPhotoGroups,
+	type PhotoContext,
+} from "../../photos/groups.ts"
+import {
+	capturedDateParts,
+	photoTitle as getPhotoTitle,
+	photoExposure,
+} from "../../photos/presentation.ts"
+import {
+	type PhotoEntry,
+	PhotoEntrySchema,
+	PhotoSetEntrySchema,
+} from "../../photos/schema.ts"
+import {photoSlug} from "../../photos/slug.ts"
+
+export async function getStaticPaths() {
+	const photos = (await getCollection("photos")).map((entry) =>
+		v.parse(PhotoEntrySchema, entry.data),
+	)
+	const sets = (await getCollection("photoSets")).map((entry) =>
+		v.parse(PhotoSetEntrySchema, entry.data),
+	)
+	const groups = buildPhotoGroups(photos, sets)
+	const contextsByPhoto = buildPhotoContexts(photos, groups)
+
+	return photos.map((photo) => ({
+		params: {id: photo.id},
+		props: {photo, contexts: contextsByPhoto.get(photo.id) ?? []},
+	}))
+}
+
+interface Props {
+	photo: PhotoEntry
+	contexts: PhotoContext[]
+}
+
+const {photo, contexts} = Astro.props
+const defaultContext = contexts[0]
+const photoTitle = getPhotoTitle(photo)
+const photoDescription =
+	photo.metadata.caption ?? photo.metadata.alt ?? photoTitle
+const capturedDate = capturedDateParts(photo.metadata.capturedAt)
+const exposure = photoExposure(photo)
+const photoSets = contexts.filter((c) => c.reference?.type === "set")
+---
+
+<Layout
+	title={`${photoTitle} | Photo | Sam King`}
+	description={photoDescription}
+	ogImage={photo.ogUrl}
+>
+	<main
+		class="relative h-dvh overflow-hidden"
+		data-photo-detail
+		data-photo-id={photo.id}
+		data-photo-contexts={JSON.stringify(contexts)}
+	>
+		<div
+			class="absolute inset-0 overflow-hidden touch-none"
+			data-photo-viewport
+		>
+			<div
+				class="flex h-full w-full items-center justify-center px-5 py-10 md:p-10 lg:p-20"
+			>
+				<img
+					src={photo.detailUrl}
+					data-photo-width={photo.metadata.width}
+					data-photo-height={photo.metadata.height}
+					width={photo.metadata.width}
+					height={photo.metadata.height}
+					alt={photo.metadata.alt ?? photo.metadata.caption ?? ""}
+					draggable="false"
+					data-photo-image
+					class="block max-h-full max-w-full h-auto w-auto select-none bg-muted object-contain"
+				/>
+			</div>
+			<div
+				class="pointer-events-none absolute inset-0 flex items-center justify-center p-12 md:p-20"
+			>
+				<img
+					data-photo-source={photo.sourceUrl}
+					width={photo.metadata.width}
+					height={photo.metadata.height}
+					alt=""
+					aria-hidden="true"
+					draggable="false"
+					data-photo-original
+					class="block max-h-full max-w-full h-auto w-auto select-none object-contain opacity-0"
+				/>
+			</div>
+		</div>
+
+		{
+			defaultContext && (
+				<div class="contents" data-photo-context>
+					<div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex min-w-0 items-start justify-between gap-3 md:gap-5">
+						<p class="flex min-w-0 bg-background px-3 py-2 whitespace-nowrap">
+							<span class="truncate" data-context-label>
+								{defaultContext.label}
+							</span>
+							<span
+								class="ml-2 shrink-0 text-muted-foreground"
+								data-context-position
+							>
+								{defaultContext.index}/{defaultContext.total}
+							</span>
+						</p>
+						<div class="pointer-events-auto shrink-0 bg-background px-3 py-2">
+							<a
+								href={`${defaultContext.path}#photo-${photo.id}`}
+								class="underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted hover:decoration-solid hover:decoration-foreground focus-visible:outline-none focus-visible:decoration-solid focus-visible:decoration-foreground active:decoration-solid active:decoration-foreground"
+								data-context-close
+							>
+								Esc
+							</a>
+						</div>
+					</div>
+
+					<nav
+						class="absolute inset-0 z-10 grid grid-cols-2"
+						aria-label="Adjacent photos"
+						data-context-navigation
+						hidden={!defaultContext.previousId || !defaultContext.nextId}
+					>
+						<a
+							href={
+								defaultContext.previousId
+									? photoDetailHref(
+											defaultContext.previousId,
+											defaultContext.reference,
+										)
+									: "/photos/"
+							}
+							aria-label="Previous photo"
+							class="group relative cursor-w-resize focus-visible:outline-none"
+							data-context-previous
+						>
+							<span class="sr-only">Previous photo</span>
+							<span
+								aria-hidden="true"
+								class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-0 group-focus-visible:opacity-100 md:left-5"
+							>
+								&larr;
+							</span>
+						</a>
+						<a
+							href={
+								defaultContext.nextId
+									? photoDetailHref(
+											defaultContext.nextId,
+											defaultContext.reference,
+										)
+									: "/photos/"
+							}
+							aria-label="Next photo"
+							class="group relative cursor-e-resize focus-visible:outline-none"
+							data-context-next
+						>
+							<span class="sr-only">Next photo</span>
+							<span
+								aria-hidden="true"
+								class="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 opacity-0 group-focus-visible:opacity-100 md:right-5"
+							>
+								&rarr;
+							</span>
+						</a>
+					</nav>
+				</div>
+			)
+		}
+
+		<script is:inline data-astro-rerun>
+			;(() => {
+				const detail = document.currentScript?.closest("[data-photo-detail]")
+				if (!(detail instanceof HTMLElement)) {
+					return
+				}
+
+				const search = new URLSearchParams(window.location.search)
+				const type = search.get("ctx")
+				const id = search.get("ctxid")
+				if (!type || !id) {
+					return
+				}
+
+				let contexts
+				try {
+					contexts = JSON.parse(detail.dataset.photoContexts ?? "[]")
+				} catch {
+					return
+				}
+
+				const context = contexts.find(
+					(candidate) =>
+						candidate.reference?.type === type && candidate.reference.id === id,
+				)
+				if (!context) {
+					return
+				}
+
+				const label = detail.querySelector("[data-context-label]")
+				const position = detail.querySelector("[data-context-position]")
+
+				if (label) {
+					label.textContent = context.label
+				}
+				if (position) {
+					position.textContent = `${context.index}/${context.total}`
+				}
+			})()
+		</script>
+
+		<details
+			class="group pointer-events-auto absolute right-0 bottom-0 z-20 w-fit max-w-90 bg-background px-3 py-2 open:flex open:w-full open:flex-col-reverse"
+			data-photo-info
+		>
+			<summary
+				class="ml-auto w-fit cursor-pointer list-none underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted hover:decoration-solid hover:decoration-foreground focus-visible:outline-none focus-visible:decoration-solid focus-visible:decoration-foreground active:decoration-solid active:decoration-foreground [&::-webkit-details-marker]:hidden"
+			>
+				<span class="group-open:hidden">Info</span>
+				<span class="hidden group-open:inline">Close</span>
+			</summary>
+			<div class="space-y-3 px-3 pt-3 pb-5">
+				<div>
+					<p>{photoTitle}</p>
+					{
+						photo.metadata.caption && (
+							<p class="text-muted-foreground">{photo.metadata.caption}</p>
+						)
+					}
+				</div>
+				{
+					capturedDate && (
+						<p class="flex flex-wrap gap-x-1">
+							<Link
+								href={`/photos/date/${capturedDate.year}/${capturedDate.month}/${capturedDate.day}/`}
+							>
+								{capturedDate.dayLabel}
+							</Link>
+							<Link
+								href={`/photos/date/${capturedDate.year}/${capturedDate.month}/`}
+							>
+								{capturedDate.monthLabel}
+							</Link>
+							<Link href={`/photos/date/${capturedDate.year}/`}>
+								{capturedDate.year}
+							</Link>
+						</p>
+					)
+				}
+				{
+					(photo.cameraName || photo.lensName || exposure.length > 0) && (
+						<div>
+							{photo.cameraName && (
+								<p>
+									<Link
+										href={`/photos/cameras/${photoSlug(photo.cameraName)}/`}
+									>
+										{photo.cameraName}
+									</Link>
+								</p>
+							)}
+							{photo.lensName && (
+								<p>
+									<Link href={`/photos/lenses/${photoSlug(photo.lensName)}/`}>
+										{photo.lensName}
+									</Link>
+								</p>
+							)}
+							{exposure.length > 0 && (
+								<p class="text-muted-foreground">{exposure.join(" • ")}</p>
+							)}
+						</div>
+					)
+				}
+				{
+					photoSets.length > 0 && (
+						<div>
+							<p class="text-muted-foreground">Sets</p>
+							<ul class="list-none">
+								{photoSets.map((set) => (
+									<li>
+										<Link href={set.path}>{set.label}</Link>
+									</li>
+								))}
+							</ul>
+						</div>
+					)
+				}
+				{
+					photo.metadata.tags.length > 0 && (
+						<div>
+							<p class="text-muted-foreground">Tags</p>
+							<ul class="list-none flex gap-x-2 flex-wrap">
+								{photo.metadata.tags.map((tag) => (
+									<li>
+										<Link href={`/photos/tags/${photoSlug(tag.name)}/`}>
+											{tag.name}
+										</Link>
+									</li>
+								))}
+							</ul>
+						</div>
+					)
+				}
+			</div>
+		</details>
+
+		<div
+			class="pointer-events-auto absolute bottom-0 left-0 z-20 flex gap-3 bg-background px-3 py-2"
+		>
+			<button
+				type="button"
+				class="cursor-pointer text-muted-foreground underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted hover:text-foreground hover:decoration-solid hover:decoration-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:decoration-solid focus-visible:decoration-foreground active:decoration-solid active:decoration-foreground aria-pressed:text-foreground"
+				aria-label="Fit photo to viewer"
+				aria-pressed="true"
+				data-photo-fit
+			>
+				Fit
+			</button>
+			<button
+				type="button"
+				class="cursor-pointer text-muted-foreground underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted hover:text-foreground hover:decoration-solid hover:decoration-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:decoration-solid focus-visible:decoration-foreground active:decoration-solid active:decoration-foreground aria-pressed:text-foreground"
+				aria-label="View photo at 100%"
+				aria-pressed="false"
+				data-photo-actual
+			>
+				100%
+			</button>
+		</div>
+	</main>
+</Layout>
+
+<script>
+	import {registerPhotoDetail} from "../../photos/photo-detail.client.ts"
+	registerPhotoDetail()
+</script>

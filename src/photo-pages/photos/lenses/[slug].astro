@@ -1,0 +1,60 @@
+---
+import {getCollection} from "astro:content"
+import * as v from "valibot"
+import PhotoCollection from "../../../components/PhotoCollection.astro"
+import PhotoPageBar from "../../../components/PhotoPageBar.astro"
+import SiteHeader from "../../../components/SiteHeader.astro"
+import Layout from "../../../layouts/Root.astro"
+import type {PhotoContextReference} from "../../../photos/context.ts"
+import {type PhotoEntry, PhotoEntrySchema} from "../../../photos/schema.ts"
+import {photoSlug} from "../../../photos/slug.ts"
+
+export async function getStaticPaths() {
+	const photos = (await getCollection("photos"))
+		.map((entry) => v.parse(PhotoEntrySchema, entry.data))
+		.sort((left, right) => right.position - left.position)
+
+	const groups = new Map<string, {title: string; photos: PhotoEntry[]}>()
+
+	for (const photo of photos) {
+		if (!photo.lensName) {
+			continue
+		}
+		const slug = photoSlug(photo.lensName)
+		const group = groups.get(slug) ?? {title: photo.lensName, photos: []}
+		group.photos.push(photo)
+		groups.set(slug, group)
+	}
+
+	return [...groups].map(([slug, props]) => ({params: {slug}, props}))
+}
+
+interface Props {
+	title: string
+	photos: PhotoEntry[]
+}
+
+const {title, photos} = Astro.props
+const context: PhotoContextReference = {
+	type: "lens",
+	id: v.parse(v.string(), Astro.params.slug),
+}
+---
+
+<Layout title={`Photos using a ${title} | Sam King`} ogImage={photos[0]?.ogUrl}>
+	<main class="pt-10 pb-40">
+		<div class="px-5 md:px-10">
+			<SiteHeader />
+		</div>
+		<section class="mt-8 space-y-8">
+			<PhotoPageBar
+				crumbs={[
+					{label: "Photos", href: "/photos/"},
+					{label: "Lenses", href: "/photos/browse/"},
+					{label: title, count: photos.length},
+				]}
+			/>
+			<PhotoCollection photos={photos} context={context} />
+		</section>
+	</main>
+</Layout>

@@ -3,8 +3,8 @@
 @theme {
 	--color-background: hsl(230 4% 100%);
 	--color-foreground: hsl(230 4% 16%);
-	--color-muted: hsl(230 4% 82%);
-	--color-muted-foreground: hsl(230 4% 60%);
+	--color-muted: hsl(230 4% 88%);
+	--color-muted-foreground: hsl(230 4% 40%);
 	--color-border: hsl(230 4% 90%);
 
 	--font-mono:
@@ -208,11 +208,13 @@
 
 	/* Links */
 	.markdown a {
-		@apply underline underline-offset-[0.125em] decoration-muted-foreground decoration-dotted text-foreground transition-colors;
+		@apply underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted text-foreground transition-colors;
 	}
 
-	.markdown a:hover {
-		@apply decoration-foreground;
+	.markdown a:hover,
+	.markdown a:focus-visible,
+	.markdown a:active {
+		@apply outline-none decoration-solid decoration-foreground;
 	}
 
 	/* Code */

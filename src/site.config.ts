@@ -1,3 +1,5 @@
+import type {PhotoDerivativeKind} from "./photos/schema.ts"
+
 export const siteConfig = {
 	domain: "samking.co",
 	title: "Sam King",
@@ -12,6 +14,29 @@ export const siteConfig = {
 	bigFanOf:
 		"Old growth forests, Neal Stephenson books, Alexisonfire, and PS2 racing game soundtracks.",
 	ogImage: "/og.png",
+	photos: {
+		enabled: false,
+		captureOneCatalogPath:
+			"~/Dropbox/photography/Capture One/sk-archive.cocatalog",
+		allPhotosCollectionId: "775",
+		setsCollectionId: "781",
+		exportProfile: "website",
+		r2Derivatives: [
+			{kind: "source", path: "source.jpg"},
+			{kind: "thumb", path: "thumb.webp"},
+			{kind: "detail", path: "detail.webp"},
+			{kind: "og", path: "og.jpg"},
+		] satisfies {kind: PhotoDerivativeKind; path: string}[],
+	},
+	atproto: {
+		did: "did:plc:653egim2jcy2f4j4abtunvhj",
+		refrakt: {
+			exportProfile: "refrakt",
+			rootCollectionId: "774",
+			profileCollectionId: "775",
+			albumsCollectionId: "781",
+		},
+	},
 	refrakt: {
 		handle: "sk",
 	},
@@ -34,4 +59,4 @@ export const siteConfig = {
 	instagram: {
 		handle: "samkingco",
 	},
-};
+}

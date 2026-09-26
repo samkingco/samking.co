@@ -1,20 +1,20 @@
 ---
-import { getCollection } from "astro:content";
-import Link from "../components/Link.astro";
-import { siteConfig } from "../site.config";
-import DefaultLayout from "../layouts/Default.astro";
-import { getLatestVideoInfo } from "../utils/youtube";
+import {getCollection} from "astro:content"
+import Link from "../components/Link.astro"
+import {siteConfig} from "../site.config"
+import DefaultLayout from "../layouts/Default.astro"
+import {getLatestVideoInfo} from "../utils/youtube"
 
 type PublicLink = {
-	title: string;
-	href: string;
-};
+	title: string
+	href: string
+}
 
 type Section = {
-	id: string;
-	title: string;
-	links: PublicLink[];
-};
+	id: string
+	title: string
+	links: PublicLink[]
+}
 
 const photographySection: Section = {
 	id: "photography",
@@ -25,24 +25,28 @@ const photographySection: Section = {
 			href: `https://refrakt.app/${siteConfig.refrakt.handle}`,
 		},
 	],
-};
+}
 
-const latestVideo = await getLatestVideoInfo(siteConfig.youtube.channelId);
-const youtubeSection: Section = {
-	id: "youtube",
-	title: "Latest YouTube video",
-	links: [
-		{
-			title: latestVideo.title,
-			href: latestVideo.watchUrl,
-		},
-	],
-};
+const latestVideo = await getLatestVideoInfo(siteConfig.youtube.channelId)
+const youtubeSections: Section[] = latestVideo
+	? [
+			{
+				id: "youtube",
+				title: "Latest YouTube video",
+				links: [
+					{
+						title: latestVideo.title,
+						href: latestVideo.watchUrl,
+					},
+				],
+			},
+		]
+	: []
 
-const allPosts = await getCollection("posts");
+const allPosts = await getCollection("posts")
 const latestPost = allPosts
 	.sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
-	.at(0);
+	.at(0)
 
 const creativeSection: Section = {
 	id: "journal",
@@ -53,7 +57,7 @@ const creativeSection: Section = {
 			href: `/journal/${latestPost.id}`,
 		},
 	].filter((i) => !!i),
-};
+}
 
 const socialSection: Section = {
 	id: "social",
@@ -80,14 +84,14 @@ const socialSection: Section = {
 			href: `https://linkedin.com/in/${siteConfig.linkedin.handle}`,
 		},
 	],
-};
+}
 
 const sections: Section[] = [
 	photographySection,
-	youtubeSection,
+	...youtubeSections,
 	creativeSection,
 	socialSection,
-];
+]
 ---
 
 <DefaultLayout title="Links | Sam King">

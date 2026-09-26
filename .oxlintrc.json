@@ -1,0 +1,40 @@
+{
+	"$schema": "https://unpkg.com/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "react", "import"],
+	"categories": {
+		"correctness": "error",
+		"suspicious": "warn"
+	},
+	"rules": {
+		"curly": ["error", "multi-line"],
+		"react/react-in-jsx-scope": "off",
+		"typescript/consistent-type-imports": "error",
+		"sort-imports": [
+			"error",
+			{
+				"ignoreCase": true,
+				"ignoreDeclarationSort": true
+			}
+		]
+	},
+	"overrides": [
+		{
+			"files": ["**/*.ts"],
+			"rules": {
+				"complexity": ["error", 8],
+				"curly": ["error", "all"],
+				"max-depth": ["error", 2],
+				"max-nested-callbacks": ["error", 2],
+				"max-params": ["error", 4],
+				"no-else-return": ["error", {"allowElseIf": false}]
+			}
+		}
+	],
+	"ignorePatterns": [
+		"node_modules",
+		".astro",
+		"dist",
+		"photos/**",
+		"src/env.d.ts"
+	]
+}

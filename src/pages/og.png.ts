@@ -1,18 +1,18 @@
-import { readFileSync } from "node:fs";
-import type { APIRoute } from "astro";
-import satori from "satori";
-import { html } from "satori-html";
-import sharp from "sharp";
+import {readFileSync} from "node:fs"
+import type {APIRoute} from "astro"
+import satori from "satori"
+import {html} from "satori-html"
+import sharp from "sharp"
 
-export const prerender = true;
+export const prerender = true
 
-const avatarBase64 = readFileSync("public/avatar.png", "base64");
-const commitMonoFont = readFileSync("public/fonts/CommitMono-400-Regular.ttf");
-const commitMonoBold = readFileSync("public/fonts/CommitMono-700-Regular.ttf");
+const avatarBase64 = readFileSync("public/avatar.png", "base64")
+const commitMonoFont = readFileSync("public/fonts/CommitMono-400-Regular.ttf")
+const commitMonoBold = readFileSync("public/fonts/CommitMono-700-Regular.ttf")
 
 export const GET: APIRoute = async () => {
-	const title = "Sam King";
-	const excerpt = "Photography, Software, and Design\nVancouver, Canada";
+	const title = "Sam King"
+	const excerpt = "Photography, Software, and Design\nVancouver, Canada"
 
 	const markup = html(`<div
     style="height: 100%; width: 100%; padding: 80px; display: flex; flex-direction: column; gap: 60px; background-color: rgb(0,0,0); justify-content: flex-end;"
@@ -31,11 +31,11 @@ export const GET: APIRoute = async () => {
           style="font-size: 40px; line-height: 40px; font-family: CommitMono; color: white; opacity: 0.5;"
         >
           ${line}
-        </div>`
+        </div>`,
 				)}
       </div>
     </div>
-  </div>`);
+  </div>`)
 
 	const svg = await satori(markup, {
 		width: 1200,
@@ -54,11 +54,12 @@ export const GET: APIRoute = async () => {
 				weight: 700,
 			},
 		],
-	});
+	})
 
-	const png = await sharp(Buffer.from(svg)).png().toBuffer();
+	const png = await sharp(Buffer.from(svg)).png().toBuffer()
+	const body = Uint8Array.from(png).buffer
 
-	return new Response(png, {
+	return new Response(body, {
 		status: 200,
 		headers: {
 			"Content-Type": "image/png",
@@ -66,5 +67,5 @@ export const GET: APIRoute = async () => {
 			"Cache-Control": "s-maxage=1, stale-while-revalidate=59",
 			"Content-Disposition": "inline; filename=og.png",
 		},
-	});
-};
+	})
+}
