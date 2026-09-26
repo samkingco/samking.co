@@ -1,0 +1,21 @@
+---
+import {siteConfig} from "../site.config"
+import NotFound from "./NotFound.astro"
+import Root from "./Root.astro"
+
+interface Props {
+	title: string
+	description?: string
+	ogImage?: string
+}
+
+const {title, ...props} = Astro.props
+---
+
+{siteConfig.photos.enabled ? (
+	<Root title={title} {...props}>
+		<slot />
+	</Root>
+) : (
+	<NotFound />
+)}

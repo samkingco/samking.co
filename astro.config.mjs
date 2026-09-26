@@ -1,4 +1,4 @@
-import {createReadStream, readdirSync} from "node:fs"
+import {createReadStream} from "node:fs"
 import {stat} from "node:fs/promises"
 import {extname, isAbsolute, relative, resolve} from "node:path"
 import {satteri} from "@astrojs/markdown-satteri"
@@ -65,30 +65,6 @@ const localPhotos = {
 	},
 }
 
-const photoRoutes = {
-	name: "photo-routes",
-	hooks: {
-		"astro:config:setup"({injectRoute}) {
-			for (const file of readdirSync(
-				new URL("./src/photo-pages/photos/", import.meta.url),
-				{recursive: true},
-			)) {
-				if (!file.endsWith(".astro")) continue
-				const route = file
-					.replace(/(^|\/)index\.astro$/, "$1")
-					.replace(/\.astro$/, "")
-				injectRoute({
-					pattern: `/photos/${route}`,
-					entrypoint: new URL(
-						`./src/photo-pages/photos/${file}`,
-						import.meta.url,
-					),
-				})
-			}
-		},
-	},
-}
-
 export default defineConfig({
 	site: "https://samking.co",
 	output: "static",
@@ -97,10 +73,7 @@ export default defineConfig({
 	image: {
 		layout: "constrained",
 	},
-	integrations: [
-		sitemap(),
-		...(siteConfig.photos.enabled ? [photoRoutes] : []),
-	],
+	integrations: [sitemap()],
 	markdown: {
 		processor: satteri({hastPlugins: [markdownImages]}),
 	},

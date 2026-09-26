@@ -4,44 +4,46 @@ import * as v from "valibot"
 import PhotoCollection from "../../../components/PhotoCollection.astro"
 import PhotoPageBar from "../../../components/PhotoPageBar.astro"
 import SiteHeader from "../../../components/SiteHeader.astro"
-import Layout from "../../../layouts/Root.astro"
+import Layout from "../../../layouts/Photos.astro"
 import type {PhotoContextReference} from "../../../photos/context.ts"
+import {capturedDate, newestCaptureFirst} from "../../../photos/presentation.ts"
 import {type PhotoEntry, PhotoEntrySchema} from "../../../photos/schema.ts"
-import {photoSlug} from "../../../photos/slug.ts"
 
 export async function getStaticPaths() {
 	const photos = (await getCollection("photos"))
 		.map((entry) => v.parse(PhotoEntrySchema, entry.data))
-		.sort((left, right) => right.position - left.position)
+		.filter((photo) => capturedDate(photo.metadata.capturedAt))
 
-	const groups = new Map<string, {title: string; photos: PhotoEntry[]}>()
+	const groups = new Map<string, PhotoEntry[]>()
 
 	for (const photo of photos) {
-		if (!photo.lensName) {
+		const year = capturedDate(photo.metadata.capturedAt)?.slice(0, 4)
+		if (!year) {
 			continue
 		}
-		const slug = photoSlug(photo.lensName)
-		const group = groups.get(slug) ?? {title: photo.lensName, photos: []}
-		group.photos.push(photo)
-		groups.set(slug, group)
+		const group = groups.get(year) ?? []
+		group.push(photo)
+		groups.set(year, group)
 	}
 
-	return [...groups].map(([slug, props]) => ({params: {slug}, props}))
+	return [...groups].map(([year, items]) => ({
+		params: {year},
+		props: {
+			photos: items.sort(newestCaptureFirst),
+		},
+	}))
 }
 
 interface Props {
-	title: string
 	photos: PhotoEntry[]
 }
 
-const {title, photos} = Astro.props
-const context: PhotoContextReference = {
-	type: "lens",
-	id: v.parse(v.string(), Astro.params.slug),
-}
+const {photos} = Astro.props
+const year = v.parse(v.string(), Astro.params.year)
+const context: PhotoContextReference = {type: "date", id: year}
 ---
 
-<Layout title={`Photos using a ${title} | Sam King`} ogImage={photos[0]?.ogUrl}>
+<Layout title={`Photos from ${year} | Sam King`} ogImage={photos[0]?.ogUrl}>
 	<main class="pt-10 pb-40">
 		<div class="px-5 md:px-10">
 			<SiteHeader />
@@ -50,8 +52,8 @@ const context: PhotoContextReference = {
 			<PhotoPageBar
 				crumbs={[
 					{label: "Photos", href: "/photos/"},
-					{label: "Lenses", href: "/photos/browse/"},
-					{label: title, count: photos.length},
+					{label: "Date", href: "/photos/browse/"},
+					{label: year, count: photos.length},
 				]}
 			/>
 			<PhotoCollection photos={photos} context={context} />

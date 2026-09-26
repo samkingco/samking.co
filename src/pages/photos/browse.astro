@@ -1,11 +1,12 @@
 ---
 import {getCollection} from "astro:content"
 import * as v from "valibot"
+import Link from "../../components/Link.astro"
 import SiteHeader from "../../components/SiteHeader.astro"
 import PhotoHoverPreview from "../../components/PhotoHoverPreview.astro"
 import PhotoFilterLinks from "../../components/PhotoFilterLinks.astro"
 import PhotoPageBar from "../../components/PhotoPageBar.astro"
-import Layout from "../../layouts/Root.astro"
+import Layout from "../../layouts/Photos.astro"
 import {buildPhotoGroups, type PhotoGroup} from "../../photos/groups.ts"
 import {
 	type PhotoEntry,
@@ -60,8 +61,11 @@ const lensItems = facetItems(groups.lenses)
 					{label: "Photos", href: "/photos/", count: photos.length},
 					{label: "Browse"},
 				]}
-				views={false}
-			/>
+			>
+				<div slot="controls" class="shrink-0">
+					<Link href="/photos/rss.xml">RSS</Link>
+				</div>
+			</PhotoPageBar>
 			<div
 				class="grid items-start gap-x-10 gap-y-10 px-5 md:grid-cols-12 md:px-10"
 				data-photo-index

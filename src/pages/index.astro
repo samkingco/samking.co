@@ -14,7 +14,7 @@ const latestPhotos = siteConfig.photos.enabled
 	? (await getCollection("photos"))
 			.map((entry) => v.parse(PhotoEntrySchema, entry.data))
 			.sort((left, right) => right.position - left.position)
-			.slice(0, 4)
+			.slice(0, 3)
 	: []
 ---
 
@@ -37,11 +37,11 @@ const latestPhotos = siteConfig.photos.enabled
 
 		{siteConfig.photos.enabled && <figure>
 			<figcaption class="flex gap-3 mb-2">
-				<h3 class="text-muted-foreground">Recent photos</h3>
-				<Link href="/photos/">See all</Link>
+				<h3 class="text-muted-foreground">Recently</h3>
+				<Link href="/photos/">View photos</Link>
 			</figcaption>
 			<div
-				class="grid grid-cols-[repeat(4,minmax(0,--spacing(24)))] items-start gap-2"
+				class="grid grid-cols-[repeat(4,minmax(0,--spacing(24)))] items-start gap-3"
 			>
 				{latestPhotos.map((photo) => <a
 					href={photoDetailHref(photo.id)}
@@ -54,7 +54,7 @@ const latestPhotos = siteConfig.photos.enabled
 						height={photo.metadata.height}
 						alt=""
 						loading="lazy"
-						class="aspect-square block h-auto w-full object-cover"
+						class="block h-auto w-full"
 					/>
 				</a>)}
 			</div>
@@ -71,20 +71,10 @@ const latestPhotos = siteConfig.photos.enabled
 		</article>
 
 		<article>
-			<h3 class="text-muted-foreground">Email</h3>
-			<p>
-				<Link href="mailto:mail@samking.co" rel="me">
-					{" "}
-					mail@samking.co{" "}
-				</Link>
-			</p>
-		</article>
-
-		<article>
 			<h3 class="text-muted-foreground">More</h3>
-			<ul class="flex gap-3 flex-wrap">
+			<ul class="flex gap-x-3 gap-y-1 flex-wrap">
 				<li>
-					<Link href="/journal" rel="me"> Journal </Link>
+					<Link href="/journal" rel="me">Journal</Link>
 				</li>
 				<li>
 					<Link href="/now" rel="me"> Now </Link>
@@ -97,6 +87,11 @@ const latestPhotos = siteConfig.photos.enabled
 				</li>
 				<li>
 					<Link href="/cv" rel="me"> CV </Link>
+				</li>
+				<li>
+					<Link href="mailto:mail@samking.co" rel="me">
+						{" "}mail@samking.co{" "}
+					</Link>
 				</li>
 			</ul>
 		</article>

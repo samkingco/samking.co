@@ -1,0 +1,8 @@
+---
+import Layout from "../../../layouts/Photos.astro"
+import {siteConfig} from "../../../site.config"
+
+if (siteConfig.photos.enabled) return Astro.redirect("/photos/browse/")
+---
+
+<Layout title="404 Not found" />

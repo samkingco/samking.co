@@ -11,6 +11,15 @@ const posts = allPosts.sort(
 ---
 
 <Layout title="Journal">
+	<div class="flex items-baseline gap-1">
+		<h1>Journal</h1>
+		<span class="text-muted-foreground/60" aria-hidden="true">•</span>
+		<span
+			class="[&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_a:focus-visible]:text-foreground"
+		>
+			<Link href="/rss.xml">RSS</Link>
+		</span>
+	</div>
 	{posts.map((post) => <article>
 		<h3 class="text-muted-foreground">{formatDate(post.data.date)}</h3>
 		<Link href={`/journal/${post.id}/`}>

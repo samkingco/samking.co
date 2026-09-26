@@ -28,9 +28,21 @@ const previousEntry = sortedEntries.length > 1 ? sortedEntries[1] : null
 			</time>
 			{latestEntry.data.location}
 		</p>
-		{previousEntry && <p class="text-muted-foreground">
-			<Link href={`/now/${previousEntry.id}`}>Previous version</Link>
-		</p>}
+		<p class="text-muted-foreground">
+			{previousEntry && (
+				<>
+					<Link href={`/now/${previousEntry.id}`}>Previous version</Link>
+					<span class="mx-1 text-muted-foreground/60" aria-hidden="true"
+						>•</span
+					>
+				</>
+			)}
+			<span
+				class="[&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_a:focus-visible]:text-foreground"
+			>
+				<Link href="/now/rss.xml">RSS</Link>
+			</span>
+		</p>
 	</section>
 
 	<section class="markdown">

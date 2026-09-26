@@ -10,19 +10,27 @@ interface Crumb {
 
 interface Props {
 	crumbs: Crumb[]
-	views?: boolean
 }
 
-const {crumbs, views = true} = Astro.props
+const {crumbs} = Astro.props
+const hasControls = Astro.slots.has("controls")
 ---
 
 <div
-	class="sticky top-0 z-40 bg-background px-5 py-2 md:px-10 flex flex-col items-start justify-center gap-y-2 md:flex-row md:items-center md:justify-between"
+	class:list={[
+		"sticky top-0 z-40 flex bg-background px-5 py-2 md:px-10",
+		hasControls
+			? "flex-wrap items-center justify-between gap-x-4 gap-y-2"
+			: "flex-col items-start justify-center gap-y-2 md:flex-row md:items-center md:justify-between",
+	]}
 	data-photo-layout-bar
 >
 	<nav
 		aria-label="Breadcrumb"
-		class="scrollbar-none max-w-full overflow-x-auto"
+		class:list={[
+			"scrollbar-none max-w-full overflow-x-auto",
+			hasControls ? "shrink-0" : "min-w-0",
+		]}
 	>
 		<ol class="flex items-baseline whitespace-nowrap">
 			{crumbs.map((crumb, index) => <li class="flex items-baseline">
@@ -49,5 +57,5 @@ const {crumbs, views = true} = Astro.props
 			</li>)}
 		</ol>
 	</nav>
-	{views && <PhotoLayoutControls />}
+	{hasControls ? <slot name="controls" /> : <PhotoLayoutControls />}
 </div>

@@ -1,16 +1,19 @@
 ---
 import {getCollection} from "astro:content"
 import * as v from "valibot"
-import PhotoCollection from "../../../../components/PhotoCollection.astro"
-import PhotoPageBar from "../../../../components/PhotoPageBar.astro"
-import SiteHeader from "../../../../components/SiteHeader.astro"
-import Layout from "../../../../layouts/Root.astro"
-import type {PhotoContextReference} from "../../../../photos/context.ts"
+import PhotoCollection from "../../../../../components/PhotoCollection.astro"
+import PhotoPageBar from "../../../../../components/PhotoPageBar.astro"
+import SiteHeader from "../../../../../components/SiteHeader.astro"
+import Layout from "../../../../../layouts/Photos.astro"
+import type {PhotoContextReference} from "../../../../../photos/context.ts"
 import {
 	capturedDate,
 	newestCaptureFirst,
-} from "../../../../photos/presentation.ts"
-import {type PhotoEntry, PhotoEntrySchema} from "../../../../photos/schema.ts"
+} from "../../../../../photos/presentation.ts"
+import {
+	type PhotoEntry,
+	PhotoEntrySchema,
+} from "../../../../../photos/schema.ts"
 
 export async function getStaticPaths() {
 	const photos = (await getCollection("photos"))
@@ -24,16 +27,15 @@ export async function getStaticPaths() {
 		if (!date) {
 			continue
 		}
-		const key = date.slice(0, 7)
-		const group = groups.get(key) ?? []
+		const group = groups.get(date) ?? []
 		group.push(photo)
-		groups.set(key, group)
+		groups.set(date, group)
 	}
 
 	return [...groups].map(([date, items]) => {
-		const [year, month] = date.split("-")
+		const [year, month, day] = date.split("-")
 		return {
-			params: {year, month},
+			params: {year, month, day},
 			props: {
 				photos: items.sort(newestCaptureFirst),
 			},
@@ -48,12 +50,17 @@ interface Props {
 const {photos} = Astro.props
 const year = v.parse(v.string(), Astro.params.year)
 const month = v.parse(v.string(), Astro.params.month)
+const day = v.parse(v.string(), Astro.params.day)
 const title = new Intl.DateTimeFormat("en-GB", {
+	day: "numeric",
 	month: "long",
 	year: "numeric",
 	timeZone: "UTC",
-}).format(new Date(Date.UTC(Number(year), Number(month) - 1, 1)))
-const context: PhotoContextReference = {type: "date", id: `${year}-${month}`}
+}).format(new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))))
+const context: PhotoContextReference = {
+	type: "date",
+	id: `${year}-${month}-${day}`,
+}
 ---
 
 <Layout title={`Photos from ${title} | Sam King`} ogImage={photos[0]?.ogUrl}>
