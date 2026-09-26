@@ -97,26 +97,20 @@ const sections: Section[] = [
 <DefaultLayout title="Links | Sam King">
 	<h2 class="sr-only">Links</h2>
 
-	{
-		sections.map((section) => (
-			<section>
-				<p class="text-muted-foreground tabular-nums slashed-zero">
-					{section.title}
-				</p>
-				{section.links.map((link) => (
-					<div>
-						<p>
-							<Link
-								href={link.href}
-								withIcon={section.id !== "youtube"}
-								rel={section.id === "social" ? "me" : undefined}
-							>
-								{link.title}
-							</Link>
-						</p>
-					</div>
-				))}
-			</section>
-		))
-	}
+	{sections.map((section) => <section>
+		<p class="text-muted-foreground tabular-nums slashed-zero">
+			{section.title}
+		</p>
+		{section.links.map((link) => <div>
+			<p>
+				<Link
+					href={link.href}
+					withIcon={section.id !== "youtube"}
+					rel={section.id === "social" ? "me" : undefined}
+				>
+					{link.title}
+				</Link>
+			</p>
+		</div>)}
+	</section>)}
 </DefaultLayout>

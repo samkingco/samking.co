@@ -40,26 +40,18 @@ const readPrev = currIndex === 0 ? undefined : posts[currIndex - 1]
 	<hr class="h-px bg-border border-none" />
 
 	<nav class="space-y-10">
-		{
-			readNext && (
-				<div>
-					<p class="text-muted-foreground">Read next</p>
-					<p>
-						<Link href={`/journal/${readNext.id}`}>{readNext.data.title}</Link>
-					</p>
-				</div>
-			)
-		}
-		{
-			readPrev && (
-				<div>
-					<p class="text-muted-foreground">Previous entry</p>
-					<p>
-						<Link href={`/journal/${readPrev.id}`}>{readPrev.data.title}</Link>
-					</p>
-				</div>
-			)
-		}
+		{readNext && <div>
+			<p class="text-muted-foreground">Read next</p>
+			<p>
+				<Link href={`/journal/${readNext.id}`}>{readNext.data.title}</Link>
+			</p>
+		</div>}
+		{readPrev && <div>
+			<p class="text-muted-foreground">Previous entry</p>
+			<p>
+				<Link href={`/journal/${readPrev.id}`}>{readPrev.data.title}</Link>
+			</p>
+		</div>}
 	</nav>
 
 	<footer>

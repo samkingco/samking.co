@@ -209,7 +209,9 @@ export async function createRefraktPlan(input: {
 	const albums = await buildAlbums(input.did, input.catalog.albums)
 	const albumById = new Map(albums.map((album) => [album.sourceId, album]))
 	const desired: RefraktPlannedRecord[] = [
+		// oxlint-disable-next-line no-unused-vars -- sourceId is only used for matching.
 		...photos.map(({sourceId: _, ...record}) => record),
+		// oxlint-disable-next-line no-unused-vars -- sourceId is only used for matching.
 		...albums.map(({sourceId: _, ...record}) => record),
 		...(await buildProfileItems(
 			input.did,

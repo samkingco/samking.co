@@ -39,25 +39,17 @@ const updateText = isLatest ? "Updated" : "Created"
 		</h1>
 		<p class="text-muted-foreground">
 			{updateText}
-			<time datetime={entry.data.date.toISOString()}
-				>{formatDate(entry.data.date, "words")}</time
-			>
+			<time datetime={entry.data.date.toISOString()}>
+				{formatDate(entry.data.date, "words")}
+			</time>
 			{entry.data.location}
 		</p>
-		{
-			previousEntry && (
-				<p class="text-muted-foreground">
-					<Link href={`/now/${previousEntry.id}`}>Previous version</Link>
-				</p>
-			)
-		}
-		{
-			!isLatest && (
-				<p class="text-muted-foreground">
-					<Link href="/now">Current version</Link>
-				</p>
-			)
-		}
+		{previousEntry && <p class="text-muted-foreground">
+			<Link href={`/now/${previousEntry.id}`}>Previous version</Link>
+		</p>}
+		{!isLatest && <p class="text-muted-foreground">
+			<Link href="/now">Current version</Link>
+		</p>}
 	</section>
 
 	<section class="markdown">

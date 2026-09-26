@@ -61,13 +61,11 @@ function catalog(
 }
 
 function asRemote(plan: Awaited<ReturnType<typeof createRefraktPlan>>) {
-	return plan.creates.map(
-		(record): RefraktRemoteRecord => ({
-			uri: record.uri,
-			cid: record.cid,
-			value: record.record,
-		}),
-	)
+	return plan.creates.map((record): RefraktRemoteRecord => ({
+		uri: record.uri,
+		cid: record.cid,
+		value: record.record,
+	}))
 }
 
 test("creates deterministic photo and profile records", async () => {

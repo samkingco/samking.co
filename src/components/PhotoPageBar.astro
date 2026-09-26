@@ -25,29 +25,28 @@ const {crumbs, views = true} = Astro.props
 		class="scrollbar-none max-w-full overflow-x-auto"
 	>
 		<ol class="flex items-baseline whitespace-nowrap">
-			{
-				crumbs.map((crumb, index) => (
-					<li class="flex items-baseline">
-						{index > 0 && (
-							<span class="mx-2 text-muted-foreground/60" aria-hidden="true">
-								/
-							</span>
-						)}
-						{crumb.href ? (
-							<span class="[&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_a:focus-visible]:text-foreground [&_a:active]:text-foreground">
-								<Link href={crumb.href}>{crumb.label}</Link>
-							</span>
-						) : (
-							<h1 class="inline" aria-current="page">
-								{crumb.label}
-							</h1>
-						)}
-						{crumb.count !== undefined && (
-							<span class="ml-2 text-muted-foreground">{crumb.count}</span>
-						)}
-					</li>
-				))
-			}
+			{crumbs.map((crumb, index) => <li class="flex items-baseline">
+				{index > 0 && <span
+					class="mx-2 text-muted-foreground/60"
+					aria-hidden="true"
+				>
+					/
+				</span>}
+				{crumb.href ? (
+					<span
+						class="[&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_a:focus-visible]:text-foreground [&_a:active]:text-foreground"
+					>
+						<Link href={crumb.href}>{crumb.label}</Link>
+					</span>
+				) : (
+					<h1 class="inline" aria-current="page">
+						{crumb.label}
+					</h1>
+				)}
+				{crumb.count !== undefined && <span class="ml-2 text-muted-foreground"
+					>{crumb.count}</span
+				>}
+			</li>)}
 		</ol>
 	</nav>
 	{views && <PhotoLayoutControls />}

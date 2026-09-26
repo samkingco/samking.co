@@ -98,84 +98,79 @@ const photoSets = contexts.filter((c) => c.reference?.type === "set")
 			</div>
 		</div>
 
-		{
-			defaultContext && (
-				<div class="contents" data-photo-context>
-					<div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex min-w-0 items-start justify-between gap-3 md:gap-5">
-						<p class="flex min-w-0 bg-background px-3 py-2 whitespace-nowrap">
-							<span class="truncate" data-context-label>
-								{defaultContext.label}
-							</span>
-							<span
-								class="ml-2 shrink-0 text-muted-foreground"
-								data-context-position
-							>
-								{defaultContext.index}/{defaultContext.total}
-							</span>
-						</p>
-						<div class="pointer-events-auto shrink-0 bg-background px-3 py-2">
-							<a
-								href={`${defaultContext.path}#photo-${photo.id}`}
-								class="underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted hover:decoration-solid hover:decoration-foreground focus-visible:outline-none focus-visible:decoration-solid focus-visible:decoration-foreground active:decoration-solid active:decoration-foreground"
-								data-context-close
-							>
-								Esc
-							</a>
-						</div>
-					</div>
-
-					<nav
-						class="absolute inset-0 z-10 grid grid-cols-2"
-						aria-label="Adjacent photos"
-						data-context-navigation
-						hidden={!defaultContext.previousId || !defaultContext.nextId}
+		{defaultContext && <div class="contents" data-photo-context>
+			<div
+				class="pointer-events-none absolute inset-x-0 top-0 z-20 flex min-w-0 items-start justify-between gap-3 md:gap-5"
+			>
+				<p class="flex min-w-0 bg-background px-3 py-2 whitespace-nowrap">
+					<span class="truncate" data-context-label>
+						{defaultContext.label}
+					</span>
+					<span
+						class="ml-2 shrink-0 text-muted-foreground"
+						data-context-position
 					>
-						<a
-							href={
-								defaultContext.previousId
-									? photoDetailHref(
-											defaultContext.previousId,
-											defaultContext.reference,
-										)
-									: "/photos/"
-							}
-							aria-label="Previous photo"
-							class="group relative cursor-w-resize focus-visible:outline-none"
-							data-context-previous
-						>
-							<span class="sr-only">Previous photo</span>
-							<span
-								aria-hidden="true"
-								class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-0 group-focus-visible:opacity-100 md:left-5"
-							>
-								&larr;
-							</span>
-						</a>
-						<a
-							href={
-								defaultContext.nextId
-									? photoDetailHref(
-											defaultContext.nextId,
-											defaultContext.reference,
-										)
-									: "/photos/"
-							}
-							aria-label="Next photo"
-							class="group relative cursor-e-resize focus-visible:outline-none"
-							data-context-next
-						>
-							<span class="sr-only">Next photo</span>
-							<span
-								aria-hidden="true"
-								class="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 opacity-0 group-focus-visible:opacity-100 md:right-5"
-							>
-								&rarr;
-							</span>
-						</a>
-					</nav>
+						{defaultContext.index}/{defaultContext.total}
+					</span>
+				</p>
+				<div class="pointer-events-auto shrink-0 bg-background px-3 py-2">
+					<a
+						href={`${defaultContext.path}#photo-${photo.id}`}
+						class="underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted hover:decoration-solid hover:decoration-foreground focus-visible:outline-none focus-visible:decoration-solid focus-visible:decoration-foreground active:decoration-solid active:decoration-foreground"
+						data-context-close
+					>
+						Esc
+					</a>
 				</div>
-			)
-		}
+			</div>
+
+			<nav
+				class="absolute inset-0 z-10 grid grid-cols-2"
+				aria-label="Adjacent photos"
+				data-context-navigation
+				hidden={!defaultContext.previousId || !defaultContext.nextId}
+			>
+				<a
+					href={
+						defaultContext.previousId
+							? photoDetailHref(
+									defaultContext.previousId,
+									defaultContext.reference,
+								)
+							: "/photos/"
+					}
+					aria-label="Previous photo"
+					class="group relative cursor-w-resize focus-visible:outline-none"
+					data-context-previous
+				>
+					<span class="sr-only">Previous photo</span>
+					<span
+						aria-hidden="true"
+						class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 opacity-0 group-focus-visible:opacity-100 md:left-5"
+					>
+						&larr;
+					</span>
+				</a>
+				<a
+					href={
+						defaultContext.nextId
+							? photoDetailHref(defaultContext.nextId, defaultContext.reference)
+							: "/photos/"
+					}
+					aria-label="Next photo"
+					class="group relative cursor-e-resize focus-visible:outline-none"
+					data-context-next
+				>
+					<span class="sr-only">Next photo</span>
+					<span
+						aria-hidden="true"
+						class="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 opacity-0 group-focus-visible:opacity-100 md:right-5"
+					>
+						&rarr;
+					</span>
+				</a>
+			</nav>
+		</div>}
 
 		<script is:inline data-astro-rerun>
 			;(() => {
@@ -217,7 +212,6 @@ const photoSets = contexts.filter((c) => c.reference?.type === "set")
 				}
 			})()
 		</script>
-
 		<details
 			class="group pointer-events-auto absolute right-0 bottom-0 z-20 w-fit max-w-90 bg-background px-3 py-2 open:flex open:w-full open:flex-col-reverse"
 			data-photo-info
@@ -231,86 +225,58 @@ const photoSets = contexts.filter((c) => c.reference?.type === "set")
 			<div class="space-y-3 px-3 pt-3 pb-5">
 				<div>
 					<p>{photoTitle}</p>
-					{
-						photo.metadata.caption && (
-							<p class="text-muted-foreground">{photo.metadata.caption}</p>
-						)
-					}
+					{photo.metadata.caption && <p class="text-muted-foreground">
+						{photo.metadata.caption}
+					</p>}
 				</div>
-				{
-					capturedDate && (
-						<p class="flex flex-wrap gap-x-1">
-							<Link
-								href={`/photos/date/${capturedDate.year}/${capturedDate.month}/${capturedDate.day}/`}
-							>
-								{capturedDate.dayLabel}
+				{capturedDate && <p class="flex flex-wrap gap-x-1">
+					<Link
+						href={`/photos/date/${capturedDate.year}/${capturedDate.month}/${capturedDate.day}/`}
+					>
+						{capturedDate.dayLabel}
+					</Link>
+					<Link
+						href={`/photos/date/${capturedDate.year}/${capturedDate.month}/`}
+					>
+						{capturedDate.monthLabel}
+					</Link>
+					<Link href={`/photos/date/${capturedDate.year}/`}>
+						{capturedDate.year}
+					</Link>
+				</p>}
+				{(photo.cameraName || photo.lensName || exposure.length > 0) && <div>
+					{photo.cameraName && <p>
+						<Link href={`/photos/cameras/${photoSlug(photo.cameraName)}/`}>
+							{photo.cameraName}
+						</Link>
+					</p>}
+					{photo.lensName && <p>
+						<Link href={`/photos/lenses/${photoSlug(photo.lensName)}/`}>
+							{photo.lensName}
+						</Link>
+					</p>}
+					{exposure.length > 0 && <p class="text-muted-foreground">
+						{exposure.join(" • ")}
+					</p>}
+				</div>}
+				{photoSets.length > 0 && <div>
+					<p class="text-muted-foreground">Sets</p>
+					<ul class="list-none">
+						{photoSets.map((set) => <li>
+							<Link href={set.path}>{set.label}</Link>
+						</li>)}
+					</ul>
+				</div>}
+				{photo.metadata.tags.length > 0 && <div>
+					<p class="text-muted-foreground">Tags</p>
+					<ul class="list-none flex gap-x-2 flex-wrap">
+						{photo.metadata.tags.map((tag) => <li>
+							<Link href={`/photos/tags/${photoSlug(tag.name)}/`}>
+								{tag.name}
 							</Link>
-							<Link
-								href={`/photos/date/${capturedDate.year}/${capturedDate.month}/`}
-							>
-								{capturedDate.monthLabel}
-							</Link>
-							<Link href={`/photos/date/${capturedDate.year}/`}>
-								{capturedDate.year}
-							</Link>
-						</p>
-					)
-				}
-				{
-					(photo.cameraName || photo.lensName || exposure.length > 0) && (
-						<div>
-							{photo.cameraName && (
-								<p>
-									<Link
-										href={`/photos/cameras/${photoSlug(photo.cameraName)}/`}
-									>
-										{photo.cameraName}
-									</Link>
-								</p>
-							)}
-							{photo.lensName && (
-								<p>
-									<Link href={`/photos/lenses/${photoSlug(photo.lensName)}/`}>
-										{photo.lensName}
-									</Link>
-								</p>
-							)}
-							{exposure.length > 0 && (
-								<p class="text-muted-foreground">{exposure.join(" • ")}</p>
-							)}
-						</div>
-					)
-				}
-				{
-					photoSets.length > 0 && (
-						<div>
-							<p class="text-muted-foreground">Sets</p>
-							<ul class="list-none">
-								{photoSets.map((set) => (
-									<li>
-										<Link href={set.path}>{set.label}</Link>
-									</li>
-								))}
-							</ul>
-						</div>
-					)
-				}
-				{
-					photo.metadata.tags.length > 0 && (
-						<div>
-							<p class="text-muted-foreground">Tags</p>
-							<ul class="list-none flex gap-x-2 flex-wrap">
-								{photo.metadata.tags.map((tag) => (
-									<li>
-										<Link href={`/photos/tags/${photoSlug(tag.name)}/`}>
-											{tag.name}
-										</Link>
-									</li>
-								))}
-							</ul>
-						</div>
-					)
-				}
+						</li>)}
+					</ul>
+				</div>}
 			</div>
 		</details>
 

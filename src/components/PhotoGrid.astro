@@ -19,25 +19,21 @@ const {photos, context} = Astro.props
 	<ul
 		class="grid grid-cols-[repeat(auto-fill,minmax(min(--spacing(48),100%),1fr))] items-start gap-5 md:gap-10 list-none"
 	>
-		{
-			photos.map((photo) => (
-				<li>
-					<a
-						href={photoDetailHref(photo.id, context)}
-						data-photo-id={photo.id}
-						class="block scroll-mt-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-					>
-						<img
-							src={photo.thumbUrl}
-							width={photo.metadata.width}
-							height={photo.metadata.height}
-							alt={photo.metadata.alt ?? photo.metadata.caption ?? ""}
-							loading="lazy"
-							class="block h-auto w-full"
-						/>
-					</a>
-				</li>
-			))
-		}
+		{photos.map((photo) => <li>
+			<a
+				href={photoDetailHref(photo.id, context)}
+				data-photo-id={photo.id}
+				class="block scroll-mt-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+			>
+				<img
+					src={photo.thumbUrl}
+					width={photo.metadata.width}
+					height={photo.metadata.height}
+					alt={photo.metadata.alt ?? photo.metadata.caption ?? ""}
+					loading="lazy"
+					class="block h-auto w-full"
+				/>
+			</a>
+		</li>)}
 	</ul>
 </div>

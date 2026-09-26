@@ -18,33 +18,29 @@ const {photos, context} = Astro.props
 	data-photo-view="scroll"
 	hidden
 >
-	{
-		photos.map((photo) => (
-			<figure
-				style={`width: min(100%, ${photo.metadata.width}px, calc(70dvh * ${photo.metadata.width / photo.metadata.height}))`}
-			>
-				<a
-					href={photoDetailHref(photo.id, context)}
-					data-photo-id={photo.id}
-					style={`aspect-ratio: ${photo.metadata.width} / ${photo.metadata.height}`}
-					class="block w-full scroll-mt-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-				>
-					<img
-						src={photo.detailUrl}
-						width={photo.metadata.width}
-						height={photo.metadata.height}
-						alt={photo.metadata.alt ?? photo.metadata.caption ?? ""}
-						loading="lazy"
-						class="block size-full object-contain object-top-left"
-					/>
-				</a>
-				<figcaption class="flex items-baseline justify-between gap-4 pt-2">
-					<span>{photoTitle(photo)}</span>
-					<span class="shrink-0 text-muted-foreground">
-						{formatPhotoDate(photo.metadata.capturedAt)}
-					</span>
-				</figcaption>
-			</figure>
-		))
-	}
+	{photos.map((photo) => <figure
+		style={`width: min(100%, ${photo.metadata.width}px, calc(70dvh * ${photo.metadata.width / photo.metadata.height}))`}
+	>
+		<a
+			href={photoDetailHref(photo.id, context)}
+			data-photo-id={photo.id}
+			style={`aspect-ratio: ${photo.metadata.width} / ${photo.metadata.height}`}
+			class="block w-full scroll-mt-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+		>
+			<img
+				src={photo.detailUrl}
+				width={photo.metadata.width}
+				height={photo.metadata.height}
+				alt={photo.metadata.alt ?? photo.metadata.caption ?? ""}
+				loading="lazy"
+				class="block size-full object-contain object-top-left"
+			/>
+		</a>
+		<figcaption class="flex items-baseline justify-between gap-4 pt-2">
+			<span>{photoTitle(photo)}</span>
+			<span class="shrink-0 text-muted-foreground">
+				{formatPhotoDate(photo.metadata.capturedAt)}
+			</span>
+		</figcaption>
+	</figure>)}
 </article>

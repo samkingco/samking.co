@@ -86,16 +86,12 @@ const lensItems = facetItems(groups.lenses)
 				>
 					<h2 class="text-muted-foreground">Date</h2>
 					<div>
-						{
-							dateGroups.map((group) => (
-								<div>
-									<PhotoFilterLinks items={[group.year]} />
-									<div class="pl-2">
-										<PhotoFilterLinks items={group.months} inline />
-									</div>
-								</div>
-							))
-						}
+						{dateGroups.map((group) => <div>
+							<PhotoFilterLinks items={[group.year]} />
+							<div class="pl-2">
+								<PhotoFilterLinks items={group.months} inline />
+							</div>
+						</div>)}
 					</div>
 				</section>
 				<div class="min-w-0 space-y-10 md:col-span-8 lg:col-span-3">

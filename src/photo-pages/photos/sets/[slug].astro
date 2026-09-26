@@ -60,13 +60,9 @@ const context: PhotoContextReference = {
 					{label: title, count: photos.length},
 				]}
 			/>
-			{
-				description && (
-					<div class="px-5 md:px-10 pb-2">
-						<p class="max-w-[72ch]">{description}</p>
-					</div>
-				)
-			}
+			{description && <div class="px-5 md:px-10 pb-2">
+				<p class="max-w-[72ch]">{description}</p>
+			</div>}
 			<PhotoCollection photos={photos} context={context} />
 		</section>
 	</main>

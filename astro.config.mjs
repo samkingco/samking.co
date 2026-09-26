@@ -1,12 +1,13 @@
 import {createReadStream, readdirSync} from "node:fs"
 import {stat} from "node:fs/promises"
 import {extname, isAbsolute, relative, resolve} from "node:path"
+import {satteri} from "@astrojs/markdown-satteri"
 import sitemap from "@astrojs/sitemap"
 import tailwindcss from "@tailwindcss/vite"
 import {defineConfig} from "astro/config"
 import {FontaineTransform} from "fontaine"
 import {siteConfig} from "./src/site.config.ts"
-import {rehypeImages} from "./src/utils/rehype-images.mjs"
+import {markdownImages} from "./src/utils/markdown-images.mjs"
 
 const PHOTO_OBJECT_ROOT = resolve("photos/objects")
 
@@ -91,6 +92,8 @@ const photoRoutes = {
 export default defineConfig({
 	site: "https://samking.co",
 	output: "static",
+	// Preserve Astro 6's whitespace handling between inline elements.
+	compressHTML: true,
 	image: {
 		layout: "constrained",
 	},
@@ -99,7 +102,7 @@ export default defineConfig({
 		...(siteConfig.photos.enabled ? [photoRoutes] : []),
 	],
 	markdown: {
-		rehypePlugins: [rehypeImages],
+		processor: satteri({hastPlugins: [markdownImages]}),
 	},
 	vite: {
 		plugins: [
