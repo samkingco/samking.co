@@ -2,14 +2,17 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import { FontaineTransform } from "fontaine";
-import { rehypeImageCaptions } from "./src/utils/rehype-image-captions.mjs";
+import { rehypeImages } from "./src/utils/rehype-images.mjs";
 
 export default defineConfig({
 	site: "https://samking.co",
 	output: "static",
+	image: {
+		layout: "constrained",
+	},
 	integrations: [sitemap()],
 	markdown: {
-		rehypePlugins: [rehypeImageCaptions],
+		rehypePlugins: [rehypeImages],
 	},
 	vite: {
 		plugins: [

@@ -1,8 +1,17 @@
 import { visitParents } from "unist-util-visit-parents";
 
-export function rehypeImageCaptions() {
+export function rehypeImages() {
 	return (tree) => {
 		visitParents(tree, "element", (node) => {
+			if (node.tagName === "img") {
+				// Auto uses the rendered width, including the content column's cap.
+				// Older browsers fall back to the viewport width.
+				node.properties.loading ??= "lazy";
+				if (node.properties.loading === "lazy") {
+					node.properties.sizes ??= "auto, 100vw";
+				}
+			}
+
 			if (
 				node.tagName === "p" &&
 				node.children &&

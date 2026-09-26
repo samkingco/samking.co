@@ -17,12 +17,14 @@ import Layout from "../layouts/Default.astro";
 				loading="eager"
 				width="96"
 				height="96"
+				densities={[1, 2, 3]}
+				layout="none"
 			/>
 			{siteConfig.bio.map((paragraph) => <Markdown content={paragraph} />)}
 		</article>
 
 		<article>
-			<h3 class="text-muted-foreground">Core values</h3>
+			<h3 class="text-muted-foreground">Meaningful to me</h3>
 			<Markdown content={siteConfig.coreValues} />
 		</article>
 
