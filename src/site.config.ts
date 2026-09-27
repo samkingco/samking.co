@@ -22,7 +22,11 @@ export const siteConfig = {
 	},
 	atproto: {
 		did: "did:plc:653egim2jcy2f4j4abtunvhj",
+		bluesky: {
+			publishingEnabled: true,
+		},
 		refrakt: {
+			publishingEnabled: false,
 			exportProfile: "refrakt",
 			rootCollectionId: "774",
 			profileCollectionId: "775",

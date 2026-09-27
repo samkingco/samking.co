@@ -1,5 +1,6 @@
-import {isCancel, log, note, select, taskLog} from "@clack/prompts"
+import {confirm, isCancel, log, note, select, taskLog} from "@clack/prompts"
 import {planBluesky, planRefrakt} from "../atproto/plan.ts"
+import {publishBluesky, requireBlueskyPublishing} from "../atproto/publish.ts"
 import type {RecordPlan} from "../atproto/records.ts"
 import {siteConfig} from "../site.config.ts"
 
@@ -31,13 +32,63 @@ export async function manageAtproto(): Promise<void> {
 export function runBlueskyPlan(options: {json?: boolean}): Promise<void> {
 	return reviewPlanResult(
 		"Bluesky plan",
-		() =>
-			planBluesky(
-				siteConfig.atproto.did,
-				new URL(`https://${siteConfig.domain}`),
-			),
+		buildBlueskyPlan,
 		options,
+		siteConfig.atproto.bluesky.publishingEnabled
+			? (result) => confirmBlueskyPublish(result)
+			: undefined,
 	)
+}
+
+function buildBlueskyPlan() {
+	return planBluesky(
+		siteConfig.atproto.did,
+		new URL(`https://${siteConfig.domain}`),
+	)
+}
+
+export async function runBlueskyPublish(options: {
+	yes?: boolean
+}): Promise<void> {
+	requireBlueskyPublishing()
+	if (!options.yes && !process.stdin.isTTY) {
+		throw new Error("Use --yes to publish without an interactive confirmation.")
+	}
+	const result = await buildBlueskyPlan()
+	note(planSummary(result.plan), "Bluesky plan")
+	await confirmBlueskyPublish(result, options.yes)
+}
+
+async function confirmBlueskyPublish(
+	result: Awaited<ReturnType<typeof planBluesky>>,
+	yes = false,
+): Promise<void> {
+	requireBlueskyPublishing()
+	const count = result.plan.creates.length + result.plan.updates.length
+	if (count === 0) {
+		log.info("No changes to publish.")
+		return
+	}
+	if (!yes) {
+		const approved = await confirm({
+			message: `Publish ${count} record changes to Bluesky as ${result.did}?`,
+			initialValue: false,
+		})
+		if (isCancel(approved) || !approved) {
+			return
+		}
+	}
+	const task = taskLog({title: "Publish Bluesky notes", output: process.stderr})
+	try {
+		task.message("Signing in to the PDS")
+		const published = await publishBluesky(result, (record) =>
+			task.message(`Published ${record.uri}`),
+		)
+		task.success(`Published ${published} records`)
+	} catch (error) {
+		task.error("Publishing failed")
+		throw error
+	}
 }
 
 export function runRefraktPlan(options: {json?: boolean}): Promise<void> {
@@ -48,13 +99,14 @@ export function runRefraktPlan(options: {json?: boolean}): Promise<void> {
 	)
 }
 
-async function reviewPlanResult(
+async function reviewPlanResult<T extends {plan: RecordPlan}>(
 	title: string,
-	buildPlan: () => Promise<{plan: RecordPlan}>,
+	buildPlan: () => Promise<T>,
 	options: {json?: boolean},
+	publish?: (result: T) => Promise<void>,
 ): Promise<void> {
 	const task = taskLog({title, output: process.stderr})
-	let result: Awaited<ReturnType<typeof buildPlan>>
+	let result: T
 	try {
 		task.message("Reading local content and remote records")
 		result = await buildPlan()
@@ -69,7 +121,7 @@ async function reviewPlanResult(
 	}
 	note(planSummary(result.plan), title)
 	if (process.stdin.isTTY) {
-		await reviewPlan(result.plan)
+		await reviewPlan(result.plan, publish ? () => publish(result) : undefined)
 	}
 }
 
@@ -95,13 +147,16 @@ function planSummary(plan: RecordPlan): string {
 	return lines.join("\n")
 }
 
-async function reviewPlan(plan: RecordPlan): Promise<void> {
+async function reviewPlan(
+	plan: RecordPlan,
+	publish?: () => Promise<void>,
+): Promise<void> {
 	while (true) {
 		const action = await select({
 			message: "Review plan",
 			options: [
 				{value: "changes", label: "View changes"},
-				{value: "publish", label: "Publish"},
+				...(publish ? [{value: "publish", label: "Publish"}] : []),
 				{value: "back", label: "Back"},
 			],
 		})
@@ -109,8 +164,8 @@ async function reviewPlan(plan: RecordPlan): Promise<void> {
 			return
 		}
 		if (action === "publish") {
-			log.info("No AT Protocol auth configured. Nothing published.")
-			continue
+			await publish?.()
+			return
 		}
 		await viewChanges(plan)
 	}

@@ -34,7 +34,11 @@ function run(cwd: string, args: string[], input = "", preload = noNetwork) {
 			input,
 			encoding: "utf8",
 			timeout: 10_000,
-			env: {...process.env, PHOTO_DATABASE_PATH: join(cwd, "catalog.sqlite")},
+			env: {
+				...process.env,
+				ATPROTO_APP_PASSWORD: "",
+				PHOTO_DATABASE_PATH: join(cwd, "catalog.sqlite"),
+			},
 		},
 	)
 }
@@ -61,7 +65,7 @@ function mockNetwork(records: RemoteRecord[] = []) {
 	`
 }
 
-test("create content, plan a note, and recognize it after publication", async (t) => {
+test("create content, publish a note, and skip it on a repeat run", async (t) => {
 	const cwd = await workspace(t)
 	const root = join(cwd, "src/content")
 	const input = "\nA crow 🐦 and [photos](/photos/) with @samking.co.\n\n"
@@ -119,6 +123,44 @@ test("create content, plan a note, and recognize it after publication", async (t
 		],
 	)
 
+	const publishing = run(
+		cwd,
+		["atproto", "publish", "bluesky", "--yes"],
+		"",
+		`${mockNetwork()}
+		import assert from "node:assert/strict";
+		process.env.ATPROTO_APP_PASSWORD = "test-app-password";
+		const read = globalThis.fetch;
+		let writes = 0;
+		process.on("exit", () => {
+			if (writes !== 1) {
+				console.error("Expected one PDS record write, received " + writes);
+				process.exitCode = 1;
+			}
+		});
+		globalThis.fetch = async (input, init) => {
+			const url = new URL(input instanceof Request ? input.url : input);
+			if (url.origin !== "https://pds.test" || init?.method?.toUpperCase() !== "POST") return read(input, init);
+			const body = JSON.parse(init.body);
+			if (url.pathname === "/xrpc/com.atproto.server.createSession") {
+				assert.equal(body.identifier, did);
+				assert.equal(body.password, "test-app-password");
+				return Response.json({did, handle: "samking.co", accessJwt: "test-access", refreshJwt: "test-refresh"});
+			}
+			if (url.pathname === "/xrpc/com.atproto.repo.putRecord") {
+				assert.equal(new Headers(init.headers).get("authorization"), "Bearer test-access");
+				assert.equal(body.repo, did);
+				assert.equal(body.collection, "app.bsky.feed.post");
+				assert.equal(body.rkey, ${JSON.stringify(note.tid)});
+				assert.deepEqual(body.record, ${JSON.stringify(createdRecord.record)});
+				writes++;
+				return Response.json(${JSON.stringify({uri: createdRecord.uri, cid: createdRecord.cid})});
+			}
+			throw new Error("Unexpected write: " + url);
+		};`,
+	)
+	assert.equal(publishing.status, 0, publishing.stderr)
+
 	const published = [
 		{
 			uri: createdRecord.uri,
@@ -138,6 +180,13 @@ test("create content, plan a note, and recognize it after publication", async (t
 	assert.deepEqual(nextPlan.updates, [])
 	assert.equal(nextPlan.unchanged.length, 1)
 	assert.equal(await readFile(note.path, "utf8"), saved)
+	const republished = run(
+		cwd,
+		["atproto", "publish", "bluesky", "--yes"],
+		"",
+		mockNetwork(published),
+	)
+	assert.equal(republished.status, 0, republished.stderr)
 })
 
 test("conflicting input does not write content", async (t) => {

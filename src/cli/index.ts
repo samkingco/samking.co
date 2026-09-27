@@ -1,6 +1,11 @@
 import {isCancel, select} from "@clack/prompts"
 import {Command} from "commander"
-import {manageAtproto, runBlueskyPlan, runRefraktPlan} from "./atproto.ts"
+import {
+	manageAtproto,
+	runBlueskyPlan,
+	runBlueskyPublish,
+	runRefraktPlan,
+} from "./atproto.ts"
 import {editCollectionDescriptions} from "./collections.ts"
 import {editEquipment} from "./equipment.ts"
 import {createNote} from "./notes.ts"
@@ -115,6 +120,14 @@ plan
 	.description("Plan Refrakt photos")
 	.option("--json", "Print plan as JSON")
 	.action(runRefraktPlan)
+
+atproto
+	.command("publish")
+	.description("Publish record changes")
+	.command("bluesky")
+	.description("Publish Bluesky notes")
+	.option("--yes", "Publish without an interactive confirmation")
+	.action(runBlueskyPublish)
 
 try {
 	await program.parseAsync()
