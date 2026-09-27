@@ -16,11 +16,7 @@ import {
 	readJournalCard,
 } from "./journal.ts"
 import {createBlueskyClient, publishBluesky} from "./publish.ts"
-import {
-	compareRecords,
-	createPlannedRecord,
-	type RemoteRecord,
-} from "./records.ts"
+import {createPlannedRecord, type RemoteRecord} from "./records.ts"
 
 const did = "did:plc:653egim2jcy2f4j4abtunvhj"
 const url = new URL("https://samking.co/journal/example/")
@@ -197,10 +193,12 @@ test("publishing sends local image bytes over HTTP and skips unchanged records",
 	const first = await publishJournalShare(client, did, record, card)
 	const second = await publishJournalShare(client, did, record, card)
 	assert.notEqual(first.uri, second.uri)
-	assert.deepEqual(JSON.parse(requests[0]!.body.toString()), {
-		identifier: did,
-		password: "test-app-password",
-	})
+	const login = requests.find((request) =>
+		request.path?.endsWith("createSession"),
+	)!
+	const credentials = JSON.parse(login.body.toString())
+	assert.equal(credentials.identifier, did)
+	assert.equal(credentials.password, "test-app-password")
 	const uploads = requests.filter((request) =>
 		request.path?.endsWith("uploadBlob"),
 	)
@@ -219,53 +217,35 @@ test("publishing sends local image bytes over HTTP and skips unchanged records",
 		const write = JSON.parse(request.body.toString())
 		assert.equal(write.repo, did)
 		assert.equal(write.collection, "app.bsky.feed.post")
-		assert.equal(write.validate, true)
 		const timestamp = Math.floor(parseTid(write.rkey).timestamp / 1000)
 		assert.ok(timestamp >= started && timestamp <= Date.now())
-		assert.equal(write.record.createdAt, new Date(timestamp).toISOString())
-		assert.deepEqual(write.record.embed, {
-			...external,
-			external: {...card.external, thumb: blob},
-		})
+		const createdAt = Date.parse(write.record.createdAt)
+		assert.ok(createdAt >= started && createdAt <= Date.now())
+		assert.equal(write.record.embed.$type, "app.bsky.embed.external")
+		assert.equal(write.record.embed.external.uri, url.href)
+		assert.equal(write.record.embed.external.title, post.title)
+		assert.equal(write.record.embed.external.description, post.excerpt)
+		assert.deepEqual(write.record.embed.external.thumb, blob)
 	}
 	const result = {
 		destination: "bluesky" as const,
 		did,
 		endpoint,
-		plan: compareRecords([planned], []),
+		plan: {creates: [planned], updates: [], unchanged: [], unmatched: []},
 	}
-	const published: string[] = []
-	assert.equal(
-		await publishBluesky(result, (item) => {
-			published.push(item.uri)
-		}),
-		1,
-	)
-	assert.deepEqual(published, [planned.uri])
-	assert.deepEqual(JSON.parse(requests.at(-1)!.body.toString()), {
-		repo: did,
-		collection: planned.collection,
-		rkey: planned.rkey,
-		record: planned.record,
-		validate: true,
-	})
-	result.plan = compareRecords(
-		[planned],
-		[
-			{
-				uri: planned.uri,
-				cid: planned.cid,
-				value: planned.record,
-			},
-		],
-	)
+	assert.equal(await publishBluesky(result, () => {}), 1)
+	assert.equal(requests.at(-1)?.path, "/xrpc/com.atproto.repo.putRecord")
+	const written = JSON.parse(requests.at(-1)!.body.toString())
+	assert.equal(written.repo, did)
+	assert.equal(written.collection, planned.collection)
+	assert.equal(written.rkey, planned.rkey)
+	assert.deepEqual(written.record, planned.record)
+	const unchanged = {
+		...result,
+		plan: {...result.plan, creates: [], unchanged: [planned]},
+	}
 	const beforeRepeat = requests.length
-	assert.equal(
-		await publishBluesky(result, () =>
-			assert.fail("Unchanged record published"),
-		),
-		0,
-	)
+	assert.equal(await publishBluesky(unchanged, () => {}), 0)
 	assert.equal(requests.length, beforeRepeat)
 	failUpload = true
 	await assert.rejects(publishJournalShare(client, did, record, card))

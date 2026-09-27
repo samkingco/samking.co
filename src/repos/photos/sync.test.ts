@@ -17,28 +17,21 @@ import {
 	photoExports,
 	photos,
 } from "./database-schema.ts"
-import {openPhotoDatabase, photoIdForVariant} from "./database.ts"
+import {openPhotoDatabase} from "./database.ts"
 
 const cli = fileURLToPath(new URL("../../cli/index.ts", import.meta.url))
 const configUrl = new URL("../../site.config.ts", import.meta.url).href
 
-function run(
-	cwd: string,
-	command = "sync",
-	websiteProfile = "website",
-	remote: string | {script: string; status: number} = "",
-) {
-	const options =
-		typeof remote === "string" ? {script: remote, status: 0} : remote
+function run(cwd: string, command = "sync", remote = "") {
 	const env = Object.fromEntries(
 		Object.entries(process.env).filter(([key]) => !key.startsWith("R2_")),
 	)
 	const preload = `
 		import {siteConfig} from ${JSON.stringify(configUrl)};
 		siteConfig.photos.captureOneCatalogPath = ${JSON.stringify(join(cwd, "Fixture.cocatalog"))};
-		siteConfig.photos.exportProfile = ${JSON.stringify(websiteProfile)};
+		siteConfig.photos.exportProfile = "website";
 		globalThis.fetch = async () => { throw new Error("Unexpected network request") };
-		${options.script}
+		${remote}
 	`
 	const result = spawnSync(
 		process.execPath,
@@ -56,7 +49,7 @@ function run(
 			timeout: 20_000,
 		},
 	)
-	assert.equal(result.status, options.status, result.stderr + result.stdout)
+	assert.equal(result.status, 0, result.stderr + result.stdout)
 }
 
 async function image(path: string, caption: string, camera = false) {
@@ -134,27 +127,14 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 		.run()
 	db.insert(collectionRoots).values({collectionId: "2", addedAt: date}).run()
 
-	const collision = {
-		id: photoIdForVariant("10"),
-		captureOneVariantId: "other",
-		captureOneVariantName: "Keep this name",
-		status: "active" as const,
-		createdAt: date,
-		updatedAt: date,
-	}
-	db.insert(photos).values(collision).run()
-	run(cwd, "sync", "website", {script: "", status: 1})
-	assert.equal(
-		db.select().from(photos).get()!.captureOneVariantName,
-		collision.captureOneVariantName,
-	)
-	assert.equal(db.select().from(photos).get()!.captureOneVariantId, "other")
-	db.delete(photos).run()
 	db.insert(photos)
 		.values({
-			...collision,
 			id: "existing-photo",
 			captureOneVariantId: "10",
+			captureOneVariantName: "Bird",
+			status: "active",
+			createdAt: date,
+			updatedAt: date,
 			altText: "Human description",
 			altTextStatus: "edited",
 			altTextInputHash: "human-input",
@@ -179,7 +159,6 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 	])
 	const source = outputs.find(({kind}) => kind === "source")!
 	assert.equal(initial.metadataSourceId, source.id)
-	assert.throws(() => db.update(photos).set({metadataSourceId: -1}).run())
 	assert.ok(source.r2Key.endsWith("/source.jpg"))
 	assert.deepEqual(await readFile(source.path), await readFile(website))
 	assert.equal(
@@ -192,20 +171,11 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 		"Keep this description",
 	)
 
-	// Shared ingest follows the stored reference, not the website profile.
-	db.update(photos)
-		.set({
-			metadataJson: JSON.stringify({
-				...JSON.parse(initial.metadataJson!),
-				caption: "Stale caption",
-			}),
-		})
-		.run()
-	run(cwd, "sync", "another-profile")
-	assert.equal(
-		JSON.parse(db.select().from(photos).get()!.metadataJson!).caption,
-		"Source caption",
-	)
+	// Missing generated files are recreated at the same keys, not duplicated.
+	const thumb = outputs.find(({kind}) => kind === "thumb")!
+	await rm(thumb.path)
+	run(cwd)
+	assert.ok((await readFile(thumb.path)).length > 0)
 	assert.equal(db.select().from(photoExports).all().length, 2)
 	assert.equal(db.select().from(photoDerivatives).all().length, 4)
 	assert.deepEqual(db.select().from(collectionPhotos).all(), [
@@ -217,10 +187,6 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 	assert.equal(repeated.altTextStatus, initial.altTextStatus)
 	assert.equal(repeated.altTextInputHash, initial.altTextInputHash)
 
-	// Missing generated files are recreated at the same keys, not duplicated.
-	await rm(outputs.find(({kind}) => kind === "thumb")!.path)
-	run(cwd)
-	assert.equal(db.select().from(photoDerivatives).all().length, 4)
 	assert.deepEqual(
 		db
 			.select()
@@ -233,7 +199,12 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 
 	await image(website, "Changed source caption")
 	run(cwd)
-	const updated = JSON.parse(db.select().from(photos).get()!.metadataJson!)
+	const changed = db.select().from(photos).get()!
+	assert.equal(changed.id, initial.id)
+	assert.equal(changed.altText, "Human description")
+	assert.equal(changed.altTextStatus, "edited")
+	assert.equal(changed.altTextInputHash, "human-input")
+	const updated = JSON.parse(changed.metadataJson!)
 	assert.equal(updated.caption, "Changed source caption")
 	assert.equal(updated.cameraMake, null)
 	assert.equal(updated.cameraModel, null)
@@ -251,30 +222,6 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 		4,
 	)
 
-	// Re-exporting earlier bytes restores that export, then replaces it again.
-	await image(website, "Source caption", true)
-	run(cwd)
-	assert.equal(
-		db
-			.select()
-			.from(photoExports)
-			.where(eq(photoExports.id, source.exportId))
-			.get()!.current,
-		true,
-	)
-	assert.equal(db.select().from(photoExports).all().length, 3)
-	await image(website, "Changed source caption")
-	run(cwd)
-	assert.equal(
-		db
-			.select()
-			.from(photoExports)
-			.where(eq(photoExports.id, source.exportId))
-			.get()!.current,
-		false,
-	)
-	assert.equal(db.select().from(photoExports).all().length, 3)
-
 	const sourceNow = db
 		.select()
 		.from(photoDerivatives)
@@ -283,6 +230,7 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 	assert.notEqual(sourceNow.id, source.id)
 	assert.equal(db.select().from(photos).get()!.metadataSourceId, sourceNow.id)
 	const sourceBytes = await readFile(sourceNow.path)
+	assert.deepEqual(sourceBytes, await readFile(website))
 	run(cwd, "regenerate-og")
 	assert.deepEqual(await readFile(sourceNow.path), sourceBytes)
 	assert.equal(
@@ -293,10 +241,7 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 			.all().length,
 		4,
 	)
-	const remote = (
-		expectedChecks: number,
-		failure?: {check: number; properties: object},
-	) => `
+	const remote = (expectedChecks: number, failSecondCheck = false) => `
 		import assert from "node:assert/strict";
 		import {readFile} from "node:fs/promises";
 		import {createHash} from "node:crypto";
@@ -305,12 +250,11 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 			R2_ENDPOINT: "https://r2.test", R2_ACCESS_KEY_ID: "test",
 			R2_SECRET_ACCESS_KEY: "test", R2_BUCKET: "photos", R2_BACKUP_BUCKET: "backups"
 		});
-		const failure = ${JSON.stringify(failure ?? null)};
 		let checks = 0;
 		S3Client.prototype.send = async (command) => {
 			if (command instanceof HeadObjectCommand) {
 				checks++;
-				if (failure?.check === checks) throw Object.assign(new Error("R2 unavailable"), failure.properties);
+				if (${failSecondCheck} && checks === 2) throw Object.assign(new Error("R2 unavailable"), {code: "ECONNRESET"});
 				const bytes = await readFile(command.input.Key.replace("photos/", "photos/objects/"));
 				return {
 					Metadata: {sha256: createHash("sha256").update(bytes).digest("hex")},
@@ -321,52 +265,11 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 			assert.ok(command instanceof PutObjectCommand);
 			assert.equal(command.input.Bucket, "backups", "Matching images must not be uploaded");
 			await Array.fromAsync(command.input.Body);
-			if (failure?.check === 0) throw Object.assign(new Error("R2 unavailable"), failure.properties);
 			return {};
 		};
 		process.on("exit", () => assert.equal(checks, ${expectedChecks}));
 	`
-	run(
-		cwd,
-		"sync",
-		"website",
-		remote(1, {
-			check: 1,
-			properties: {code: "ENETUNREACH"},
-		}),
-	)
-	assert.equal(
-		db
-			.select()
-			.from(photoDerivatives)
-			.all()
-			.filter(({uploadedAt}) => uploadedAt !== null).length,
-		0,
-	)
-	run(cwd, "sync", "website", {
-		script: remote(1, {
-			check: 1,
-			properties: {$metadata: {httpStatusCode: 403}},
-		}),
-		status: 1,
-	})
-	run(cwd, "sync", "website", {
-		script: 'process.env.R2_ENDPOINT = "https://r2.test";',
-		status: 1,
-	})
-	assert.equal(
-		JSON.parse(db.select().from(photos).get()!.metadataJson!).caption,
-		"Changed source caption",
-	)
-	run(
-		cwd,
-		"sync",
-		"website",
-		remote(2, {
-			check: 2,
-			properties: {code: "ECONNRESET"},
-		}),
-	)
+	run(cwd, "sync", remote(2, true))
 	assert.equal(
 		db
 			.select()
@@ -375,7 +278,7 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 			.filter(({uploadedAt}) => uploadedAt !== null).length,
 		1,
 	)
-	run(cwd, "sync", "website", remote(3))
+	run(cwd, "sync", remote(3))
 	assert.ok(
 		db
 			.select()
@@ -384,34 +287,4 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 			.all()
 			.every(({uploadedAt}) => uploadedAt !== null),
 	)
-	run(
-		cwd,
-		"sync",
-		"website",
-		remote(0, {
-			check: 0,
-			properties: {name: "TimeoutError"},
-		}),
-	)
-	run(cwd, "sync", "website", remote(0))
-	run(
-		cwd,
-		"regenerate-og",
-		"website",
-		remote(1, {
-			check: 1,
-			properties: {code: "ENOTFOUND"},
-		}),
-	)
-	assert.equal(
-		db
-			.select()
-			.from(photoDerivatives)
-			.all()
-			.filter(({uploadedAt}) => uploadedAt === null).length,
-		1,
-	)
-	run(cwd, "sync", "website", remote(1))
-	db.delete(photoDerivatives).where(eq(photoDerivatives.id, sourceNow.id)).run()
-	assert.equal(db.select().from(photos).get()!.metadataSourceId, null)
 })

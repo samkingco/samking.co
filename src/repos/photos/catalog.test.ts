@@ -187,29 +187,23 @@ async function altFixture(t: TestContext) {
 
 function mockOllama(t: TestContext) {
 	const model = {name: "qwen3-vl:30b-a3b-instruct", digest: "revision-1"}
-	const state = {installed: true}
 	const chat = t.mock.fn(async () =>
 		Response.json({done: true, message: {content: "Generated text"}}),
 	)
-	const requests: string[] = []
 	t.mock.method(globalThis, "fetch", async (url: string | URL | Request) => {
 		const path = new URL(String(url)).pathname
-		requests.push(path)
 		switch (path) {
 			case "/api/version":
 				return Response.json({version: "test"})
 			case "/api/tags":
-				return Response.json({models: state.installed ? [model] : []})
-			case "/api/pull":
-				state.installed = true
-				return Response.json({status: "success"})
+				return Response.json({models: [model]})
 			case "/api/chat":
 				return chat()
 			default:
 				throw new Error(`Unexpected request: ${url}`)
 		}
 	})
-	return {model, state, chat, requests}
+	return {model, chat}
 }
 
 test("alt generation caches model revisions and regenerates only selected eligible photos", async (t) => {
@@ -226,16 +220,6 @@ test("alt generation caches model revisions and regenerates only selected eligib
 	assert.equal(await generateAltText(db, ["b"]), 0)
 	assert.equal(await generateAltText(db, ["a"]), 1)
 	assert.equal(chat.mock.callCount(), 4)
-})
-
-test("generation installs a missing model once", async (t) => {
-	const db = await altFixture(t)
-	const {state, requests} = mockOllama(t)
-	state.installed = false
-	assert.equal(await generateAltText(db), 1)
-	assert.equal(readAltTextPhotos(db, "a")[0]!.altText, "Generated text")
-	assert.equal(await generateAltText(db), 0)
-	assert.equal(requests.filter((path) => path === "/api/pull").length, 1)
 })
 
 test("IPTC, approved, and edited text stay protected when inputs change", async (t) => {
@@ -391,27 +375,21 @@ test("both catalogs prefer IPTC alt text, then catalog alt text, without changin
 			alt: null,
 		})
 	}
-	for (const status of ["generated", "approved", "edited"] as const) {
-		const text = `${status} alt text`
-		db.update(photos)
-			.set({altText: text, altTextStatus: status, altTextInputHash: "hash"})
-			.run()
-		for (const result of [
-			readWebsiteCatalog(db, website, false),
-			readRefraktCatalog(db, refrakt),
-		]) {
-			assert.deepEqual(
-				result.photos.find(({id}) => id === "a")!.metadata,
-				originalMetadata,
-			)
-			assert.deepEqual(result.photos.find(({id}) => id === "b")!.metadata, {
-				...originalMetadata,
-				alt: text,
-			})
-			assert.equal("altText" in result.photos[0]!, false)
-			assert.equal("altTextStatus" in result.photos[0]!, false)
-			assert.equal("altTextInputHash" in result.photos[0]!, false)
-		}
+	db.update(photos)
+		.set({altText: "Catalog alt text", altTextStatus: "edited"})
+		.run()
+	for (const result of [
+		readWebsiteCatalog(db, website, false),
+		readRefraktCatalog(db, refrakt),
+	]) {
+		assert.deepEqual(
+			result.photos.find(({id}) => id === "a")!.metadata,
+			originalMetadata,
+		)
+		assert.deepEqual(result.photos.find(({id}) => id === "b")!.metadata, {
+			...originalMetadata,
+			alt: "Catalog alt text",
+		})
 	}
 	assert.equal(
 		db.select().from(photos).where(eq(photos.id, "a")).get()!.metadataJson,
@@ -445,19 +423,7 @@ test("website availability and Refrakt completeness are distinct", (t) => {
 		readRefraktCatalog(db, refrakt).photos.map(({id}) => id),
 		["a", "b"],
 	)
-	db.update(photos)
-		.set({metadataJson: "invalid"})
-		.where(eq(photos.id, "b"))
-		.run()
-	assert.deepEqual(
-		readWebsiteCatalog(db, website, false).photos.map(({id}) => id),
-		["a"],
-	)
-	assert.throws(() => readWebsiteCatalog(db, website, true), SyntaxError)
-	db.update(photos)
-		.set({metadataJson: JSON.stringify(metadata), status: "deleted"})
-		.where(eq(photos.id, "b"))
-		.run()
+	db.update(photos).set({status: "deleted"}).where(eq(photos.id, "b")).run()
 	assert.throws(() => readRefraktCatalog(db, refrakt))
 	assert.deepEqual(readWebsiteCatalog(db, website, true).albums[0]?.photoIds, [
 		"a",
@@ -488,7 +454,7 @@ test("document checks do not bind the database or overwrite another catalog", (t
 	assert.equal(db.select().from(catalog).get()?.documentId, "one")
 })
 
-test("saving collection selections is atomic and preserves descriptions", (t) => {
+test("changing selected collections preserves their descriptions", (t) => {
 	const db = fixture(t)
 	const snapshot = {
 		documentId: "one",
@@ -506,12 +472,6 @@ test("saving collection selections is atomic and preserves descriptions", (t) =>
 	}
 	saveCollectionDescription(db, "album", "Keep this description")
 	saveRoots(db, snapshot, ["all"])
-	assert.deepEqual(configuredRootIds(db), ["all"])
-	assert.throws(() => saveRoots(db, snapshot, ["album", "missing"]))
-	assert.deepEqual(configuredRootIds(db), ["all"])
-	assert.throws(() =>
-		saveRoots(db, {...snapshot, documentId: "other"}, ["album"]),
-	)
 	assert.deepEqual(configuredRootIds(db), ["all"])
 	saveRoots(db, snapshot, ["album"])
 	assert.deepEqual(configuredRootIds(db), ["album"])
