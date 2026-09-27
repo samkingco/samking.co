@@ -8,7 +8,7 @@ The CLI uses [atcute](https://github.com/mary-ext/atcute) for the AT Protocol cl
 
 The [note writer](../src/repos/notes.ts#L28) saves Markdown under `src/content/notes/<year>/`, with a TID and date in frontmatter. The TID is also the Bluesky record key, so editing a note updates the same post.
 
-The [converter](../src/atproto/bluesky.ts#L15) converts Markdown to plain text. Bold, italics, and code formatting are stripped; paragraph breaks remain. Links, mentions, and hashtags become Bluesky facets attached to ranges in that text. Images and lists cause an error for now. I might add embeds later. Text must fit Bluesky’s limits; it isn’t silently shortened.
+The [converter](../src/atproto/bluesky.ts#L14) converts Markdown to plain text. Bold, italics, and code formatting are stripped; paragraph breaks remain. Links, mentions, and hashtags become Bluesky facets attached to ranges in that text. Images and lists cause an error for now. I might add embeds later. Text must fit Bluesky’s limits; it isn’t silently shortened.
 
 `@handle` mentions are resolved to DID-based Markdown links when the note is saved. Later conversion can use that saved identity without looking up the handle again.
 
@@ -16,13 +16,23 @@ The [planner](../src/atproto/plan.ts#L38) converts all local notes and [fetches 
 
 Remote posts without a matching local note are left alone. Deleting a local file doesn’t delete its Bluesky post.
 
-The conversion and comparison functions can be used without the CLI. [createPlannedRecord](../src/atproto/records.ts#L12) builds a record’s URI and content ID; [publishBluesky](../src/atproto/publish.ts#L14) signs in, checks the account, and writes records.
+The conversion and comparison functions can be used without the CLI. [createPlannedRecord](../src/atproto/records.ts#L12) builds a record’s URI and content ID; [publishBluesky](../src/atproto/publish.ts#L48) signs in, checks the account, and writes records.
+
+## Sharing journal posts
+
+I share journal posts after publishing them to the site. `pnpm content atproto share` opens a [composer](../src/cli/posts.ts#L53) with a `New post: {Title}` message I can edit.
+
+The CLI [counts earlier shares](../src/atproto/journal.ts#L21) using the link in each embed. It reads my records directly because Bluesky search can omit results.
+
+The [link card](../src/atproto/journal.ts#L59) uses the journal’s title and excerpt, with the OG image from the local build. After I confirm, the CLI uploads the image to my PDS and publishes the post with a link to the entry.
+
+Each share gets its own TID. Sharing the same entry again creates a new Bluesky post, rather than changing an earlier one.
 
 ## Using your own account
 
 Before using your own account, change `domain` and `atproto.did` in [site config](../src/site.config.ts#L1). Set `atproto.bluesky.publishingEnabled` to `true` only when ready. Supply `ATPROTO_APP_PASSWORD` through the process environment or a local `.env` file; never commit it.
 
-Publishing includes every note in `src/content/notes`, so replace my content with your own before running it.
+Publishing notes includes every note in `src/content/notes`, so replace my content with your own before running it.
 
 ```sh
 pnpm content note "A short note."

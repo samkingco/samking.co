@@ -17,7 +17,7 @@ import {
 	regenerateOpenGraphImagesCommand,
 	syncPhotosCommand,
 } from "./photos.ts"
-import {createPost} from "./posts.ts"
+import {createPost, sharePosts} from "./posts.ts"
 import {setupPhotos} from "./setup.ts"
 
 SELECT_INSTRUCTIONS.push("Esc: back", "Ctrl+C: exit")
@@ -115,6 +115,11 @@ const atproto = program
 		}
 		await manageAtproto()
 	})
+
+atproto
+	.command("share")
+	.description("Share posts to Bluesky")
+	.action(sharePosts)
 
 const plan = atproto.command("plan").description("Preview record changes")
 plan

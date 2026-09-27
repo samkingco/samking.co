@@ -12,7 +12,7 @@ import {join} from "node:path"
 import test from "node:test"
 import {isTid} from "@atcute/lexicons/syntax"
 import {parse} from "@atcute/tid"
-import {noteToBlueskyRecord} from "../atproto/bluesky.ts"
+import {markdownToBlueskyRecord} from "../atproto/bluesky.ts"
 import {readNotes, writeNote} from "./notes.ts"
 import {readPosts, writePost} from "./posts.ts"
 
@@ -29,7 +29,7 @@ test("new Markdown files retain source text and carry usable identities", async 
 		new Date(parse(note.tid).timestamp / 1000).toISOString(),
 	)
 	assert.equal(note.path, path)
-	const converted = noteToBlueskyRecord(
+	const converted = markdownToBlueskyRecord(
 		note,
 		new URL("https://samking.co/journal/note/test/"),
 	)
@@ -105,7 +105,10 @@ test("notes return Dates and serialize timestamps only for publishing", async (t
 	const [note] = await readNotes(root)
 	assert.ok(note)
 	assert.equal(note.date.toISOString(), "2025-03-01T04:30:00.000Z")
-	const converted = noteToBlueskyRecord(note, new URL("https://samking.co/"))
+	const converted = markdownToBlueskyRecord(
+		note,
+		new URL("https://samking.co/"),
+	)
 	assert.equal(converted.createdAt, "2025-03-01T04:30:00.000Z")
 	assert.equal(await readFile(path, "utf8"), source)
 	for (const invalid of ["2025-02-28", "2025-02-30T00:00:00Z", "not-a-date"]) {

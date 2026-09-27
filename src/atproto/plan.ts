@@ -3,7 +3,7 @@ import {readRefraktCatalog} from "../repos/photos/catalog.ts"
 import {openReadonlyPhotoDatabase} from "../repos/photos/database.ts"
 import type {siteConfig} from "../site.config.ts"
 import {journalPath} from "../utils/journal-path.ts"
-import {noteToBlueskyRecord} from "./bluesky.ts"
+import {markdownToBlueskyRecord} from "./bluesky.ts"
 import {readRemoteRecords} from "./pds.ts"
 import {
 	compareRecords,
@@ -50,7 +50,7 @@ export async function planBluesky(did: string, siteUrl: URL) {
 					collection: "app.bsky.feed.post",
 					rkey: note.tid,
 					label: note.text.replace(/\s+/g, " ").slice(0, 100),
-					record: noteToBlueskyRecord(note, noteUrl),
+					record: markdownToBlueskyRecord(note, noteUrl),
 				}),
 			)
 		} catch (cause) {

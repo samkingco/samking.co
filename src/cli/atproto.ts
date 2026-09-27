@@ -4,6 +4,7 @@ import {publishBluesky, requireBlueskyPublishing} from "../atproto/publish.ts"
 import type {RecordPlan} from "../atproto/records.ts"
 import {siteConfig} from "../site.config.ts"
 import {menu} from "./menu.ts"
+import {sharePosts} from "./posts.ts"
 import {viewRecord} from "./record-detail.ts"
 
 const RECORD_LABELS: Record<string, string> = {
@@ -17,6 +18,7 @@ const RECORD_LABELS: Record<string, string> = {
 export async function manageAtproto(): Promise<void> {
 	await menu("AT Protocol", [
 		{label: "Plan Bluesky notes", run: () => runBlueskyPlan({})},
+		{label: "Share posts to Bluesky", run: sharePosts},
 		{label: "Plan Refrakt photos", run: () => runRefraktPlan({})},
 	])
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import {noteToBlueskyRecord} from "./bluesky.ts"
+import {markdownToBlueskyRecord} from "./bluesky.ts"
 import {prepareMentions} from "./mentions.ts"
 
 const date = new Date("2025-01-01T00:00:00.000Z")
@@ -8,7 +8,7 @@ const url = new URL("https://samking.co/journal/note/example/")
 const did = "did:plc:653egim2jcy2f4j4abtunvhj"
 
 test("formatting becomes plain text", () => {
-	const converted = noteToBlueskyRecord(
+	const converted = markdownToBlueskyRecord(
 		{
 			date,
 			text: '**A _crow_** and `code`.\n\n```js\nconst bird = "crow"\n```\n\n[**Photos**][photos]\n\n[photos]: /photos/ "A title"',
@@ -33,7 +33,7 @@ test("formatting becomes plain text", () => {
 })
 
 test("hashtags span emphasis but not code or link labels", () => {
-	const converted = noteToBlueskyRecord(
+	const converted = markdownToBlueskyRecord(
 		{
 			date,
 			text: "#bir**ds** `#code` [#linked](/photos/) @unresolved.test",
@@ -59,7 +59,7 @@ test("hashtags span emphasis but not code or link labels", () => {
 })
 
 test("Bluesky facets use UTF-8 offsets and resolve relative destinations", () => {
-	const record = noteToBlueskyRecord(
+	const record = markdownToBlueskyRecord(
 		{date, text: "🐦 [home](/photos/) and [next](../next/)"},
 		url,
 	)
@@ -99,7 +99,7 @@ test("typed mentions become profile links and then mention facets", async () => 
 		prepared,
 		`Hi [@samking.co](https://bsky.app/profile/${encodeURIComponent(did)}). \`@code.test\` [@label.test](/photos/) mail@example.test`,
 	)
-	const converted = noteToBlueskyRecord({date, text: prepared}, url)
+	const converted = markdownToBlueskyRecord({date, text: prepared}, url)
 	assert.deepEqual(converted.facets?.[0]?.features, [
 		{$type: "app.bsky.richtext.facet#mention", did},
 	])
@@ -128,12 +128,12 @@ test("mention creation handles repeated names without changing emails or existin
 
 test("unsupported content and oversized posts do not produce publishable records", () => {
 	for (const text of ["![image](/image.jpg)", "a".repeat(301), " \n"]) {
-		assert.throws(() => noteToBlueskyRecord({date, text}, url))
+		assert.throws(() => markdownToBlueskyRecord({date, text}, url))
 	}
 })
 
 test("invalid dates do not produce publishable records", () => {
 	assert.throws(() =>
-		noteToBlueskyRecord({date: new Date(NaN), text: "A note"}, url),
+		markdownToBlueskyRecord({date: new Date(NaN), text: "A note"}, url),
 	)
 })

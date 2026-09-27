@@ -1,5 +1,6 @@
 import {ComAtprotoRepoPutRecord} from "@atcute/atproto"
 import {Client, ok} from "@atcute/client"
+import {didString, parse} from "@atcute/lexicons/validations"
 import {PasswordSession} from "@atcute/password-session"
 import {siteConfig} from "../site.config.ts"
 import type {planBluesky} from "./plan.ts"
@@ -11,15 +12,8 @@ export function requireBlueskyPublishing(): void {
 	}
 }
 
-export async function publishBluesky(
-	result: Awaited<ReturnType<typeof planBluesky>>,
-	onPublished: (record: PlannedRecord) => void,
-): Promise<number> {
+export async function createBlueskyClient(did: string, endpoint: string) {
 	requireBlueskyPublishing()
-	const records = [...result.plan.creates, ...result.plan.updates]
-	if (records.length === 0) {
-		return 0
-	}
 	const password = process.env.ATPROTO_APP_PASSWORD
 	if (!password) {
 		throw new Error("Set ATPROTO_APP_PASSWORD in .env before publishing.")
@@ -27,7 +21,7 @@ export async function publishBluesky(
 	let session: PasswordSession
 	try {
 		session = await PasswordSession.login(
-			{service: result.endpoint, identifier: result.did, password},
+			{service: endpoint, identifier: did, password},
 			{
 				fetch: (input, init) =>
 					fetch(input, {
@@ -43,19 +37,31 @@ export async function publishBluesky(
 			{cause},
 		)
 	}
-	if (session.did !== result.did) {
+	if (session.did !== did) {
 		throw new Error(
 			"The authenticated DID does not match the configured account.",
 		)
 	}
-	const client = new Client({handler: session})
+	return new Client({handler: session})
+}
+
+export async function publishBluesky(
+	result: Awaited<ReturnType<typeof planBluesky>>,
+	onPublished: (record: PlannedRecord) => void,
+): Promise<number> {
+	requireBlueskyPublishing()
+	const records = [...result.plan.creates, ...result.plan.updates]
+	if (records.length === 0) {
+		return 0
+	}
+	const client = await createBlueskyClient(result.did, result.endpoint)
 	let completed = 0
 	for (const record of records) {
 		try {
 			await ok(
 				client.call(ComAtprotoRepoPutRecord, {
 					input: {
-						repo: session.did,
+						repo: parse(didString(), result.did),
 						collection: "app.bsky.feed.post",
 						rkey: record.rkey,
 						record: record.record,

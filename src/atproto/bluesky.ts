@@ -8,27 +8,26 @@ import type {Definition, Nodes} from "mdast"
 import {fromMarkdown} from "mdast-util-from-markdown"
 import {gfmFromMarkdown} from "mdast-util-gfm"
 import {gfm} from "micromark-extension-gfm"
-import type {Note} from "../repos/notes.ts"
 
 type Fragment = {text: string; detectHashtags?: boolean; feature?: FacetFeature}
 
-export function noteToBlueskyRecord(
-	note: Pick<Note, "date" | "text">,
-	noteUrl: URL,
+export function markdownToBlueskyRecord(
+	input: {date: Date; text: string},
+	baseUrl: URL,
 ): AppBskyFeedPost.Main {
-	const {text, facets} = buildRichtext(markdownFragments(note.text, noteUrl))
+	const {text, facets} = buildRichtext(markdownFragments(input.text, baseUrl))
 	if (!text.trim()) {
 		throw new Error("Bluesky text must not be blank.")
 	}
 	return parse(AppBskyFeedPost.mainSchema, {
 		$type: "app.bsky.feed.post",
 		text,
-		createdAt: note.date.toISOString(),
+		createdAt: input.date.toISOString(),
 		...(facets.length ? {facets} : {}),
 	})
 }
 
-function markdownFragments(text: string, noteUrl: URL): Fragment[] {
+function markdownFragments(text: string, baseUrl: URL): Fragment[] {
 	const root = fromMarkdown(text, {
 		extensions: [gfm()],
 		mdastExtensions: [gfmFromMarkdown()],
@@ -47,7 +46,7 @@ function markdownFragments(text: string, noteUrl: URL): Fragment[] {
 		if (fragments.some((fragment) => fragment.text.length > 0)) {
 			fragments.push({text: "\n\n"})
 		}
-		fragments.push(...render(node, definitions, noteUrl))
+		fragments.push(...render(node, definitions, baseUrl))
 	}
 	return fragments
 }
@@ -55,14 +54,14 @@ function markdownFragments(text: string, noteUrl: URL): Fragment[] {
 function render(
 	node: Nodes,
 	definitions: ReadonlyMap<string, Definition>,
-	noteUrl: URL,
+	baseUrl: URL,
 ): Fragment[] {
 	switch (node.type) {
 		case "paragraph":
 		case "emphasis":
 		case "strong":
 			return node.children.flatMap((child) =>
-				render(child, definitions, noteUrl),
+				render(child, definitions, baseUrl),
 			)
 		case "text":
 			return [{text: node.value, detectHashtags: true}]
@@ -72,14 +71,14 @@ function render(
 		case "code":
 			return [{text: node.value}]
 		default:
-			return renderLink(node, definitions, noteUrl)
+			return renderLink(node, definitions, baseUrl)
 	}
 }
 
 function renderLink(
 	node: Nodes,
 	definitions: ReadonlyMap<string, Definition>,
-	noteUrl: URL,
+	baseUrl: URL,
 ): Fragment[] {
 	if (node.type !== "link" && node.type !== "linkReference") {
 		throw new Error(`Unsupported Markdown construct: ${node.type}.`)
@@ -92,7 +91,7 @@ function renderLink(
 
 	const uri = isGenericUri(target.url)
 		? target.url
-		: new URL(target.url, noteUrl).href
+		: new URL(target.url, baseUrl).href
 
 	if (!isGenericUri(uri)) {
 		throw new Error("Markdown link must have a valid URI.")
@@ -103,7 +102,7 @@ function renderLink(
 		{
 			// A link label is one facet, even when it contains formatting or hashtags.
 			text: node.children
-				.flatMap((child) => render(child, definitions, noteUrl))
+				.flatMap((child) => render(child, definitions, baseUrl))
 				.map(({text}) => text)
 				.join(""),
 			feature: did
