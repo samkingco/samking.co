@@ -1,4 +1,5 @@
 ---
+tid: 3micun23c2222
 title: Sick of assumptions
 slug: sick-of-assumptions
 excerpt: LLMs are trained on neurotypical conversation patterns. When you say exactly what you mean, the model tries to read between lines that don't exist.

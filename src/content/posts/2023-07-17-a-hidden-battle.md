@@ -1,4 +1,5 @@
 ---
+tid: 3k2ohxgoc2222
 title: A hidden battle
 slug: a-hidden-battle
 excerpt: It's been a very long time since I wrote here, probably a symptom of the way I've been feeling. I've been avoiding some things and trying to distract myself.

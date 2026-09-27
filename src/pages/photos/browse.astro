@@ -7,12 +7,15 @@ import PhotoHoverPreview from "../../components/PhotoHoverPreview.astro"
 import PhotoFilterLinks from "../../components/PhotoFilterLinks.astro"
 import PhotoPageBar from "../../components/PhotoPageBar.astro"
 import Layout from "../../layouts/Photos.astro"
-import {buildPhotoGroups, type PhotoGroup} from "../../photos/groups.ts"
+import {
+	buildPhotoGroups,
+	type PhotoGroup,
+} from "../../components/PhotoGroups.ts"
 import {
 	type PhotoEntry,
 	PhotoEntrySchema,
 	PhotoSetEntrySchema,
-} from "../../photos/schema.ts"
+} from "../../repos/photos/schema.ts"
 
 type IndexItem = {
 	href: string

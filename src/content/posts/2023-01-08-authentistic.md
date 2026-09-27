@@ -1,4 +1,5 @@
 ---
+tid: 3jlqpej3s2222
 title: Authentistic
 slug: authentistic
 excerpt: Since finding out I’m Autistic half way through 2022, I’ve been thinking a lot about unmasking and reconciling what that means for my identity.

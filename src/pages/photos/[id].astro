@@ -3,23 +3,23 @@ import {getCollection} from "astro:content"
 import * as v from "valibot"
 import Link from "../../components/Link.astro"
 import Layout from "../../layouts/Photos.astro"
-import {photoDetailHref} from "../../photos/context.ts"
+import {photoDetailHref} from "../../components/PhotoContext.ts"
 import {
 	buildPhotoContexts,
 	buildPhotoGroups,
 	type PhotoContext,
-} from "../../photos/groups.ts"
+} from "../../components/PhotoGroups.ts"
 import {
 	capturedDateParts,
 	photoTitle as getPhotoTitle,
 	photoExposure,
-} from "../../photos/presentation.ts"
+} from "../../components/PhotoPresentation.ts"
 import {
 	type PhotoEntry,
 	PhotoEntrySchema,
 	PhotoSetEntrySchema,
-} from "../../photos/schema.ts"
-import {photoSlug} from "../../photos/slug.ts"
+} from "../../repos/photos/schema.ts"
+import {slugify} from "../../utils/slugify.ts"
 
 export async function getStaticPaths() {
 	const photos = (await getCollection("photos")).map((entry) =>
@@ -246,12 +246,14 @@ const photoSets = contexts.filter((c) => c.reference?.type === "set")
 				</p>}
 				{(photo.cameraName || photo.lensName || exposure.length > 0) && <div>
 					{photo.cameraName && <p>
-						<Link href={`/photos/cameras/${photoSlug(photo.cameraName)}/`}>
+						<Link
+							href={`/photos/cameras/${slugify(photo.cameraName) || "item"}/`}
+						>
 							{photo.cameraName}
 						</Link>
 					</p>}
 					{photo.lensName && <p>
-						<Link href={`/photos/lenses/${photoSlug(photo.lensName)}/`}>
+						<Link href={`/photos/lenses/${slugify(photo.lensName) || "item"}/`}>
 							{photo.lensName}
 						</Link>
 					</p>}
@@ -271,7 +273,7 @@ const photoSets = contexts.filter((c) => c.reference?.type === "set")
 					<p class="text-muted-foreground">Tags</p>
 					<ul class="list-none flex gap-x-2 flex-wrap">
 						{photo.metadata.tags.map((tag) => <li>
-							<Link href={`/photos/tags/${photoSlug(tag.name)}/`}>
+							<Link href={`/photos/tags/${slugify(tag.name) || "item"}/`}>
 								{tag.name}
 							</Link>
 						</li>)}
@@ -306,6 +308,6 @@ const photoSets = contexts.filter((c) => c.reference?.type === "set")
 </Layout>
 
 <script>
-	import {registerPhotoDetail} from "../../photos/photo-detail.client.ts"
+	import {registerPhotoDetail} from "../../components/PhotoDetail.client.ts"
 	registerPhotoDetail()
 </script>

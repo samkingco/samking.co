@@ -1,11 +1,13 @@
 import rss, {type RSSFeedItem} from "@astrojs/rss"
 import type {APIContext} from "astro"
 import {getImage} from "astro:assets"
-import {getCollection} from "astro:content"
 import MarkdownIt from "markdown-it"
 import {type HTMLElement, parse as htmlParser} from "node-html-parser"
 import sanitizeHtml from "sanitize-html"
 import {siteConfig} from "../site.config"
+import {formatDate} from "../utils/dates"
+import {getJournalEntries} from "../utils/journal"
+import {journalPath} from "../utils/journal-path"
 
 const markdownParser = new MarkdownIt()
 
@@ -30,18 +32,15 @@ async function resolveFeedImage(img: HTMLElement, site: string): Promise<void> {
 export async function GET(_context: APIContext) {
 	const site = "https://samking.co"
 
-	const allPosts = await getCollection("posts")
-	const posts = allPosts.sort(
-		(a, b) => b.data.date.getTime() - a.data.date.getTime(),
-	)
+	const entries = await getJournalEntries()
 
 	const items: RSSFeedItem[] = []
 
-	for (const post of posts) {
-		if (post.body === undefined) {
-			throw new Error(`Journal post ${post.id} must have a body`)
+	for (const entry of entries) {
+		if (entry.body === undefined) {
+			throw new Error(`Journal entry ${entry.id} must have a body`)
 		}
-		const body = markdownParser.render(post.body)
+		const body = markdownParser.render(entry.body)
 		const html = htmlParser.parse(body)
 		const images = html.querySelectorAll("img")
 
@@ -50,11 +49,15 @@ export async function GET(_context: APIContext) {
 		}
 
 		items.push({
-			title: post.data.title,
-			description: post.data.excerpt,
-			pubDate: post.data.date,
+			title:
+				entry.collection === "posts"
+					? entry.data.title
+					: `Note • ${formatDate(entry.data.date)}`,
+			description:
+				entry.collection === "posts" ? entry.data.excerpt : undefined,
+			pubDate: entry.data.date,
 			author: "mail@samking.co (Sam King)",
-			link: `${site}/journal/${post.id}/`,
+			link: `${site}${journalPath(entry)}`,
 			content: sanitizeHtml(html.toString(), {
 				allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
 			}),

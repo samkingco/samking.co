@@ -1,7 +1,7 @@
 ---
-import type {PhotoContextReference} from "../photos/context.ts"
-import {photoDetailHref} from "../photos/context.ts"
-import type {PhotoEntry} from "../photos/schema.ts"
+import type {PhotoContextReference} from "./PhotoContext.ts"
+import {photoDetailHref} from "./PhotoContext.ts"
+import type {PhotoEntry} from "../repos/photos/schema.ts"
 import {
 	exposureSortValue,
 	formatAperture,
@@ -9,7 +9,7 @@ import {
 	formatPhotoDate,
 	formatShutter,
 	photoTitle,
-} from "../photos/presentation.ts"
+} from "./PhotoPresentation.ts"
 import PhotoHoverPreview from "./PhotoHoverPreview.astro"
 
 interface Props {

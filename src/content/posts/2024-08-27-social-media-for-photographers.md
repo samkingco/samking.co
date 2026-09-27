@@ -1,4 +1,5 @@
 ---
+tid: 3l2qg72qc2222
 title: Social Media for Photographers
 slug: social-media-for-photographers
 excerpt: Is there room for a more intimate, authentic space for those who genuinely care about the medium of photography?

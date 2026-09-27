@@ -1,4 +1,5 @@
 ---
+tid: 3kzxbju4s2222
 title: Refrakt and more
 slug: refrakt-and-more
 excerpt: I've been working on refrakt.app for a little over a year and a half now. Recently however, I've not had the time or motivation to work on it as much as I probably should, and I can't help but feel bad about that.

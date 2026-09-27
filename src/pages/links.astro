@@ -20,6 +20,14 @@ const photographySection: Section = {
 	id: "photography",
 	title: "Photography",
 	links: [
+		...(siteConfig.photos.enabled
+			? [
+					{
+						title: "Archive",
+						href: "/photos",
+					},
+				]
+			: []),
 		{
 			title: "Refrakt",
 			href: `https://refrakt.app/${siteConfig.refrakt.handle}`,

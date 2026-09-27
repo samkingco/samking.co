@@ -1,4 +1,5 @@
 ---
+tid: 3lveub5yk2222
 title: State of mind
 slug: state-of-mind
 excerpt: April me thought productivity guilt was the problem. August me realizes the world may also be to blame.

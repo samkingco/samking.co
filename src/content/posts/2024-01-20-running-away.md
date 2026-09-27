@@ -1,4 +1,5 @@
 ---
+tid: 3kjep5luk2222
 title: Running away, in a good way
 slug: running-away
 excerpt: I've made an impulsive decision to run away to Vancouver, but I really do think it will be good for me. The mountains and slower pace of life are what I need right now.

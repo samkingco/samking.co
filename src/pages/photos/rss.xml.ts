@@ -6,11 +6,14 @@ import {
 	capturedDateParts,
 	photoExposure,
 	photoTitle,
-} from "../../photos/presentation.ts"
-import {PHOTO_CDN_URL} from "../../photos/r2.ts"
-import {PhotoEntrySchema, PhotoSetEntrySchema} from "../../photos/schema.ts"
-import {photoSlug} from "../../photos/slug.ts"
+} from "../../components/PhotoPresentation.ts"
+import {PHOTO_CDN_URL} from "../../repos/photos/r2.ts"
+import {
+	PhotoEntrySchema,
+	PhotoSetEntrySchema,
+} from "../../repos/photos/schema.ts"
 import {siteConfig} from "../../site.config.ts"
+import {slugify} from "../../utils/slugify.ts"
 
 const escapeHtml = (value: string) =>
 	value
@@ -29,7 +32,7 @@ export async function GET() {
 	const photoLink = (path: string, label: string) =>
 		`<a href="${escapeHtml(`${site}${path}`)}">${escapeHtml(label)}</a>`
 	const equipmentLink = (kind: "cameras" | "lenses", name: string | null) =>
-		name ? photoLink(`/photos/${kind}/${photoSlug(name)}/`, name) : ""
+		name ? photoLink(`/photos/${kind}/${slugify(name) || "item"}/`, name) : ""
 	const photos = (await getCollection("photos"))
 		.map((entry) => v.parse(PhotoEntrySchema, entry.data))
 		.sort((a, b) => b.position - a.position)
@@ -57,7 +60,7 @@ export async function GET() {
 				photoSets.length > 0 &&
 					`<strong>Sets:</strong> ${photoSets.map((set) => photoLink(`/photos/sets/${set.slug}/`, set.title)).join(", ")}`,
 				photo.metadata.tags.length > 0 &&
-					`<strong>Tags:</strong> ${photo.metadata.tags.map((tag) => photoLink(`/photos/tags/${photoSlug(tag.name)}/`, tag.name)).join(", ")}`,
+					`<strong>Tags:</strong> ${photo.metadata.tags.map((tag) => photoLink(`/photos/tags/${slugify(tag.name) || "item"}/`, tag.name)).join(", ")}`,
 			]
 				.filter(Boolean)
 				.join("<br>")

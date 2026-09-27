@@ -1,5 +1,3 @@
-import type {PhotoDerivativeKind} from "./photos/schema.ts"
-
 export const siteConfig = {
 	domain: "samking.co",
 	title: "Sam King",
@@ -21,12 +19,6 @@ export const siteConfig = {
 		allPhotosCollectionId: "775",
 		setsCollectionId: "781",
 		exportProfile: "website",
-		r2Derivatives: [
-			{kind: "source", path: "source.jpg"},
-			{kind: "thumb", path: "thumb.webp"},
-			{kind: "detail", path: "detail.webp"},
-			{kind: "og", path: "og.jpg"},
-		] satisfies {kind: PhotoDerivativeKind; path: string}[],
 	},
 	atproto: {
 		did: "did:plc:653egim2jcy2f4j4abtunvhj",

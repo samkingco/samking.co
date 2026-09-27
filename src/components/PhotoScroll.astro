@@ -1,8 +1,8 @@
 ---
-import type {PhotoContextReference} from "../photos/context.ts"
-import {photoDetailHref} from "../photos/context.ts"
-import type {PhotoEntry} from "../photos/schema.ts"
-import {formatPhotoDate, photoTitle} from "../photos/presentation.ts"
+import type {PhotoContextReference} from "./PhotoContext.ts"
+import {photoDetailHref} from "./PhotoContext.ts"
+import type {PhotoEntry} from "../repos/photos/schema.ts"
+import {formatPhotoDate, photoTitle} from "./PhotoPresentation.ts"
 
 interface Props {
 	photos: PhotoEntry[]

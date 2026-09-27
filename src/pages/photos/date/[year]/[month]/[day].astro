@@ -5,15 +5,15 @@ import PhotoCollection from "../../../../../components/PhotoCollection.astro"
 import PhotoPageBar from "../../../../../components/PhotoPageBar.astro"
 import SiteHeader from "../../../../../components/SiteHeader.astro"
 import Layout from "../../../../../layouts/Photos.astro"
-import type {PhotoContextReference} from "../../../../../photos/context.ts"
+import type {PhotoContextReference} from "../../../../../components/PhotoContext.ts"
 import {
 	capturedDate,
 	newestCaptureFirst,
-} from "../../../../../photos/presentation.ts"
+} from "../../../../../components/PhotoPresentation.ts"
 import {
 	type PhotoEntry,
 	PhotoEntrySchema,
-} from "../../../../../photos/schema.ts"
+} from "../../../../../repos/photos/schema.ts"
 
 export async function getStaticPaths() {
 	const photos = (await getCollection("photos"))

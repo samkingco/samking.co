@@ -1,4 +1,5 @@
 ---
+tid: 3mkyeidqs2222
 title: Eat the dog
 slug: eat-the-dog
 excerpt: On the dog you wouldn't eat and the cow you do, and what sits between your compassion and your dinner.

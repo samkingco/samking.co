@@ -1,4 +1,5 @@
 ---
+tid: 3igntbxjs2222
 title: Thoughts on therapy
 slug: thoughts-on-therapy
 excerpt: In the spirit of being more open, I’m continuing the conversation about therapy. Why and how I got started, and how it’s been so far. Maybe it will be helpful if you’ve been thinking about starting therapy yourself.

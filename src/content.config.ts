@@ -1,16 +1,22 @@
 import {glob} from "astro/loaders"
 import {z} from "astro/zod"
 import {defineCollection} from "astro:content"
-import {photoSetsLoader, photosLoader} from "./photos/loader"
+import {notesLoader} from "./loaders/notes.ts"
+import {photoSetsLoader} from "./loaders/photo-sets.ts"
+import {photosLoader} from "./loaders/photos.ts"
+import {postsLoader} from "./loaders/posts.ts"
+import {noteMetadataSchema} from "./repos/notes.ts"
+import {postMetadataSchema} from "./repos/posts.ts"
 import {siteConfig} from "./site.config"
 
 const postsCollection = defineCollection({
-	loader: glob({pattern: "**/*.md", base: "./src/content/posts"}),
-	schema: z.object({
-		title: z.string(),
-		date: z.date(),
-		excerpt: z.string(),
-	}),
+	loader: postsLoader(),
+	schema: postMetadataSchema,
+})
+
+const notesCollection = defineCollection({
+	loader: notesLoader(),
+	schema: noteMetadataSchema,
 })
 
 const nowCollection = defineCollection({
@@ -56,6 +62,7 @@ const photoSetsCollection = defineCollection({
 
 export const collections = {
 	posts: postsCollection,
+	notes: notesCollection,
 	now: nowCollection,
 	freelance: freelanceCollection,
 	rights: rightsCollection,

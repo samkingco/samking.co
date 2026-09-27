@@ -1,6 +1,6 @@
 ---
-import type {PhotoContextReference} from "../photos/context.ts"
-import type {PhotoEntry} from "../photos/schema.ts"
+import type {PhotoContextReference} from "./PhotoContext.ts"
+import type {PhotoEntry} from "../repos/photos/schema.ts"
 import PhotoGrid from "./PhotoGrid.astro"
 import PhotoIndex from "./PhotoIndex.astro"
 import PhotoScroll from "./PhotoScroll.astro"
@@ -61,7 +61,7 @@ const {photos, context} = Astro.props
 		})()
 	</script>
 	<script>
-		import {registerPhotoNavigation} from "../photos/photo-detail.client.ts"
+		import {registerPhotoNavigation} from "./PhotoDetail.client.ts"
 		registerPhotoNavigation()
 	</script>
 </section>

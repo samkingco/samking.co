@@ -1,4 +1,5 @@
 ---
+tid: 3jccxfzrs2222
 title: A self discovery at 30
 slug: self-discovery
 excerpt: It’s kind of weird for me to share this, but this is a personal read about a recent discovery and how it’s impacted me. It may change your perception of me as a person, but hopefully not in a negative way.

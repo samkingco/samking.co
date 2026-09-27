@@ -1,4 +1,5 @@
 ---
+tid: 3is2gvhek2222
 title: Recovering after the crash
 slug: recovering-after-the-crash
 excerpt: I apologise for the cringe title, but I’m sharing my experience with burnout and what I’m going to be doing over the next couple of months.

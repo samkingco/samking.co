@@ -1,4 +1,5 @@
 ---
+tid: 3iggbv75k2222
 title: An introduction
 slug: an-introduction
 excerpt: Who are you? What is this? Wtf am I reading? Hopefully I can answer some of those questions in this post. This is a new dedicated space for my writing, something I haven’t had for a long time. Enjoy your stay!

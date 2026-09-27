@@ -5,9 +5,12 @@ import PhotoCollection from "../../../components/PhotoCollection.astro"
 import PhotoPageBar from "../../../components/PhotoPageBar.astro"
 import SiteHeader from "../../../components/SiteHeader.astro"
 import Layout from "../../../layouts/Photos.astro"
-import type {PhotoContextReference} from "../../../photos/context.ts"
-import {type PhotoEntry, PhotoEntrySchema} from "../../../photos/schema.ts"
-import {photoSlug} from "../../../photos/slug.ts"
+import type {PhotoContextReference} from "../../../components/PhotoContext.ts"
+import {
+	type PhotoEntry,
+	PhotoEntrySchema,
+} from "../../../repos/photos/schema.ts"
+import {slugify} from "../../../utils/slugify.ts"
 
 export async function getStaticPaths() {
 	const photos = (await getCollection("photos"))
@@ -20,7 +23,7 @@ export async function getStaticPaths() {
 		if (!photo.lensName) {
 			continue
 		}
-		const slug = photoSlug(photo.lensName)
+		const slug = slugify(photo.lensName) || "item"
 		const group = groups.get(slug) ?? {title: photo.lensName, photos: []}
 		group.photos.push(photo)
 		groups.set(slug, group)

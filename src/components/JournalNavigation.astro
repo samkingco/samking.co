@@ -1,0 +1,38 @@
+---
+import Link from "./Link.astro"
+import {getJournalEntries} from "../utils/journal"
+import {journalPath} from "../utils/journal-path"
+
+interface Props {
+	collection: "posts" | "notes"
+	id: string
+}
+
+const {collection, id} = Astro.props
+const entries = await getJournalEntries()
+const index = entries.findIndex(
+	(entry) => entry.collection === collection && entry.id === id,
+)
+const adjacent = [
+	{label: "Read next", entry: entries[index + 1]},
+	{label: "Previous entry", entry: entries[index - 1]},
+]
+---
+
+<nav aria-label="Journal entries" class="space-y-10">
+	{adjacent.map(
+		({label, entry}) =>
+			entry && <div>
+				<p class="text-muted-foreground">{label}</p>
+				<p class="[&_a]:max-w-full">
+					<Link href={journalPath(entry)}>
+						{entry.collection === "posts" ? (
+							entry.data.title
+						) : (
+							<span class="line-clamp-1">{entry.body}</span>
+						)}
+					</Link>
+				</p>
+			</div>,
+	)}
+</nav>

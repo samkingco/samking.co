@@ -1,4 +1,5 @@
 ---
+tid: 3lgh3oag22222
 title: Going dark, time to focus elsewhere
 slug: going-dark
 excerpt: The exhausting reality of platform fragmentation, and a vision for more intimate creative spaces.

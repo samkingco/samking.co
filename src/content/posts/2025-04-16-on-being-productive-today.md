@@ -1,4 +1,5 @@
 ---
+tid: 3lmvbvq7k2222
 title: On being productive today
 slug: on-being-productive-today
 excerpt: My brain wants 16-hour coding marathons. My body wants mountains. The guilt is suffocating. Maybe productivity means something different now.
