@@ -98,6 +98,14 @@ const sections: Section[] = [
 	photographySection,
 	...youtubeSections,
 	creativeSection,
+	{
+		id: "building",
+		title: "Building",
+		links: [
+			{title: "Refrakt", href: "https://refrakt.app"},
+			{title: "Sesame", href: "https://opensesame.software"},
+		],
+	},
 	socialSection,
 ]
 ---
@@ -105,20 +113,34 @@ const sections: Section[] = [
 <DefaultLayout title="Links | Sam King">
 	<h2 class="sr-only">Links</h2>
 
-	{sections.map((section) => <section>
-		<p class="text-muted-foreground tabular-nums slashed-zero">
-			{section.title}
-		</p>
-		{section.links.map((link) => <div>
-			<p>
-				<Link
-					href={link.href}
-					withIcon={section.id !== "youtube"}
-					rel={section.id === "social" ? "me" : undefined}
-				>
-					{link.title}
-				</Link>
+	<div class="space-y-5">
+		{sections.map((section) => <section>
+			<p class="text-muted-foreground tabular-nums slashed-zero">
+				{section.title}
 			</p>
-		</div>)}
-	</section>)}
+			{section.links.map((link) => <div>
+				<p>
+					<Link
+						href={link.href}
+						withIcon={section.id !== "youtube"}
+						rel={section.id === "social" ? "me" : undefined}
+					>
+						{link.title}
+					</Link>
+				</p>
+			</div>)}
+		</section>)}
+
+		<section>
+			<h3 class="text-muted-foreground">Support</h3>
+			<p>
+				I share photos, writing, and things I build for fun. If you’d like to
+				support my work, it helps keep me caffeinated and doing what I love.
+				Contributions are optional, and all content remains free to read.
+			</p>
+			<p class="mt-3">
+				<Link href={siteConfig.supportUrl}>Support my work</Link>
+			</p>
+		</section>
+	</div>
 </DefaultLayout>

@@ -2,6 +2,7 @@
 import {getEntry} from "astro:content"
 import JournalNavigation from "../components/JournalNavigation.astro"
 import Link from "../components/Link.astro"
+import {siteConfig} from "../site.config"
 import {formatDate} from "../utils/dates"
 import DefaultLayout from "./Default.astro"
 
@@ -39,6 +40,9 @@ if (!post) throw new Error(`Post ${slug} not found`)
 		<p class="text-muted-foreground">Like this post?</p>
 		<p>
 			<Link href="/rss.xml">Subscribe via RSS</Link>
+		</p>
+		<p>
+			<Link href={siteConfig.supportUrl}>Support my work</Link>
 		</p>
 	</footer>
 </DefaultLayout>

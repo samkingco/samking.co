@@ -12,6 +12,7 @@ export const siteConfig = {
 	bigFanOf:
 		"Old growth forests, Neal Stephenson books, Alexisonfire, and PS2 racing game soundtracks.",
 	ogImage: "/og.png",
+	supportUrl: "https://buy.stripe.com/7sY5kC2YF9zCbJ5diV77O00",
 	photos: {
 		enabled: false,
 		captureOneCatalogPath:

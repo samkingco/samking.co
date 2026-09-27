@@ -71,6 +71,13 @@ const latestPhotos = siteConfig.photos.enabled
 		</article>
 
 		<article>
+			<h3 class="text-muted-foreground">Email</h3>
+			<p>
+				<Link href="mailto:mail@samking.co" rel="me">mail@samking.co</Link>
+			</p>
+		</article>
+
+		<article>
 			<h3 class="text-muted-foreground">More</h3>
 			<ul class="flex gap-x-3 gap-y-1 flex-wrap">
 				<li>
@@ -89,9 +96,7 @@ const latestPhotos = siteConfig.photos.enabled
 					<Link href="/cv" rel="me"> CV </Link>
 				</li>
 				<li>
-					<Link href="mailto:mail@samking.co" rel="me">
-						{" "}mail@samking.co{" "}
-					</Link>
+					<Link href={siteConfig.supportUrl}>Support me</Link>
 				</li>
 			</ul>
 		</article>
