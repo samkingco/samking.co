@@ -1,7 +1,8 @@
 import assert from "node:assert/strict"
-import {readFileSync} from "node:fs"
 import test, {type TestContext} from "node:test"
+import {fileURLToPath} from "node:url"
 import {eq} from "drizzle-orm"
+import {migrate} from "drizzle-orm/node-sqlite/migrator"
 import {createRefraktRecords} from "../../atproto/refrakt.ts"
 import {readRefraktCatalog, readWebsiteCatalog} from "./catalog.ts"
 import {readCollections, saveCollectionDescription} from "./collections.ts"
@@ -60,15 +61,11 @@ const metadata = {
 function fixture(t: TestContext) {
 	const database = openPhotoDatabase(":memory:")
 	t.after(() => database.$client.close())
-	database.$client.exec(
-		readFileSync(
-			new URL(
-				"../../../drizzle/photos/20260925205129_massive_silver_samurai/migration.sql",
-				import.meta.url,
-			),
-			"utf8",
+	migrate(database, {
+		migrationsFolder: fileURLToPath(
+			new URL("../../../drizzle/photos", import.meta.url),
 		),
-	)
+	})
 	database
 		.insert(collections)
 		.values(

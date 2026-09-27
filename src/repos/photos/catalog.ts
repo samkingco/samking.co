@@ -78,7 +78,7 @@ export function readRefraktCatalog(
 	const allCollections = readCollections(database)
 	if (!allCollections.some(({id}) => id === config.rootCollectionId)) {
 		throw new Error(
-			`Capture One root ${config.rootCollectionId} is not ingested. Add it with "pnpm content photos roots" and sync.`,
+			`Capture One collection ${config.rootCollectionId} is not ingested. Add it with "pnpm content photos setup" and sync.`,
 		)
 	}
 	const children = Map.groupBy(allCollections, (row) => row.parentId)

@@ -15,7 +15,7 @@ import {
 	syncPhotosCommand,
 } from "./photos.ts"
 import {createPost} from "./posts.ts"
-import {manageRoots} from "./roots.ts"
+import {setupPhotos} from "./setup.ts"
 
 const program = new Command()
 	.name("content")
@@ -86,7 +86,10 @@ photos
 	.command("regenerate-og")
 	.description("Regenerate OG images")
 	.action(regenerateOpenGraphImagesCommand)
-photos.command("roots").description("Manage C1 roots").action(manageRoots)
+photos
+	.command("setup")
+	.description("Choose collections to sync")
+	.action(setupPhotos)
 photos
 	.command("collections")
 	.description("Edit collection descriptions")

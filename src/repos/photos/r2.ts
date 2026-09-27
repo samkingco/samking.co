@@ -1,6 +1,7 @@
 import {createReadStream} from "node:fs"
 import {
 	DeleteObjectCommand,
+	HeadObjectCommand,
 	PutObjectCommand,
 	S3Client,
 } from "@aws-sdk/client-s3"
@@ -17,6 +18,35 @@ const R2ConfigSchema = v.object({
 export type R2Config = v.InferOutput<typeof R2ConfigSchema>
 
 export const PHOTO_CDN_URL = "https://cdn.samking.co"
+
+const CONNECTION_ERRORS = new Set([
+	"ENOTFOUND",
+	"EAI_AGAIN",
+	"ENETUNREACH",
+	"EHOSTUNREACH",
+	"ECONNREFUSED",
+	"ECONNRESET",
+	"ETIMEDOUT",
+	"EPIPE",
+	"TimeoutError",
+])
+
+export function isR2ConnectionError(error: unknown): boolean {
+	if (!(error instanceof Error)) {
+		return false
+	}
+	const {code, $metadata} = error as Error & {
+		code?: string
+		$metadata?: {httpStatusCode?: number}
+	}
+	if ($metadata?.httpStatusCode) {
+		return false
+	}
+	return (
+		CONNECTION_ERRORS.has(code ?? error.name) ||
+		isR2ConnectionError(error.cause)
+	)
+}
 
 export function loadR2Config(): R2Config {
 	return v.parse(R2ConfigSchema, {
@@ -47,7 +77,26 @@ export async function uploadR2File(input: {
 	byteSize: number
 	mimeType: string
 	sha256: string
-}): Promise<void> {
+}): Promise<"uploaded" | "reused"> {
+	try {
+		const remote = await input.client.send(
+			new HeadObjectCommand({Bucket: input.config.bucket, Key: input.key}),
+		)
+		if (
+			remote.Metadata?.sha256 === input.sha256 &&
+			remote.ContentLength === input.byteSize &&
+			remote.ContentType === input.mimeType
+		) {
+			return "reused"
+		}
+	} catch (error) {
+		if (
+			(error as {$metadata?: {httpStatusCode?: number}}).$metadata
+				?.httpStatusCode !== 404
+		) {
+			throw error
+		}
+	}
 	await input.client.send(
 		new PutObjectCommand({
 			Bucket: input.config.bucket,
@@ -59,6 +108,7 @@ export async function uploadR2File(input: {
 			Metadata: {sha256: input.sha256},
 		}),
 	)
+	return "uploaded"
 }
 
 export async function uploadPhotoCatalogBackup({

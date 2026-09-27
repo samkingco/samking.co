@@ -195,6 +195,16 @@ test("conflicting input does not write content", async (t) => {
 	assert.deepEqual(await readNotes(join(cwd, "src/content")), [])
 })
 
+test("photo setup replaces the roots command", async (t) => {
+	const cwd = await workspace(t)
+	const help = run(cwd, ["photos", "--help"])
+	assert.equal(help.status, 0, help.stderr)
+	assert.match(help.stdout, /\bsetup\b/)
+	assert.doesNotMatch(help.stdout, /\broots\b/)
+	assert.equal(run(cwd, ["photos", "setup", "--help"]).status, 0)
+	assert.equal(run(cwd, ["photos", "roots"]).status, 1)
+})
+
 test("failed mention lookup does not save a partially converted note", async (t) => {
 	const cwd = await workspace(t)
 	assert.equal(run(cwd, ["note", "Hi @samking.co"]).status, 1)

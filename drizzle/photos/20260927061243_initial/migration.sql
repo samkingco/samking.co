@@ -88,9 +88,11 @@ CREATE TABLE `photos` (
 	`capture_one_variant_id` text NOT NULL UNIQUE,
 	`capture_one_variant_name` text NOT NULL,
 	`metadata_json` text,
+	`metadata_source_id` integer,
 	`status` text NOT NULL,
 	`created_at` text NOT NULL,
 	`updated_at` text NOT NULL,
+	CONSTRAINT `fk_photos_metadata_source_id_photo_derivatives_id_fk` FOREIGN KEY (`metadata_source_id`) REFERENCES `photo_derivatives`(`id`) ON DELETE SET NULL,
 	CONSTRAINT "photos_check_3" CHECK("status" IN ('active', 'deleted'))
 );
 --> statement-breakpoint

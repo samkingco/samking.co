@@ -1,5 +1,6 @@
 import {sql} from "drizzle-orm"
 import {
+	type AnySQLiteColumn,
 	check,
 	index,
 	integer,
@@ -50,6 +51,10 @@ export const photos = sqliteTable(
 		captureOneVariantId: text("capture_one_variant_id").notNull().unique(),
 		captureOneVariantName: text("capture_one_variant_name").notNull(),
 		metadataJson: text("metadata_json"),
+		metadataSourceId: integer("metadata_source_id").references(
+			(): AnySQLiteColumn => photoDerivatives.id,
+			{onDelete: "set null"},
+		),
 		status: text({enum: ["active", "deleted"]}).notNull(),
 		createdAt: text("created_at").notNull(),
 		updatedAt: text("updated_at").notNull(),

@@ -1,24 +1,24 @@
-import {isCancel, select} from "@clack/prompts"
+import {isCancel, note, select} from "@clack/prompts"
 import type {CaptureOneCollection} from "../repos/photos/capture-one.ts"
 import {openPhotoDatabase} from "../repos/photos/database.ts"
 import {addRoot, loadRoots, removeRoot} from "../repos/photos/roots.ts"
 
-export async function manageRoots(): Promise<void> {
+export async function setupPhotos(): Promise<void> {
 	const database = openPhotoDatabase()
 	using _ = database.$client
 	const startedAt = Date.now()
-	console.log("Reading Capture One roots...")
+	console.log("Reading Capture One collections...")
 	const snapshot = await loadRoots(database)
 	console.log(
-		`Read ${snapshot.collections.length} roots in ${((Date.now() - startedAt) / 1000).toFixed(1)}s.`,
+		`Read ${snapshot.collections.length} collections in ${((Date.now() - startedAt) / 1000).toFixed(1)}s.`,
 	)
 	const {added} = snapshot
 	const action = await select({
-		message: "C1 roots",
+		message: "Choose collections to sync",
 		options: [
-			{label: "Add root", value: "add"},
-			{label: "Remove root", value: "remove"},
-			{label: "List roots", value: "list"},
+			{label: "Add collection", value: "add"},
+			{label: "Remove collection", value: "remove"},
+			{label: "List collections", value: "list"},
 			{label: "Back", value: "back"},
 		],
 	})
@@ -33,11 +33,15 @@ export async function manageRoots(): Promise<void> {
 		(collection) => added.has(collection.id) !== (action === "add"),
 	)
 	if (candidates.length === 0) {
-		console.log(`No roots available to ${action}.`)
+		console.log(`No collections available to ${action}.`)
 		return
 	}
+	note(
+		"Each selected collection and all collections below it are synced to the local catalog.\nScripts and apps can read those collections and their photos.\nChanges are read when you run a sync, not watched in the background.",
+		"Sync scope",
+	)
 	const collectionId = await select({
-		message: `Select a root to ${action}`,
+		message: `Select a collection to ${action}`,
 		maxItems: 20,
 		options: [
 			...candidates.map((collection) => ({

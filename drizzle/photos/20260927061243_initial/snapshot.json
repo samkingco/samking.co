@@ -1,7 +1,7 @@
 {
   "version": "7",
   "dialect": "sqlite",
-  "id": "dd23b509-932a-44ed-a4b1-a25dc265ee00",
+  "id": "11377620-d0a8-4de4-803d-2a6e0d7b970f",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -589,6 +589,16 @@
       "table": "photos"
     },
     {
+      "type": "integer",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "metadata_source_id",
+      "entityType": "columns",
+      "table": "photos"
+    },
+    {
       "type": "text",
       "notNull": true,
       "autoincrement": false,
@@ -692,6 +702,21 @@
       "name": "fk_photo_exports_photo_id_photos_id_fk",
       "entityType": "fks",
       "table": "photo_exports"
+    },
+    {
+      "columns": [
+        "metadata_source_id"
+      ],
+      "tableTo": "photo_derivatives",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "SET NULL",
+      "nameExplicit": false,
+      "name": "fk_photos_metadata_source_id_photo_derivatives_id_fk",
+      "entityType": "fks",
+      "table": "photos"
     },
     {
       "columns": [

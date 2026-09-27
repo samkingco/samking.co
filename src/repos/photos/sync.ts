@@ -53,15 +53,14 @@ type ExportCandidate = {
 }
 
 function optionalR2Config(): R2Config | null {
-	return [
+	const settings = [
 		process.env.R2_ENDPOINT,
 		process.env.R2_ACCESS_KEY_ID,
 		process.env.R2_SECRET_ACCESS_KEY,
 		process.env.R2_BUCKET,
 		process.env.R2_BACKUP_BUCKET,
-	].every(Boolean)
-		? loadR2Config()
-		: null
+	]
+	return settings.some(Boolean) ? loadR2Config() : null
 }
 
 export async function syncPhotos(
@@ -82,8 +81,7 @@ export async function syncPhotos(
 	persistCollections(database, snapshot)
 	markMissingPhotos(database, new Set(snapshot.variants.map(({id}) => id)))
 	await discardSupersededPendingFiles(database)
-	// source.jpg is authoritative, including edits that clear metadata fields.
-	for (const source of readSourceImages(database)) {
+	for (const source of readMetadataSources(database)) {
 		const {normalized} = await preparePhoto(source.path)
 		database
 			.update(photos)
@@ -93,21 +91,6 @@ export async function syncPhotos(
 			})
 			.where(eq(photos.id, source.photoId))
 			.run()
-	}
-	const config = optionalR2Config()
-	if (!config) {
-		progress(
-			"Local catalog synced. R2 credentials are not loaded; uploads remain pending.",
-		)
-		return snapshot.variants.length
-	}
-	const client = createR2Client(config)
-	try {
-		await uploadPendingFiles(database, client, config, progress)
-		progress("Uploading catalog backup")
-		await backupPhotoDatabase(database, client, config)
-	} finally {
-		client.destroy()
 	}
 	return snapshot.variants.length
 }
@@ -126,20 +109,42 @@ export async function regenerateOpenGraphImages(
 		)
 		upsertDerivative(database, row.id, generated)
 	}
+	return rows.length
+}
+
+export async function uploadPhotos(
+	progress: (message: string) => void,
+	{backupCatalog}: {backupCatalog: boolean},
+): Promise<boolean> {
 	const config = optionalR2Config()
 	if (!config) {
-		progress(
-			"Images regenerated. R2 credentials are not loaded; uploads remain pending.",
-		)
-		return rows.length
+		return false
 	}
+	const database = openPhotoDatabase()
+	using _ = database.$client
 	const client = createR2Client(config)
 	try {
 		await uploadPendingFiles(database, client, config, progress)
+		if (backupCatalog) {
+			progress("Uploading catalog backup")
+			await backupPhotoDatabase(database, client, config)
+		}
 	} finally {
 		client.destroy()
 	}
-	return rows.length
+	return true
+}
+
+function readMetadataSources(database: PhotoDatabase) {
+	return database
+		.select({photoId: photos.id, path: photoDerivatives.path})
+		.from(photos)
+		.innerJoin(
+			photoDerivatives,
+			eq(photoDerivatives.id, photos.metadataSourceId),
+		)
+		.where(and(eq(photos.status, "active"), isNull(photoDerivatives.deletedAt)))
+		.all()
 }
 
 function readSourceImages(database: PhotoDatabase) {
@@ -378,7 +383,17 @@ function stageExport(
 			.get()
 		const exportId = exportRow.id
 		for (const derivative of prepared.derivatives) {
-			upsertDerivative(database, exportId, derivative)
+			const {id} = upsertDerivative(database, exportId, derivative)
+			if (
+				candidate.profile === siteConfig.photos.exportProfile &&
+				derivative.kind === "source"
+			) {
+				database
+					.update(photos)
+					.set({metadataSourceId: id})
+					.where(eq(photos.id, photoId))
+					.run()
+			}
 		}
 	})
 }
@@ -426,9 +441,9 @@ function upsertDerivative(
 	database: PhotoDatabase,
 	exportId: number,
 	derivative: PreparedDerivative,
-): void {
+) {
 	const r2Key = `photos/${relative(OBJECT_ROOT, derivative.path).split(sep).join("/")}`
-	database
+	return database
 		.insert(photoDerivatives)
 		.values({
 			...derivative,
@@ -444,7 +459,8 @@ function upsertDerivative(
 				deletedAt: null,
 			},
 		})
-		.run()
+		.returning({id: photoDerivatives.id})
+		.get()
 }
 
 function persistCollections(
@@ -636,7 +652,7 @@ async function uploadPendingFiles(
 	config: R2Config,
 	progress: (message: string) => void,
 ): Promise<void> {
-	progress("Uploading pending files")
+	progress("Checking pending files in R2")
 	const rows = database
 		.select({
 			id: photoDerivatives.id,
@@ -657,9 +673,11 @@ async function uploadPendingFiles(
 			),
 		)
 		.all()
+	let uploaded = 0
+	let reused = 0
 	for (const [index, row] of rows.entries()) {
 		progress(`${index + 1}/${rows.length} ${row.r2Key}`)
-		await uploadR2File({
+		const result = await uploadR2File({
 			client,
 			config,
 			path: row.path,
@@ -668,11 +686,16 @@ async function uploadPendingFiles(
 			mimeType: row.mimeType,
 			sha256: row.sha256,
 		})
+		if (result === "uploaded") {
+			uploaded++
+		} else {
+			reused++
+		}
 		database
 			.update(photoDerivatives)
 			.set({uploadedAt: new Date().toISOString()})
 			.where(eq(photoDerivatives.id, row.id))
 			.run()
 	}
-	progress(`Uploaded ${rows.length} files`)
+	progress(`Uploaded ${uploaded} files; reused ${reused} files in R2`)
 }

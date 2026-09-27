@@ -86,7 +86,7 @@ export async function readCaptureOneSnapshot(
 ): Promise<CaptureOneSnapshot> {
 	if (rootIds.length === 0) {
 		throw new Error(
-			'Add a Capture One root with "pnpm content photos roots" first.',
+			'Choose Capture One collections with "pnpm content photos setup" first.',
 		)
 	}
 	return readCaptureOne(rootIds)
@@ -239,7 +239,7 @@ function selectedCollections(
 		}
 
 		if (!byId.has(id)) {
-			throw new Error(`Capture One root ${id} was not found`)
+			throw new Error(`Capture One collection ${id} was not found`)
 		}
 
 		selected.add(id)

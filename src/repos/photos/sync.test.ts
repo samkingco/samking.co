@@ -1,6 +1,5 @@
 import assert from "node:assert/strict"
 import {spawnSync} from "node:child_process"
-import {readFileSync} from "node:fs"
 import {mkdir, mkdtemp, readFile, realpath, rm} from "node:fs/promises"
 import {tmpdir} from "node:os"
 import {join} from "node:path"
@@ -8,6 +7,7 @@ import {DatabaseSync} from "node:sqlite"
 import test from "node:test"
 import {fileURLToPath, pathToFileURL} from "node:url"
 import {eq, isNull} from "drizzle-orm"
+import {migrate} from "drizzle-orm/node-sqlite/migrator"
 import sharp from "sharp"
 import {
 	collectionRoots,
@@ -21,14 +21,23 @@ import {openPhotoDatabase} from "./database.ts"
 const cli = fileURLToPath(new URL("../../cli/index.ts", import.meta.url))
 const configUrl = new URL("../../site.config.ts", import.meta.url).href
 
-function run(cwd: string, command = "sync") {
+function run(
+	cwd: string,
+	command = "sync",
+	websiteProfile = "website",
+	remote: string | {script: string; status: number} = "",
+) {
+	const options =
+		typeof remote === "string" ? {script: remote, status: 0} : remote
 	const env = Object.fromEntries(
 		Object.entries(process.env).filter(([key]) => !key.startsWith("R2_")),
 	)
 	const preload = `
 		import {siteConfig} from ${JSON.stringify(configUrl)};
 		siteConfig.photos.captureOneCatalogPath = ${JSON.stringify(join(cwd, "Fixture.cocatalog"))};
+		siteConfig.photos.exportProfile = ${JSON.stringify(websiteProfile)};
 		globalThis.fetch = async () => { throw new Error("Unexpected network request") };
+		${options.script}
 	`
 	const result = spawnSync(
 		process.execPath,
@@ -46,7 +55,7 @@ function run(cwd: string, command = "sync") {
 			timeout: 20_000,
 		},
 	)
-	assert.equal(result.status, 0, result.stderr + result.stdout)
+	assert.equal(result.status, options.status, result.stderr + result.stdout)
 }
 
 async function image(path: string, caption: string, camera = false) {
@@ -102,15 +111,11 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 		.run(2, pathToFileURL(refrakt).href)
 	const db = openPhotoDatabase(join(cwd, "photos/catalog.sqlite"))
 	using _ = db.$client
-	db.$client.exec(
-		readFileSync(
-			new URL(
-				"../../../drizzle/photos/20260925205129_massive_silver_samurai/migration.sql",
-				import.meta.url,
-			),
-			"utf8",
+	migrate(db, {
+		migrationsFolder: fileURLToPath(
+			new URL("../../../drizzle/photos", import.meta.url),
 		),
-	)
+	})
 	const date = "2025-01-01T00:00:00.000Z"
 	db.insert(collections)
 		.values({
@@ -144,6 +149,8 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 		"thumb",
 	])
 	const source = outputs.find(({kind}) => kind === "source")!
+	assert.equal(initial.metadataSourceId, source.id)
+	assert.throws(() => db.update(photos).set({metadataSourceId: -1}).run())
 	assert.ok(source.r2Key.endsWith("/source.jpg"))
 	assert.deepEqual(await readFile(source.path), await readFile(website))
 	assert.equal(
@@ -156,7 +163,7 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 		"Keep this description",
 	)
 
-	// Repair metadata left by the old scoring rule, without changing the export.
+	// Shared ingest follows the stored reference, not the website profile.
 	db.update(photos)
 		.set({
 			metadataJson: JSON.stringify({
@@ -165,7 +172,7 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 			}),
 		})
 		.run()
-	run(cwd)
+	run(cwd, "sync", "another-profile")
 	assert.equal(
 		JSON.parse(db.select().from(photos).get()!.metadataJson!).caption,
 		"Source caption",
@@ -212,6 +219,8 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 		.from(photoDerivatives)
 		.all()
 		.find(({kind, deletedAt}) => kind === "source" && deletedAt === null)!
+	assert.notEqual(sourceNow.id, source.id)
+	assert.equal(db.select().from(photos).get()!.metadataSourceId, sourceNow.id)
 	const sourceBytes = await readFile(sourceNow.path)
 	run(cwd, "regenerate-og")
 	assert.deepEqual(await readFile(sourceNow.path), sourceBytes)
@@ -223,4 +232,125 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 			.all().length,
 		4,
 	)
+	const remote = (
+		expectedChecks: number,
+		failure?: {check: number; properties: object},
+	) => `
+		import assert from "node:assert/strict";
+		import {readFile} from "node:fs/promises";
+		import {createHash} from "node:crypto";
+		import {S3Client, HeadObjectCommand, PutObjectCommand} from ${JSON.stringify(import.meta.resolve("@aws-sdk/client-s3"))};
+		Object.assign(process.env, {
+			R2_ENDPOINT: "https://r2.test", R2_ACCESS_KEY_ID: "test",
+			R2_SECRET_ACCESS_KEY: "test", R2_BUCKET: "photos", R2_BACKUP_BUCKET: "backups"
+		});
+		const failure = ${JSON.stringify(failure ?? null)};
+		let checks = 0;
+		S3Client.prototype.send = async (command) => {
+			if (command instanceof HeadObjectCommand) {
+				checks++;
+				if (failure?.check === checks) throw Object.assign(new Error("R2 unavailable"), failure.properties);
+				const bytes = await readFile(command.input.Key.replace("photos/", "photos/objects/"));
+				return {
+					Metadata: {sha256: createHash("sha256").update(bytes).digest("hex")},
+					ContentLength: bytes.length,
+					ContentType: command.input.Key.endsWith(".webp") ? "image/webp" : "image/jpeg"
+				};
+			}
+			assert.ok(command instanceof PutObjectCommand);
+			assert.equal(command.input.Bucket, "backups", "Matching images must not be uploaded");
+			await Array.fromAsync(command.input.Body);
+			if (failure?.check === 0) throw Object.assign(new Error("R2 unavailable"), failure.properties);
+			return {};
+		};
+		process.on("exit", () => assert.equal(checks, ${expectedChecks}));
+	`
+	run(
+		cwd,
+		"sync",
+		"website",
+		remote(1, {
+			check: 1,
+			properties: {code: "ENETUNREACH"},
+		}),
+	)
+	assert.equal(
+		db
+			.select()
+			.from(photoDerivatives)
+			.all()
+			.filter(({uploadedAt}) => uploadedAt !== null).length,
+		0,
+	)
+	run(cwd, "sync", "website", {
+		script: remote(1, {
+			check: 1,
+			properties: {$metadata: {httpStatusCode: 403}},
+		}),
+		status: 1,
+	})
+	run(cwd, "sync", "website", {
+		script: 'process.env.R2_ENDPOINT = "https://r2.test";',
+		status: 1,
+	})
+	assert.equal(
+		JSON.parse(db.select().from(photos).get()!.metadataJson!).caption,
+		"Changed source caption",
+	)
+	run(
+		cwd,
+		"sync",
+		"website",
+		remote(2, {
+			check: 2,
+			properties: {code: "ECONNRESET"},
+		}),
+	)
+	assert.equal(
+		db
+			.select()
+			.from(photoDerivatives)
+			.all()
+			.filter(({uploadedAt}) => uploadedAt !== null).length,
+		1,
+	)
+	run(cwd, "sync", "website", remote(3))
+	assert.ok(
+		db
+			.select()
+			.from(photoDerivatives)
+			.where(isNull(photoDerivatives.deletedAt))
+			.all()
+			.every(({uploadedAt}) => uploadedAt !== null),
+	)
+	run(
+		cwd,
+		"sync",
+		"website",
+		remote(0, {
+			check: 0,
+			properties: {name: "TimeoutError"},
+		}),
+	)
+	run(cwd, "sync", "website", remote(0))
+	run(
+		cwd,
+		"regenerate-og",
+		"website",
+		remote(1, {
+			check: 1,
+			properties: {code: "ENOTFOUND"},
+		}),
+	)
+	assert.equal(
+		db
+			.select()
+			.from(photoDerivatives)
+			.all()
+			.filter(({uploadedAt}) => uploadedAt === null).length,
+		1,
+	)
+	run(cwd, "sync", "website", remote(1))
+	db.delete(photoDerivatives).where(eq(photoDerivatives.id, sourceNow.id)).run()
+	assert.equal(db.select().from(photos).get()!.metadataSourceId, null)
 })

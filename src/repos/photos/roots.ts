@@ -25,7 +25,7 @@ export function addRoot(
 ) {
 	const collection = snapshot.collections.find(({id}) => id === collectionId)
 	if (!collection) {
-		throw new Error(`Capture One root ${collectionId} was not found`)
+		throw new Error(`Capture One collection ${collectionId} was not found`)
 	}
 	return database.transaction(() => {
 		bindDocument(database, snapshot.documentId)
