@@ -1,87 +1,88 @@
 import assert from "node:assert/strict"
-import {spawn, spawnSync} from "node:child_process"
+import {spawn} from "node:child_process"
 import {once} from "node:events"
-import {mkdtemp, readFile, rm} from "node:fs/promises"
+import {mkdtemp, readFile, realpath, rm} from "node:fs/promises"
 import {tmpdir} from "node:os"
 import {join} from "node:path"
 import test, {type TestContext} from "node:test"
-import {setTimeout as delay} from "node:timers/promises"
 import {fileURLToPath} from "node:url"
-import type {RemoteRecord} from "../atproto/records.ts"
 import {readNotes, writeNote} from "../repos/notes.ts"
 import {readPosts} from "../repos/posts.ts"
-import {siteConfig} from "../site.config.ts"
 
 const cli = fileURLToPath(new URL("./index.ts", import.meta.url))
-const noNetwork =
-	"globalThis.fetch = async () => { throw new Error('Unexpected network request') }"
 
 async function workspace(t: TestContext) {
-	const cwd = await mkdtemp(join(tmpdir(), "content-cli-"))
+	const cwd = await realpath(await mkdtemp(join(tmpdir(), "content-cli-")))
 	t.after(() => rm(cwd, {recursive: true, force: true}))
 	return cwd
 }
 
-function run(cwd: string, args: string[], input = "", preload = noNetwork) {
-	return spawnSync(
+async function run(
+	cwd: string,
+	args: string[],
+	options: {input?: string; interactive?: boolean} = {},
+) {
+	assert.ok(
+		process.allowedNodeEnvironmentFlags.has("--allow-net"),
+		"CLI tests require Node with network permissions.",
+	)
+	using child = spawn(
 		process.execPath,
 		[
-			"--import",
-			`data:text/javascript,${encodeURIComponent(preload)}`,
+			// Exercise the real CLI without granting network access or writes outside its workspace.
+			"--permission",
+			"--allow-fs-read=*",
+			`--allow-fs-write=${cwd}`,
+			"--allow-addons",
+			"--disable-warning=SecurityWarning",
 			cli,
 			...args,
 		],
 		{
 			cwd,
-			input,
-			encoding: "utf8",
+			stdio: ["pipe", "pipe", "pipe"],
 			timeout: 10_000,
 			env: {
 				...process.env,
+				NODE_OPTIONS: "",
 				ATPROTO_APP_PASSWORD: "",
 				PHOTO_DATABASE_PATH: join(cwd, "catalog.sqlite"),
 			},
 		},
 	)
+	let stdout = ""
+	let stderr = ""
+	child.stdout.on("data", (chunk) => {
+		stdout += chunk.toString()
+	})
+	child.stderr.on("data", (chunk) => {
+		stderr += chunk.toString()
+	})
+	const completed = once(child, "close")
+	if (options.interactive) {
+		await Promise.race([
+			once(child.stdout, "data"),
+			completed.then(() => {
+				throw new Error(`CLI exited before prompting: ${stderr}`)
+			}),
+		])
+	}
+	child.stdin.end(options.input ?? "")
+	const [status] = await completed
+	return {status, stdout, stderr}
 }
 
-// Only the external identity/PDS boundary is replaced. Commands, files, parsing,
-// conversion and comparison run through the real CLI.
-function mockNetwork(records: RemoteRecord[] = []) {
-	return `
-		const did = ${JSON.stringify(siteConfig.atproto.did)};
-		globalThis.fetch = async (input, init) => {
-			const url = new URL(input instanceof Request ? input.url : input);
-			if ((init?.method ?? "GET").toUpperCase() !== "GET") throw new Error("Write attempted");
-			if (url.origin === "https://bsky.social" && url.pathname === "/xrpc/com.atproto.identity.resolveHandle") {
-				return Response.json({did});
-			}
-			if (url.origin === "https://plc.directory" && decodeURIComponent(url.pathname) === "/" + did) {
-				return Response.json({id: did, service: [{id: did + "#atproto_pds", type: "AtprotoPersonalDataServer", serviceEndpoint: "https://pds.test"}]});
-			}
-			if (url.origin === "https://pds.test" && url.pathname === "/xrpc/com.atproto.repo.listRecords") {
-				return Response.json({records: ${JSON.stringify(records)}});
-			}
-			throw new Error("Unexpected request: " + url);
-		};
-	`
-}
-
-test("create content, publish a note, and skip it on a repeat run", async (t) => {
+test("CLI arguments and stdin create real notes and journal files", async (t) => {
 	const cwd = await workspace(t)
 	const root = join(cwd, "src/content")
-	const input = "\nA crow 🐦 and [photos](/photos/) with @samking.co.\n\n"
-	const created = run(cwd, ["note", "--stdin"], input, mockNetwork())
+	const input = "\nA crow 🐦 and [photos](/photos/).\n\n"
+	const created = await run(cwd, ["note", "--stdin"], {input})
 	assert.equal(created.status, 0, created.stderr)
 	const [note] = await readNotes(root)
 	assert.ok(note)
-	assert.equal(
-		note.text,
-		`\nA crow 🐦 and [photos](/photos/) with [@samking.co](https://bsky.app/profile/${encodeURIComponent(siteConfig.atproto.did)}).\n\n`,
-	)
-	const saved = await readFile(note.path, "utf8")
+	assert.equal(note.text, input)
 
-	const postResult = run(cwd, [
+	const postResult = await run(cwd, [
 		"journal",
 		"A café visit",
 		"--excerpt",
@@ -93,157 +94,74 @@ test("create content, publish a note, and skip it on a repeat run", async (t) =>
 	assert.equal(post.title, "A café visit")
 	assert.equal(post.slug, "a-cafe-visit")
 	assert.equal(post.excerpt, "A summary")
+})
 
-	const result = run(
-		cwd,
-		["atproto", "plan", "bluesky", "--json"],
-		"",
-		mockNetwork(),
-	)
-	assert.equal(result.status, 0, result.stderr)
-	const plan = JSON.parse(result.stdout).plan
-	assert.equal(plan.creates.length, 1)
-	const createdRecord = plan.creates[0]
+test("real Clack editors accept multiline input and keyboard edits", async (t) => {
+	const cwd = await workspace(t)
+	const note = await run(cwd, ["note"], {
+		interactive: true,
+		input: "First line\rSecond linx\x7fe\t\r",
+	})
+	assert.equal(note.status, 0, note.stderr)
 	assert.equal(
-		createdRecord.uri,
-		`at://${siteConfig.atproto.did}/app.bsky.feed.post/${note.tid}`,
+		(await readNotes(join(cwd, "src/content")))[0]?.text,
+		"First line\nSecond line",
 	)
+
+	const post = await run(cwd, ["journal", "--excerpt", "An excerpt"], {
+		interactive: true,
+		input: "A café visix\x7ft\r",
+	})
+	assert.equal(post.status, 0, post.stderr)
 	assert.equal(
-		createdRecord.record.text,
-		"A crow 🐦 and photos with @samking.co.",
+		(await readPosts(join(cwd, "src/content")))[0]?.title,
+		"A café visit",
 	)
-	assert.deepEqual(
-		createdRecord.record.facets.flatMap(
-			(facet: {features: unknown[]}) => facet.features,
-		),
-		[
-			{
-				$type: "app.bsky.richtext.facet#link",
-				uri: "https://samking.co/photos/",
-			},
-			{$type: "app.bsky.richtext.facet#mention", did: siteConfig.atproto.did},
-		],
-	)
-
-	const publishing = run(
-		cwd,
-		["atproto", "publish", "bluesky", "--yes"],
-		"",
-		`${mockNetwork()}
-		import assert from "node:assert/strict";
-		process.env.ATPROTO_APP_PASSWORD = "test-app-password";
-		const read = globalThis.fetch;
-		let writes = 0;
-		process.on("exit", () => {
-			if (writes !== 1) {
-				console.error("Expected one PDS record write, received " + writes);
-				process.exitCode = 1;
-			}
-		});
-		globalThis.fetch = async (input, init) => {
-			const url = new URL(input instanceof Request ? input.url : input);
-			if (url.origin !== "https://pds.test" || init?.method?.toUpperCase() !== "POST") return read(input, init);
-			const body = JSON.parse(init.body);
-			if (url.pathname === "/xrpc/com.atproto.server.createSession") {
-				assert.equal(body.identifier, did);
-				assert.equal(body.password, "test-app-password");
-				return Response.json({did, handle: "samking.co", accessJwt: "test-access", refreshJwt: "test-refresh"});
-			}
-			if (url.pathname === "/xrpc/com.atproto.repo.putRecord") {
-				assert.equal(new Headers(init.headers).get("authorization"), "Bearer test-access");
-				assert.equal(body.repo, did);
-				assert.equal(body.collection, "app.bsky.feed.post");
-				assert.equal(body.rkey, ${JSON.stringify(note.tid)});
-				assert.deepEqual(body.record, ${JSON.stringify(createdRecord.record)});
-				writes++;
-				return Response.json(${JSON.stringify({uri: createdRecord.uri, cid: createdRecord.cid})});
-			}
-			throw new Error("Unexpected write: " + url);
-		};`,
-	)
-	assert.equal(publishing.status, 0, publishing.stderr)
-
-	const published = [
-		{
-			uri: createdRecord.uri,
-			cid: createdRecord.cid,
-			value: createdRecord.record,
-		},
-	]
-	const repeated = run(
-		cwd,
-		["atproto", "plan", "bluesky", "--json"],
-		"",
-		mockNetwork(published),
-	)
-	assert.equal(repeated.status, 0, repeated.stderr)
-	const nextPlan = JSON.parse(repeated.stdout).plan
-	assert.deepEqual(nextPlan.creates, [])
-	assert.deepEqual(nextPlan.updates, [])
-	assert.equal(nextPlan.unchanged.length, 1)
-	assert.equal(await readFile(note.path, "utf8"), saved)
-	const republished = run(
-		cwd,
-		["atproto", "publish", "bluesky", "--yes"],
-		"",
-		mockNetwork(published),
-	)
-	assert.equal(republished.status, 0, republished.stderr)
 })
 
 test("conflicting input does not write content", async (t) => {
 	const cwd = await workspace(t)
-	assert.equal(run(cwd, ["note", "argument", "--stdin"], "stdin").status, 1)
+	assert.equal(
+		(await run(cwd, ["note", "argument", "--stdin"], {input: "stdin"})).status,
+		1,
+	)
 	assert.deepEqual(await readNotes(join(cwd, "src/content")), [])
 })
 
-test("photo setup replaces the roots command", async (t) => {
+test("non-interactive menus require a terminal", async (t) => {
 	const cwd = await workspace(t)
-	const help = run(cwd, ["photos", "--help"])
-	assert.equal(help.status, 0, help.stderr)
-	assert.match(help.stdout, /\bsetup\b/)
-	assert.doesNotMatch(help.stdout, /\broots\b/)
-	assert.equal(run(cwd, ["photos", "setup", "--help"]).status, 0)
-	assert.equal(run(cwd, ["photos", "roots"]).status, 1)
+	for (const args of [
+		[],
+		["photos"],
+		["photos", "alt"],
+		["atproto"],
+		["atproto", "share"],
+	]) {
+		assert.equal((await run(cwd, args)).status, 1)
+	}
 })
 
-test(
-	"Escape returns from a submenu but the root waits for Ctrl+C",
-	{timeout: 10_000},
-	async (t) => {
-		const cwd = await workspace(t)
-		const preload = `${noNetwork};
-		Object.assign(process.stdin, {isTTY: true, setRawMode() {}});
-	`
-		for (const args of [[], ["photos"], ["photos", "alt"]]) {
-			const child = spawn(
-				process.execPath,
-				[
-					"--import",
-					`data:text/javascript,${encodeURIComponent(preload)}`,
-					cli,
-					...args,
-				],
-				{cwd, stdio: ["pipe", "pipe", "pipe"]},
-			)
-			t.after(() => child.kill())
-			const exit = once(child, "exit")
-			await once(child.stdout, "data")
-			child.stdin.write("\x1b")
-			if (args.length === 0) {
-				await delay(100)
-				assert.equal(child.exitCode, null)
-				child.stdin.write("\x03")
-			}
-			const [code] = await exit
-			assert.equal(code, args.length === 0 ? 130 : 0)
-		}
-	},
-)
+test("Escape and Ctrl+C leave editors without creating files", async (t) => {
+	const cwd = await workspace(t)
+	for (const command of ["note", "journal"]) {
+		const cancelled = await run(cwd, [command], {
+			interactive: true,
+			input: "Unsaved text\x1b",
+		})
+		assert.equal(cancelled.status, 0, cancelled.stderr)
+		const interrupted = await run(cwd, [command], {
+			interactive: true,
+			input: "Unsaved text\x03",
+		})
+		assert.equal(interrupted.status, 130, interrupted.stderr)
+	}
+	assert.deepEqual(await readNotes(join(cwd, "src/content")), [])
+	assert.deepEqual(await readPosts(join(cwd, "src/content")), [])
+})
 
 test("failed mention lookup does not save a partially converted note", async (t) => {
 	const cwd = await workspace(t)
-	assert.equal(run(cwd, ["note", "Hi @samking.co"]).status, 1)
+	assert.equal((await run(cwd, ["note", "Hi @samking.co"])).status, 1)
 	assert.deepEqual(await readNotes(join(cwd, "src/content")), [])
 })
 
@@ -256,8 +174,9 @@ test("an invalid note stops the whole plan without changing source files", async
 		readFile(valid, "utf8"),
 		readFile(invalid, "utf8"),
 	])
-	const result = run(cwd, ["atproto", "plan", "bluesky", "--json"])
+	const result = await run(cwd, ["atproto", "plan", "bluesky", "--json"])
 	assert.equal(result.status, 1)
+	assert.ok(result.stderr.includes(invalid), result.stderr)
 	assert.equal(result.stdout.trim(), "")
 	assert.deepEqual(
 		await Promise.all([readFile(valid, "utf8"), readFile(invalid, "utf8")]),

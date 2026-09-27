@@ -1,10 +1,11 @@
 import assert from "node:assert/strict"
+import {once} from "node:events"
 import {mkdir, mkdtemp, rm, writeFile} from "node:fs/promises"
+import {createServer, type IncomingHttpHeaders} from "node:http"
 import {tmpdir} from "node:os"
 import {join} from "node:path"
 import test from "node:test"
 import {AppBskyEmbedExternal} from "@atcute/bluesky"
-import {Client} from "@atcute/client"
 import {parse} from "@atcute/lexicons/validations"
 import {parse as parseTid} from "@atcute/tid"
 import sharp from "sharp"
@@ -14,7 +15,12 @@ import {
 	publishJournalShare,
 	readJournalCard,
 } from "./journal.ts"
-import {createPlannedRecord, type RemoteRecord} from "./records.ts"
+import {createBlueskyClient, publishBluesky} from "./publish.ts"
+import {
+	compareRecords,
+	createPlannedRecord,
+	type RemoteRecord,
+} from "./records.ts"
 
 const did = "did:plc:653egim2jcy2f4j4abtunvhj"
 const url = new URL("https://samking.co/journal/example/")
@@ -106,13 +112,21 @@ test("composition appends a short clickable URL and validates the complete text"
 	assert.deepEqual(code.facets!.at(-1)!.features, facet.features)
 })
 
-test("shares use local metadata and image bytes, then upload and create a new record", async (t) => {
+test("publishing sends local image bytes over HTTP and skips unchanged records", async (t) => {
 	const cwd = await mkdtemp(join(tmpdir(), "journal-card-"))
-	t.after(() => rm(cwd, {recursive: true, force: true}))
-	t.mock.method(process, "cwd", () => cwd)
-	t.mock.method(globalThis, "fetch", () =>
-		assert.fail("Unexpected network request"),
-	)
+	const previousCwd = process.cwd()
+	const previousPassword = process.env.ATPROTO_APP_PASSWORD
+	process.chdir(cwd)
+	process.env.ATPROTO_APP_PASSWORD = "test-app-password"
+	t.after(async () => {
+		process.chdir(previousCwd)
+		if (previousPassword === undefined) {
+			delete process.env.ATPROTO_APP_PASSWORD
+		} else {
+			process.env.ATPROTO_APP_PASSWORD = previousPassword
+		}
+		await rm(cwd, {recursive: true, force: true})
+	})
 	const post = {slug: "example", title: "Example", excerpt: "An excerpt"}
 	const path = join(cwd, "dist/journal/example.og.png")
 	await assert.rejects(readJournalCard(post, url))
@@ -126,7 +140,11 @@ test("shares use local metadata and image bytes, then upload and create a new re
 	const card = await readJournalCard(post, url)
 	assert.deepEqual(card.external, external.external)
 	assert.deepEqual(Buffer.from(await card.image.arrayBuffer()), png)
-	const writes: {rkey: string; record: typeof record & {embed: unknown}}[] = []
+	const requests: {
+		path: string | undefined
+		headers: IncomingHttpHeaders
+		body: Buffer
+	}[] = []
 	let failUpload = false
 	const blob = {
 		$type: "blob",
@@ -134,36 +152,74 @@ test("shares use local metadata and image bytes, then upload and create a new re
 		mimeType: "image/png",
 		size: card.image.size,
 	}
-	const client = new Client({
-		handler: async (endpoint, init) => {
-			const request = new Request(new URL(endpoint, "https://pds.test"), init)
-			assert.equal(request.method, "POST")
-			if (endpoint.endsWith("uploadBlob")) {
-				if (failUpload) {
-					return Response.json({error: "InvalidBlob"}, {status: 400})
-				}
-				assert.equal(request.headers.get("content-type"), "image/png")
-				assert.deepEqual(Buffer.from(await request.arrayBuffer()), png)
-				return Response.json({blob})
-			}
-			assert.ok(endpoint.endsWith("createRecord"))
-			const body = JSON.parse(String(init.body))
-			assert.equal(body.repo, did)
-			assert.equal(body.collection, "app.bsky.feed.post")
-			assert.equal(body.validate, true)
-			writes.push(body)
-			return Response.json({
-				uri: `at://${did}/app.bsky.feed.post/${body.rkey}`,
-				cid: planned.cid,
-			})
-		},
+	await using server = createServer(async (request, response) => {
+		const body = Buffer.concat(await Array.fromAsync(request))
+		requests.push({path: request.url, headers: request.headers, body})
+		response.setHeader("content-type", "application/json")
+		switch (request.url) {
+			case "/xrpc/com.atproto.server.createSession":
+				response.end(
+					JSON.stringify({
+						did,
+						handle: "samking.co",
+						accessJwt: "test-access",
+						refreshJwt: "test-refresh",
+					}),
+				)
+				break
+			case "/xrpc/com.atproto.repo.uploadBlob":
+				response.statusCode = failUpload ? 400 : 200
+				response.end(
+					JSON.stringify(failUpload ? {error: "InvalidBlob"} : {blob}),
+				)
+				break
+			case "/xrpc/com.atproto.repo.createRecord":
+			case "/xrpc/com.atproto.repo.putRecord":
+				response.end(
+					JSON.stringify({
+						uri: `at://${did}/app.bsky.feed.post/${JSON.parse(body.toString()).rkey}`,
+						cid: planned.cid,
+					}),
+				)
+				break
+			default:
+				response.statusCode = 404
+				response.end()
+		}
 	})
+	server.listen(0, "127.0.0.1")
+	await once(server, "listening")
+	const address = server.address()
+	assert.ok(address && typeof address !== "string")
+	const endpoint = `http://127.0.0.1:${address.port}`
+	const client = await createBlueskyClient(did, endpoint)
 	const started = Date.now()
 	const first = await publishJournalShare(client, did, record, card)
 	const second = await publishJournalShare(client, did, record, card)
 	assert.notEqual(first.uri, second.uri)
+	assert.deepEqual(JSON.parse(requests[0]!.body.toString()), {
+		identifier: did,
+		password: "test-app-password",
+	})
+	const uploads = requests.filter((request) =>
+		request.path?.endsWith("uploadBlob"),
+	)
+	assert.equal(uploads.length, 2)
+	for (const upload of uploads) {
+		assert.equal(upload.headers.authorization, "Bearer test-access")
+		assert.equal(upload.headers["content-type"], "image/png")
+		assert.deepEqual(upload.body, png)
+	}
+	const writes = requests.filter((request) =>
+		request.path?.endsWith("createRecord"),
+	)
 	assert.equal(writes.length, 2)
-	for (const write of writes) {
+	for (const request of writes) {
+		assert.equal(request.headers.authorization, "Bearer test-access")
+		const write = JSON.parse(request.body.toString())
+		assert.equal(write.repo, did)
+		assert.equal(write.collection, "app.bsky.feed.post")
+		assert.equal(write.validate, true)
 		const timestamp = Math.floor(parseTid(write.rkey).timestamp / 1000)
 		assert.ok(timestamp >= started && timestamp <= Date.now())
 		assert.equal(write.record.createdAt, new Date(timestamp).toISOString())
@@ -172,9 +228,49 @@ test("shares use local metadata and image bytes, then upload and create a new re
 			external: {...card.external, thumb: blob},
 		})
 	}
+	const result = {
+		destination: "bluesky" as const,
+		did,
+		endpoint,
+		plan: compareRecords([planned], []),
+	}
+	const published: string[] = []
+	assert.equal(
+		await publishBluesky(result, (item) => {
+			published.push(item.uri)
+		}),
+		1,
+	)
+	assert.deepEqual(published, [planned.uri])
+	assert.deepEqual(JSON.parse(requests.at(-1)!.body.toString()), {
+		repo: did,
+		collection: planned.collection,
+		rkey: planned.rkey,
+		record: planned.record,
+		validate: true,
+	})
+	result.plan = compareRecords(
+		[planned],
+		[
+			{
+				uri: planned.uri,
+				cid: planned.cid,
+				value: planned.record,
+			},
+		],
+	)
+	const beforeRepeat = requests.length
+	assert.equal(
+		await publishBluesky(result, () =>
+			assert.fail("Unchanged record published"),
+		),
+		0,
+	)
+	assert.equal(requests.length, beforeRepeat)
 	failUpload = true
 	await assert.rejects(publishJournalShare(client, did, record, card))
-	assert.equal(writes.length, 2)
+	assert.equal(requests.length, beforeRepeat + 1)
+	assert.equal(requests.at(-1)?.path, "/xrpc/com.atproto.repo.uploadBlob")
 	await writeFile(path, Buffer.alloc(1_000_001))
 	await assert.rejects(readJournalCard(post, url))
 })

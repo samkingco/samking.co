@@ -54,28 +54,60 @@ test("menus resume after tasks, keep focus, return one level, and recover from e
 		],
 		options,
 	)
-	const key = async (sequence: string) => {
-		input.write(sequence)
+	const key = async (name: string) => {
+		input.emit("keypress", "", {name})
 		await setImmediate()
 	}
-	await key("\r") // Open child.
-	await key("\r")
-	await key("\r") // Repeat its task without reopening the menu.
+	await key("return") // Open child.
+	await key("return")
+	await key("return") // Repeat its task without reopening the menu.
 	assert.equal(tasks, 2)
-	input.write("\x1b")
-	await new Promise((resolve) => setTimeout(resolve, 80))
-	await key("\r") // Root retained focus on child.
-	await key("\r")
+	await key("escape")
+	await key("return") // Root retained focus on child.
+	await key("return")
 	assert.equal(tasks, 3)
-	input.write("\x1b") // Escape also returns one level.
-	await new Promise((resolve) => setTimeout(resolve, 80))
-	await key("\x1b[B")
-	await key("\r")
+	await key("escape")
+	await key("down")
+	await key("return")
 	assert.equal(errors, 1)
-	await key("\x1b[B")
-	await key("\r")
-	await key("\r")
+	await key("down")
+	await key("return")
+	await key("return")
 	assert.equal(last, 2)
-	input.write("\x1b")
+	await key("escape")
+	await session
+})
+
+test("Escape leaves the root menu open and an abort closes it", async (t) => {
+	const input = new PassThrough()
+	const output = new Writable({
+		write(_chunk, _encoding, done) {
+			done()
+		},
+	})
+	t.after(() => {
+		input.destroy()
+		output.destroy()
+	})
+	const controller = new AbortController()
+	let calls = 0
+	const session = menu(
+		"root",
+		[
+			{
+				label: "task",
+				run: async () => {
+					calls++
+				},
+			},
+		],
+		{input, output, root: true, signal: controller.signal},
+	)
+	input.emit("keypress", "", {name: "escape"})
+	await setImmediate()
+	input.emit("keypress", "", {name: "return"})
+	await setImmediate()
+	assert.equal(calls, 1)
+	controller.abort()
 	await session
 })
