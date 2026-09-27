@@ -76,7 +76,7 @@ const photoSets = contexts.filter((c) => c.reference?.type === "set")
 					data-photo-height={photo.metadata.height}
 					width={photo.metadata.width}
 					height={photo.metadata.height}
-					alt={photo.metadata.alt ?? photo.metadata.caption ?? ""}
+					alt={photo.metadata.alt ?? ""}
 					draggable="false"
 					data-photo-image
 					class="block max-h-full max-w-full h-auto w-auto select-none bg-muted object-contain"

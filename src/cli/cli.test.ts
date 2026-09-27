@@ -215,7 +215,7 @@ test(
 		const preload = `${noNetwork};
 		Object.assign(process.stdin, {isTTY: true, setRawMode() {}});
 	`
-		for (const args of [[], ["photos"]]) {
+		for (const args of [[], ["photos"], ["photos", "alt"]]) {
 			const child = spawn(
 				process.execPath,
 				[

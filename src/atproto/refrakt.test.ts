@@ -117,6 +117,21 @@ test("creates deterministic photo and profile records", async () => {
 	)
 })
 
+test("photo alt text does not fall back to captions or titles", async () => {
+	const source = catalog()
+	source.photos[0]!.metadata.caption = "A caption"
+	source.photos[2]!.metadata.alt = "Image alt text"
+	const records = await createRefraktRecords({did: DID, catalog: source})
+	const photos = records
+		.filter((row) => row.collection === "app.refrakt.photo")
+		.map((row) => row.record as {alt: string; caption?: string})
+	assert.deepEqual(
+		photos.map(({alt}) => alt),
+		["", "", source.photos[2]!.metadata.alt],
+	)
+	assert.equal(photos[0]!.caption, source.photos[0]!.metadata.caption)
+})
+
 test("profile order comes from the catalog and keeps record identities", async () => {
 	const initial = await createRefraktPlan({
 		did: DID,

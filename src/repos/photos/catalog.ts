@@ -156,6 +156,7 @@ function readPhotoRows(
 			name: photos.captureOneVariantName,
 			createdAt: photos.createdAt,
 			metadataJson: photos.metadataJson,
+			altText: photos.altText,
 			selectedExport: {
 				id: photoExports.id,
 				photoId: photoExports.photoId,
@@ -239,12 +240,13 @@ function hasWebsiteMedia(
 }
 
 function assemblePhoto(
-	{metadataJson, ...row}: ReturnType<typeof readPhotoRows>[number],
+	{metadataJson, altText, ...row}: ReturnType<typeof readPhotoRows>[number],
 	memberships: ReturnType<typeof readMemberships>,
 	derivatives: ReturnType<typeof readDerivatives>,
 	aliases: ReturnType<typeof readEquipmentAliases>,
 ) {
 	const metadata = v.parse(NormalizedMetadataSchema, JSON.parse(metadataJson!))
+	metadata.alt = metadata.alt ?? altText
 	const camera = resolveEquipment(
 		aliases,
 		"camera",

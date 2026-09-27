@@ -1,6 +1,7 @@
 import type {Key} from "node:readline"
 import {MULTISELECT_INSTRUCTIONS, SELECT_INSTRUCTIONS} from "@clack/prompts"
 import {Command} from "commander"
+import {generateAltTextCommand, manageAltText} from "./alt-text.ts"
 import {
 	manageAtproto,
 	runBlueskyPlan,
@@ -65,12 +66,7 @@ const photos = program
 
 const photoActions = [
 	{name: "sync", label: "Sync photos", run: syncPhotosCommand},
-	{
-		name: "regenerate-og",
-		label: "Regenerate OG images",
-		run: regenerateOpenGraphImagesCommand,
-	},
-	{name: "setup", label: "Choose collections to sync", run: setupPhotos},
+	{name: "alt", label: "Alt text", run: manageAltText},
 	{
 		name: "collections",
 		label: "Edit collection descriptions",
@@ -82,9 +78,21 @@ const photoActions = [
 		label: "Empty photo trash",
 		run: emptyPhotoTrashCommand,
 	},
+	{
+		name: "regenerate-og",
+		label: "Regenerate OG images",
+		run: regenerateOpenGraphImagesCommand,
+	},
+	{name: "setup", label: "Choose collections to sync", run: setupPhotos},
 ]
 for (const {name, label, run} of photoActions) {
-	photos.command(name).description(label).action(run)
+	const command = photos.command(name).description(label).action(run)
+	if (name === "alt") {
+		command
+			.command("generate")
+			.description("Generate missing or changed alt text")
+			.action(() => generateAltTextCommand())
+	}
 }
 
 async function managePhotos(): Promise<void> {

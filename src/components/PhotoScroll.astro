@@ -31,7 +31,7 @@ const {photos, context} = Astro.props
 				src={photo.detailUrl}
 				width={photo.metadata.width}
 				height={photo.metadata.height}
-				alt={photo.metadata.alt ?? photo.metadata.caption ?? ""}
+				alt={photo.metadata.alt ?? ""}
 				loading="lazy"
 				class="block size-full object-contain object-top-left"
 			/>

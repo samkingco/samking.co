@@ -29,7 +29,7 @@ const {photos, context} = Astro.props
 					src={photo.thumbUrl}
 					width={photo.metadata.width}
 					height={photo.metadata.height}
-					alt={photo.metadata.alt ?? photo.metadata.caption ?? ""}
+					alt={photo.metadata.alt ?? ""}
 					loading="lazy"
 					class="block h-auto w-full"
 				/>

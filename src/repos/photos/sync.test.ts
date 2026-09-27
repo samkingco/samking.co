@@ -10,13 +10,14 @@ import {eq, isNull} from "drizzle-orm"
 import {migrate} from "drizzle-orm/node-sqlite/migrator"
 import sharp from "sharp"
 import {
+	collectionPhotos,
 	collectionRoots,
 	collections,
 	photoDerivatives,
 	photoExports,
 	photos,
 } from "./database-schema.ts"
-import {openPhotoDatabase} from "./database.ts"
+import {openPhotoDatabase, photoIdForVariant} from "./database.ts"
 
 const cli = fileURLToPath(new URL("../../cli/index.ts", import.meta.url))
 const configUrl = new URL("../../site.config.ts", import.meta.url).href
@@ -133,8 +134,36 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 		.run()
 	db.insert(collectionRoots).values({collectionId: "2", addedAt: date}).run()
 
+	const collision = {
+		id: photoIdForVariant("10"),
+		captureOneVariantId: "other",
+		captureOneVariantName: "Keep this name",
+		status: "active" as const,
+		createdAt: date,
+		updatedAt: date,
+	}
+	db.insert(photos).values(collision).run()
+	run(cwd, "sync", "website", {script: "", status: 1})
+	assert.equal(
+		db.select().from(photos).get()!.captureOneVariantName,
+		collision.captureOneVariantName,
+	)
+	assert.equal(db.select().from(photos).get()!.captureOneVariantId, "other")
+	db.delete(photos).run()
+	db.insert(photos)
+		.values({
+			...collision,
+			id: "existing-photo",
+			captureOneVariantId: "10",
+			altText: "Human description",
+			altTextStatus: "edited",
+			altTextInputHash: "human-input",
+		})
+		.run()
+
 	run(cwd)
 	const initial = db.select().from(photos).get()!
+	assert.equal(initial.id, "existing-photo")
 	assert.equal(JSON.parse(initial.metadataJson!).caption, "Source caption")
 	assert.equal(JSON.parse(initial.metadataJson!).cameraModel, "X-T5")
 	const outputs = db
@@ -179,6 +208,14 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 	)
 	assert.equal(db.select().from(photoExports).all().length, 2)
 	assert.equal(db.select().from(photoDerivatives).all().length, 4)
+	assert.deepEqual(db.select().from(collectionPhotos).all(), [
+		{collectionId: "3", photoId: initial.id, position: 1},
+	])
+	const repeated = db.select().from(photos).get()!
+	assert.equal(repeated.id, initial.id)
+	assert.equal(repeated.altText, initial.altText)
+	assert.equal(repeated.altTextStatus, initial.altTextStatus)
+	assert.equal(repeated.altTextInputHash, initial.altTextInputHash)
 
 	// Missing generated files are recreated at the same keys, not duplicated.
 	await rm(outputs.find(({kind}) => kind === "thumb")!.path)
@@ -213,6 +250,30 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 			.all().length,
 		4,
 	)
+
+	// Re-exporting earlier bytes restores that export, then replaces it again.
+	await image(website, "Source caption", true)
+	run(cwd)
+	assert.equal(
+		db
+			.select()
+			.from(photoExports)
+			.where(eq(photoExports.id, source.exportId))
+			.get()!.current,
+		true,
+	)
+	assert.equal(db.select().from(photoExports).all().length, 3)
+	await image(website, "Changed source caption")
+	run(cwd)
+	assert.equal(
+		db
+			.select()
+			.from(photoExports)
+			.where(eq(photoExports.id, source.exportId))
+			.get()!.current,
+		false,
+	)
+	assert.equal(db.select().from(photoExports).all().length, 3)
 
 	const sourceNow = db
 		.select()

@@ -76,7 +76,7 @@ export async function GET() {
 				title,
 				link: `${site}/photos/${photo.id}/`,
 				content: sanitizeHtml(
-					`<p><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(photo.metadata.alt ?? title)}" width="${photo.metadata.width}" height="${photo.metadata.height}"></p>${photo.metadata.caption ? `<p>${escapeHtml(photo.metadata.caption)}</p>` : ""}${metadata}`,
+					`<p><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(photo.metadata.alt ?? "")}" width="${photo.metadata.width}" height="${photo.metadata.height}"></p>${photo.metadata.caption ? `<p>${escapeHtml(photo.metadata.caption)}</p>` : ""}${metadata}`,
 					{allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"])},
 				),
 			}

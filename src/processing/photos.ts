@@ -202,7 +202,7 @@ function addRightsMetadata(
 	const artist = metadata.creator ?? metadata.credit
 	const copyright = metadata.copyright ?? metadata.license
 	if (artist || copyright) {
-		pipeline = pipeline.withExif({
+		pipeline.withExif({
 			IFD0: {
 				...(artist ? {Artist: artist} : {}),
 				...(copyright ? {Copyright: copyright} : {}),
@@ -221,7 +221,7 @@ function addRightsMetadata(
 	]
 
 	if (xmpFields.some(Boolean)) {
-		pipeline = pipeline.withXmp(buildXmp(metadata))
+		pipeline.withXmp(buildXmp(metadata))
 	}
 
 	return pipeline

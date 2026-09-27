@@ -4,22 +4,19 @@ My personal site. Writing, notes, photography, and a few other things.
 
 Built with [Astro](https://astro.build), [TypeScript](https://www.typescriptlang.org), and [Tailwind CSS](https://tailwindcss.com). Hosted on Cloudflare Pages.
 
-## A few details
+## How it works
 
-- **Capture One.** Imports collections, photo order, and exports from my catalog.
-- **Offline photo workflow.** Sync and preview photos locally, then upload to R2 when online. The SQLite catalog is backed up to R2 too.
-- **AT Protocol.** Publishes Markdown notes to Bluesky, with a preview before publishing. Includes a photo record planner for [Refrakt](https://refrakt.app).
-- **Content CLI.** Write notes, start posts, and manage photos and publishing. Commands can also be scripted or scheduled.
-- **RSS.** Separate feeds for the journal, photos, and [/now](https://nownownow.com/about) updates.
+Posts and notes are Markdown files. The [content CLI](src/cli/index.ts#L26) creates them with the frontmatter the site needs, and [Astro](src/content.config.ts#L1) builds the pages and RSS feeds.
+
+I also manage photos in Capture One. [Photo sync](docs/photos.md) reads my collections and JPEG exports, generates images for the site, and stores the metadata in SQLite. Astro builds the photo pages from that database. The images are served from R2, or from local files during development.
 
 Photo pages are currently disabled while I cull and re-edit photos after moving from Lightroom.
 
+The CLI can also [publish notes to Bluesky](docs/atproto.md) from the same Markdown files. It compares them with existing posts so I can review changes before publishing. There’s a record planner for [Refrakt](https://refrakt.app) too, though publishing photos there isn’t implemented yet.
+
 Bluesky publishing uses an app password for now. I might add OAuth later.
 
-## How it works
-
-- [Photos](docs/photos.md) — Capture One, offline previews, static pages, and R2 backups.
-- [AT Protocol](docs/atproto.md) — Markdown notes, the CLI, and publishing with atcute.
+For the Markdown readers and writers, see [notes.ts](src/repos/notes.ts#L28) and [posts.ts](src/repos/posts.ts#L17). The [loaders](src/loaders/notes.ts#L6) connect those functions to Astro.
 
 ## Run locally
 
@@ -37,6 +34,4 @@ pnpm test          # Tests
 pnpm lint          # Lint and type checks
 ```
 
-Settings are in [`src/site.config.ts`](src/site.config.ts#L1). The docs above cover setup for photos and publishing.
-
-`pnpm content` stays open between tasks. Esc returns to the previous menu; Ctrl+C closes the session. Esc at the top-level menu leaves it open. Direct commands such as `pnpm content photos sync` run once and exit.
+Settings are in [`src/site.config.ts`](src/site.config.ts#L1). Photo pages need a local catalog and exported images; see the [photo setup](docs/photos.md#using-this-elsewhere).

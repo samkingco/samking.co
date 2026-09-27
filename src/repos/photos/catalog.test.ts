@@ -1,9 +1,14 @@
 import assert from "node:assert/strict"
+import {mkdtemp, rm} from "node:fs/promises"
+import {tmpdir} from "node:os"
+import {join} from "node:path"
 import test, {type TestContext} from "node:test"
 import {fileURLToPath} from "node:url"
 import {eq} from "drizzle-orm"
 import {migrate} from "drizzle-orm/node-sqlite/migrator"
+import sharp from "sharp"
 import {createRefraktRecords} from "../../atproto/refrakt.ts"
+import {generateAltText, readAltTextPhotos, saveAltText} from "./alt-text.ts"
 import {readRefraktCatalog, readWebsiteCatalog} from "./catalog.ts"
 import {readCollections, saveCollectionDescription} from "./collections.ts"
 import {
@@ -162,6 +167,149 @@ function fixture(t: TestContext) {
 	return database
 }
 
+async function altFixture(t: TestContext) {
+	const db = fixture(t)
+	const directory = await mkdtemp(join(tmpdir(), "photo-alt-"))
+	t.after(() => rm(directory, {recursive: true, force: true}))
+	const path = join(directory, "source.jpg")
+	await sharp({
+		create: {width: 32, height: 24, channels: 3, background: "#456789"},
+	})
+		.jpeg()
+		.toFile(path)
+	db.update(photoDerivatives).set({path}).run()
+	db.update(photos)
+		.set({metadataJson: JSON.stringify({...metadata, alt: null})})
+		.where(eq(photos.id, "a"))
+		.run()
+	return db
+}
+
+function mockOllama(t: TestContext) {
+	const model = {name: "qwen3-vl:30b-a3b-instruct", digest: "revision-1"}
+	const state = {installed: true}
+	const chat = t.mock.fn(async () =>
+		Response.json({done: true, message: {content: "Generated text"}}),
+	)
+	const requests: string[] = []
+	t.mock.method(globalThis, "fetch", async (url: string | URL | Request) => {
+		const path = new URL(String(url)).pathname
+		requests.push(path)
+		switch (path) {
+			case "/api/version":
+				return Response.json({version: "test"})
+			case "/api/tags":
+				return Response.json({models: state.installed ? [model] : []})
+			case "/api/pull":
+				state.installed = true
+				return Response.json({status: "success"})
+			case "/api/chat":
+				return chat()
+			default:
+				throw new Error(`Unexpected request: ${url}`)
+		}
+	})
+	return {model, state, chat, requests}
+}
+
+test("alt generation caches model revisions and regenerates only selected eligible photos", async (t) => {
+	const db = await altFixture(t)
+	const {model, chat} = mockOllama(t)
+	assert.equal(await generateAltText(db), 1)
+	assert.equal(await generateAltText(db), 0)
+	assert.equal(chat.mock.callCount(), 1)
+	model.digest = "revision-2"
+	assert.equal(await generateAltText(db), 1)
+	assert.equal(await generateAltText(db), 0)
+	saveCollectionDescription(db, "album", "Changed context")
+	assert.equal(await generateAltText(db), 1)
+	assert.equal(await generateAltText(db, ["b"]), 0)
+	assert.equal(await generateAltText(db, ["a"]), 1)
+	assert.equal(chat.mock.callCount(), 4)
+})
+
+test("generation installs a missing model once", async (t) => {
+	const db = await altFixture(t)
+	const {state, requests} = mockOllama(t)
+	state.installed = false
+	assert.equal(await generateAltText(db), 1)
+	assert.equal(readAltTextPhotos(db, "a")[0]!.altText, "Generated text")
+	assert.equal(await generateAltText(db), 0)
+	assert.equal(requests.filter((path) => path === "/api/pull").length, 1)
+})
+
+test("IPTC, approved, and edited text stay protected when inputs change", async (t) => {
+	const db = await altFixture(t)
+	const {model, chat} = mockOllama(t)
+	await generateAltText(db)
+	for (const text of ["Generated text", "Human edit"]) {
+		const photo = readAltTextPhotos(db, "a")[0]!
+		saveAltText(db, photo, text)
+		saveCollectionDescription(db, "album", text)
+		model.digest = text
+		await generateAltText(db, ["a"])
+		assert.equal(readAltTextPhotos(db, "a")[0]!.altText, text)
+		assert.equal(
+			readAltTextPhotos(db, "a")[0]!.altTextStatus,
+			text === "Generated text" ? "approved" : "edited",
+		)
+	}
+	db.update(photos)
+		.set({
+			altTextStatus: "generated",
+			metadataJson: JSON.stringify({...metadata, alt: "IPTC text"}),
+		})
+		.where(eq(photos.id, "a"))
+		.run()
+	await generateAltText(db, ["a"])
+	assert.equal(chat.mock.callCount(), 1)
+})
+
+test("failed generation preserves previous text and completed photos", async (t) => {
+	const db = await altFixture(t)
+	db.update(photos)
+		.set({
+			metadataJson: JSON.stringify({...metadata, alt: null}),
+			altText: "Previous text",
+			altTextStatus: "generated",
+		})
+		.where(eq(photos.id, "b"))
+		.run()
+	let calls = 0
+	const {chat} = mockOllama(t)
+	chat.mock.mockImplementation(async () =>
+		Response.json({
+			done: true,
+			message: {content: ++calls === 1 ? "New text" : ""},
+		}),
+	)
+	await assert.rejects(generateAltText(db))
+	assert.equal(readAltTextPhotos(db, "a")[0]!.altText, "New text")
+	assert.equal(readAltTextPhotos(db, "b")[0]!.altText, "Previous text")
+	chat.mock.mockImplementation(async () =>
+		Response.json({
+			done: true,
+			done_reason: "length",
+			message: {content: "Partial text"},
+		}),
+	)
+	await assert.rejects(generateAltText(db))
+	assert.equal(readAltTextPhotos(db, "b")[0]!.altText, "Previous text")
+})
+
+test("generation and stale review cannot overwrite a concurrent human edit", async (t) => {
+	const db = await altFixture(t)
+	const snapshot = readAltTextPhotos(db, "a")[0]!
+	const {chat} = mockOllama(t)
+	chat.mock.mockImplementation(async () => {
+		saveAltText(db, snapshot, "Human edit")
+		return Response.json({done: true, message: {content: "Generated text"}})
+	})
+	await assert.rejects(generateAltText(db))
+	assert.throws(() => saveAltText(db, snapshot, "Stale edit"))
+	assert.equal(readAltTextPhotos(db, "a")[0]!.altText, "Human edit")
+})
+
 test("catalog reads preserve membership order and use edits in both destinations", async (t) => {
 	const db = fixture(t)
 	saveCollectionDescription(db, "album", "Birds near home")
@@ -218,6 +366,65 @@ test("catalog reads preserve membership order and use edits in both destinations
 		readCollections(db).find((row) => row.id === "all")?.description,
 		"",
 	)
+})
+
+test("both catalogs prefer IPTC alt text, then catalog alt text, without changing metadata", (t) => {
+	const db = fixture(t)
+	const originalMetadata = readWebsiteCatalog(db, website, false).photos[0]!
+		.metadata
+	const paddedMetadata = {...metadata, alt: `  ${metadata.alt}\n`}
+	db.update(photos)
+		.set({metadataJson: JSON.stringify(paddedMetadata)})
+		.where(eq(photos.id, "a"))
+		.run()
+	const blankMetadata = {...metadata, alt: " "}
+	db.update(photos)
+		.set({metadataJson: JSON.stringify(blankMetadata)})
+		.where(eq(photos.id, "b"))
+		.run()
+	for (const result of [
+		readWebsiteCatalog(db, website, false),
+		readRefraktCatalog(db, refrakt),
+	]) {
+		assert.deepEqual(result.photos.find(({id}) => id === "b")!.metadata, {
+			...originalMetadata,
+			alt: null,
+		})
+	}
+	for (const status of ["generated", "approved", "edited"] as const) {
+		const text = `${status} alt text`
+		db.update(photos)
+			.set({altText: text, altTextStatus: status, altTextInputHash: "hash"})
+			.run()
+		for (const result of [
+			readWebsiteCatalog(db, website, false),
+			readRefraktCatalog(db, refrakt),
+		]) {
+			assert.deepEqual(
+				result.photos.find(({id}) => id === "a")!.metadata,
+				originalMetadata,
+			)
+			assert.deepEqual(result.photos.find(({id}) => id === "b")!.metadata, {
+				...originalMetadata,
+				alt: text,
+			})
+			assert.equal("altText" in result.photos[0]!, false)
+			assert.equal("altTextStatus" in result.photos[0]!, false)
+			assert.equal("altTextInputHash" in result.photos[0]!, false)
+		}
+	}
+	assert.equal(
+		db.select().from(photos).where(eq(photos.id, "a")).get()!.metadataJson,
+		JSON.stringify(paddedMetadata),
+	)
+	assert.equal(
+		db.select().from(photos).where(eq(photos.id, "b")).get()!.metadataJson,
+		JSON.stringify(blankMetadata),
+	)
+	for (const row of db.select().from(photoExports).all()) {
+		assert.equal(row.metadataJson, JSON.stringify(metadata))
+		assert.equal(row.rawMetadataJson, "{}")
+	}
 })
 
 test("website availability and Refrakt completeness are distinct", (t) => {

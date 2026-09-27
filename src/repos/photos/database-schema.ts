@@ -51,6 +51,11 @@ export const photos = sqliteTable(
 		captureOneVariantId: text("capture_one_variant_id").notNull().unique(),
 		captureOneVariantName: text("capture_one_variant_name").notNull(),
 		metadataJson: text("metadata_json"),
+		altText: text("alt_text"),
+		altTextStatus: text("alt_text_status", {
+			enum: ["generated", "approved", "edited"],
+		}),
+		altTextInputHash: text("alt_text_input_hash"),
 		metadataSourceId: integer("metadata_source_id").references(
 			(): AnySQLiteColumn => photoDerivatives.id,
 			{onDelete: "set null"},
@@ -61,6 +66,10 @@ export const photos = sqliteTable(
 	},
 	(table) => [
 		check("photos_check_3", sql`${table.status} IN ('active', 'deleted')`),
+		check(
+			"photos_alt_text_status_check",
+			sql`${table.altTextStatus} IN ('generated', 'approved', 'edited')`,
+		),
 		index("photos_status_idx").on(table.status),
 	],
 )

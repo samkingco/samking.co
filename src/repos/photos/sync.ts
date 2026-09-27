@@ -52,6 +52,16 @@ type ExportCandidate = {
 	modified: number
 }
 
+type CurrentExport = Pick<
+	typeof photoExports.$inferSelect,
+	"id" | "photoId" | "profile" | "sha256"
+> & {
+	derivatives: Pick<
+		typeof photoDerivatives.$inferSelect,
+		"kind" | "path" | "r2Key"
+	>[]
+}
+
 function optionalR2Config(): R2Config | null {
 	const settings = [
 		process.env.R2_ENDPOINT,
@@ -74,11 +84,25 @@ export async function syncPhotos(
 		`${snapshot.variants.length} photos, ${snapshot.collections.length} collections`,
 	)
 	bindDocument(database, snapshot.documentId)
+	const photoIds = new Map(
+		database
+			.select({id: photos.id, variantId: photos.captureOneVariantId})
+			.from(photos)
+			.all()
+			.map(({id, variantId}) => [variantId, id]),
+	)
+	const currentExports = readCurrentExports(database)
 	for (const [index, variant] of snapshot.variants.entries()) {
 		progress(`${index + 1}/${snapshot.variants.length} ${variant.name}`)
-		await syncVariant(database, variant)
+		const photoId = photoIds.get(variant.id) ?? photoIdForVariant(variant.id)
+		upsertPhoto(database, photoId, variant)
+		photoIds.set(variant.id, photoId)
+		const profiles =
+			currentExports.get(photoId) ?? new Map<string, CurrentExport>()
+		currentExports.set(photoId, profiles)
+		await syncVariant(database, photoId, variant, profiles)
 	}
-	persistCollections(database, snapshot)
+	persistCollections(database, snapshot, photoIds)
 	markMissingPhotos(database, new Set(snapshot.variants.map(({id}) => id)))
 	await discardSupersededPendingFiles(database)
 	for (const source of readMetadataSources(database)) {
@@ -173,37 +197,75 @@ function readSourceImages(database: PhotoDatabase) {
 		.all()
 }
 
+function readCurrentExports(
+	database: PhotoDatabase,
+): Map<string, Map<string, CurrentExport>> {
+	const derivatives = Map.groupBy(
+		database
+			.select({
+				exportId: photoDerivatives.exportId,
+				kind: photoDerivatives.kind,
+				path: photoDerivatives.path,
+				r2Key: photoDerivatives.r2Key,
+			})
+			.from(photoDerivatives)
+			.innerJoin(photoExports, eq(photoExports.id, photoDerivatives.exportId))
+			.where(
+				and(eq(photoExports.current, true), isNull(photoDerivatives.deletedAt)),
+			)
+			.all(),
+		(row) => row.exportId,
+	)
+	const exports = Map.groupBy(
+		database
+			.select({
+				id: photoExports.id,
+				photoId: photoExports.photoId,
+				profile: photoExports.profile,
+				sha256: photoExports.sha256,
+			})
+			.from(photoExports)
+			.where(eq(photoExports.current, true))
+			.all(),
+		(row) => row.photoId,
+	)
+	return new Map(
+		[...exports].map(([photoId, rows]) => [
+			photoId,
+			new Map(
+				rows.map((row) => [
+					row.profile,
+					{...row, derivatives: derivatives.get(row.id) ?? []},
+				]),
+			),
+		]),
+	)
+}
+
 async function syncVariant(
 	database: PhotoDatabase,
+	photoId: string,
 	variant: CaptureOneVariant,
+	profiles: Map<string, CurrentExport>,
 ): Promise<void> {
-	const existing = database
-		.select({id: photos.id})
-		.from(photos)
-		.where(eq(photos.captureOneVariantId, variant.id))
-		.get()
-
-	const photoId = existing?.id ?? photoIdForVariant(variant.id)
-	upsertPhoto(database, photoId, variant)
-
 	const candidates = await exportCandidates(variant)
 	if (candidates.length === 0) {
-		const current = database
-			.select({id: photoExports.id})
-			.from(photoExports)
-			.where(
-				and(eq(photoExports.photoId, photoId), eq(photoExports.current, true)),
-			)
-			.get()
-
-		if (!current) {
+		if (profiles.size === 0) {
 			throw new Error("has no current JPEG export in photos/exports")
 		}
 
 		return
 	}
 	for (const candidate of candidates) {
-		await syncExport(database, photoId, candidate)
+		const current = await syncExport(
+			database,
+			photoId,
+			candidate,
+			profiles.get(candidate.profile),
+		)
+		if (current) {
+			profiles.set(candidate.profile, current)
+		}
 	}
 }
 
@@ -211,7 +273,8 @@ async function syncExport(
 	database: PhotoDatabase,
 	photoId: string,
 	candidate: ExportCandidate,
-): Promise<void> {
+	current: CurrentExport | undefined,
+): Promise<CurrentExport | undefined> {
 	const website = candidate.profile === siteConfig.photos.exportProfile
 	if (
 		!website &&
@@ -220,19 +283,7 @@ async function syncExport(
 		return
 	}
 	const sha256 = await hashFile(candidate.path)
-	const current = database
-		.select()
-		.from(photoExports)
-		.where(
-			and(
-				eq(photoExports.photoId, photoId),
-				eq(photoExports.profile, candidate.profile),
-				eq(photoExports.sha256, sha256),
-				eq(photoExports.current, true),
-			),
-		)
-		.get()
-	if (current && (await storedFilesExist(database, current))) {
+	if (current?.sha256 === sha256 && (await storedFilesExist(current))) {
 		database
 			.update(photoExports)
 			.set({
@@ -242,14 +293,14 @@ async function syncExport(
 			})
 			.where(eq(photoExports.id, current.id))
 			.run()
-		return
+		return current
 	}
 
 	const prepared = await preparePhoto(
 		candidate.path,
 		website ? resolve(OBJECT_ROOT, photoId, sha256) : undefined,
 	)
-	stageExport(database, photoId, candidate, prepared)
+	return stageExport(database, photoId, candidate, prepared)
 }
 
 async function exportCandidates(
@@ -306,16 +357,8 @@ function upsertPhoto(
 	photoId: string,
 	variant: CaptureOneVariant,
 ): void {
-	const collision = database
-		.select({captureOneVariantId: photos.captureOneVariantId})
-		.from(photos)
-		.where(eq(photos.id, photoId))
-		.get()
-	if (collision && collision.captureOneVariantId !== variant.id) {
-		throw new Error(`Photo ID collision for ${photoId}`)
-	}
 	const now = new Date().toISOString()
-	database
+	const saved = database
 		.insert(photos)
 		.values({
 			id: photoId,
@@ -332,8 +375,13 @@ function upsertPhoto(
 				status: "active",
 				updatedAt: now,
 			},
+			setWhere: eq(photos.captureOneVariantId, variant.id),
 		})
-		.run()
+		.returning({id: photos.id})
+		.get()
+	if (!saved) {
+		throw new Error(`Photo ID collision for ${photoId}`)
+	}
 }
 
 function stageExport(
@@ -341,9 +389,9 @@ function stageExport(
 	photoId: string,
 	candidate: ExportCandidate,
 	prepared: PreparedPhoto,
-): void {
+): CurrentExport {
 	const now = new Date().toISOString()
-	database.transaction(() => {
+	return database.transaction(() => {
 		markOldProfileFiles(database, photoId, candidate.profile, now)
 		const exportRow = database
 			.insert(photoExports)
@@ -379,22 +427,30 @@ function stageExport(
 					deletedAt: null,
 				},
 			})
-			.returning({id: photoExports.id})
+			.returning({
+				id: photoExports.id,
+				photoId: photoExports.photoId,
+				profile: photoExports.profile,
+				sha256: photoExports.sha256,
+			})
 			.get()
 		const exportId = exportRow.id
+		const derivatives = []
 		for (const derivative of prepared.derivatives) {
-			const {id} = upsertDerivative(database, exportId, derivative)
+			const saved = upsertDerivative(database, exportId, derivative)
+			derivatives.push(saved)
 			if (
 				candidate.profile === siteConfig.photos.exportProfile &&
 				derivative.kind === "source"
 			) {
 				database
 					.update(photos)
-					.set({metadataSourceId: id})
+					.set({metadataSourceId: saved.id})
 					.where(eq(photos.id, photoId))
 					.run()
 			}
 		}
+		return {...exportRow, derivatives}
 	})
 }
 
@@ -459,13 +515,19 @@ function upsertDerivative(
 				deletedAt: null,
 			},
 		})
-		.returning({id: photoDerivatives.id})
+		.returning({
+			id: photoDerivatives.id,
+			kind: photoDerivatives.kind,
+			path: photoDerivatives.path,
+			r2Key: photoDerivatives.r2Key,
+		})
 		.get()
 }
 
 function persistCollections(
 	database: PhotoDatabase,
 	snapshot: CaptureOneSnapshot,
+	photoIds: Map<string, string>,
 ): void {
 	const now = new Date().toISOString()
 	const activeIds = new Set(snapshot.collections.map(({id}) => id))
@@ -498,7 +560,12 @@ function persistCollections(
 					},
 				})
 				.run()
-			persistCollectionMembers(database, collection.id, collection.members)
+			persistCollectionMembers(
+				database,
+				collection.id,
+				collection.members,
+				photoIds,
+			)
 		}
 		pruneCollections(database, activeIds)
 		database.update(catalog).set({syncedAt: now}).where(eq(catalog.id, 1)).run()
@@ -523,17 +590,14 @@ function persistCollectionMembers(
 	database: PhotoDatabase,
 	collectionId: string,
 	members: CaptureOneSnapshot["collections"][number]["members"],
+	photoIds: Map<string, string>,
 ): void {
 	for (const member of members) {
-		const photo = database
-			.select({id: photos.id})
-			.from(photos)
-			.where(eq(photos.captureOneVariantId, member.variantId))
-			.get()
-		if (photo) {
+		const photoId = photoIds.get(member.variantId)
+		if (photoId) {
 			database
 				.insert(collectionPhotos)
-				.values({collectionId, photoId: photo.id, position: member.index})
+				.values({collectionId, photoId, position: member.index})
 				.run()
 		}
 	}
@@ -579,27 +643,11 @@ function markMissingPhotos(
 	}
 }
 
-async function storedFilesExist(
-	database: PhotoDatabase,
-	exportRow: typeof photoExports.$inferSelect,
-): Promise<boolean> {
+async function storedFilesExist(exportRow: CurrentExport): Promise<boolean> {
 	if (exportRow.profile !== siteConfig.photos.exportProfile) {
 		return true
 	}
-	const rows = database
-		.select({
-			kind: photoDerivatives.kind,
-			path: photoDerivatives.path,
-			r2Key: photoDerivatives.r2Key,
-		})
-		.from(photoDerivatives)
-		.where(
-			and(
-				eq(photoDerivatives.exportId, exportRow.id),
-				isNull(photoDerivatives.deletedAt),
-			),
-		)
-		.all()
+	const rows = exportRow.derivatives
 	if (rows.length !== PHOTO_DERIVATIVE_KINDS.length) {
 		return false
 	}

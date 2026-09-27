@@ -24,7 +24,10 @@ export const NormalizedMetadataSchema = v.object({
 	title: v.optional(v.nullable(v.string()), null),
 	headline: v.optional(v.nullable(v.string()), null),
 	caption: v.nullable(v.string()),
-	alt: v.nullable(v.string()),
+	alt: v.pipe(
+		v.nullable(v.pipe(v.string(), v.trim())),
+		v.transform((value) => value || null),
+	),
 	creator: v.nullable(v.string()),
 	creatorUrl: v.nullable(v.string()),
 	credit: v.nullable(v.string()),

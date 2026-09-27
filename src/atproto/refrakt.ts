@@ -204,7 +204,7 @@ async function buildPhoto(did: string, photo: CatalogPhoto) {
 	const {metadata, selectedExport} = photo
 	const createdAt = recordDate(metadata.capturedAt, photo.createdAt)
 	const rkey = sourceTid(createdAt, photo.id)
-	const alt = firstText(metadata.alt, metadata.caption) ?? ""
+	const alt = metadata.alt ?? ""
 	const caption = firstText(metadata.caption, metadata.headline, metadata.title)
 	const record = lex.parse(photoSchema, {
 		$type: PHOTO_COLLECTION,
