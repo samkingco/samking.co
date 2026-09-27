@@ -41,7 +41,7 @@ export async function editEquipment(): Promise<void> {
 		},
 		required: false,
 	})
-	if (isCancel(selected)) {
+	if (isCancel(selected) || selected.length === 0) {
 		return
 	}
 

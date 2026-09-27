@@ -1,91 +1,37 @@
-import {isCancel, note, select} from "@clack/prompts"
-import type {CaptureOneCollection} from "../repos/photos/capture-one.ts"
+import {isCancel, log, note, taskLog} from "@clack/prompts"
 import {openPhotoDatabase} from "../repos/photos/database.ts"
-import {addRoot, loadRoots, removeRoot} from "../repos/photos/roots.ts"
+import {loadRoots, saveRoots} from "../repos/photos/roots.ts"
+import {selectCollections} from "./collection-tree.ts"
 
 export async function setupPhotos(): Promise<void> {
+	if (!process.stdin.isTTY) {
+		throw new Error("Choose collections to sync in an interactive terminal.")
+	}
 	const database = openPhotoDatabase()
 	using _ = database.$client
-	const startedAt = Date.now()
-	console.log("Reading Capture One collections...")
-	const snapshot = await loadRoots(database)
-	console.log(
-		`Read ${snapshot.collections.length} collections in ${((Date.now() - startedAt) / 1000).toFixed(1)}s.`,
-	)
-	const {added} = snapshot
-	const action = await select({
-		message: "Choose collections to sync",
-		options: [
-			{label: "Add collection", value: "add"},
-			{label: "Remove collection", value: "remove"},
-			{label: "List collections", value: "list"},
-			{label: "Back", value: "back"},
-		],
-	})
-	if (isCancel(action) || action === "back") {
-		return
+	const task = taskLog({title: "Read Capture One collections"})
+	let snapshot: Awaited<ReturnType<typeof loadRoots>>
+	try {
+		snapshot = await loadRoots(database)
+		task.success(`Read ${snapshot.collections.length} collections`)
+	} catch (error) {
+		task.error("Could not read Capture One collections")
+		throw error
 	}
-	if (action === "list") {
-		printCollections(snapshot.collections, added)
-		return
-	}
-	const candidates = snapshot.collections.filter(
-		(collection) => added.has(collection.id) !== (action === "add"),
-	)
-	if (candidates.length === 0) {
-		console.log(`No collections available to ${action}.`)
+	if (snapshot.collections.length === 0) {
+		log.info("No Capture One collections found.")
 		return
 	}
 	note(
-		"Each selected collection and all collections below it are synced to the local catalog.\nScripts and apps can read those collections and their photos.\nChanges are read when you run a sync, not watched in the background.",
+		"Selecting a collection includes everything below it, including future collections.\n■ selected · ✓ included by a parent · - contains a selection · □ not selected\nChanges are read when you run sync. Scripts and apps can read the local catalog.",
 		"Sync scope",
 	)
-	const collectionId = await select({
-		message: `Select a collection to ${action}`,
-		maxItems: 20,
-		options: [
-			...candidates.map((collection) => ({
-				label: collectionLabel(collection, snapshot.collections),
-				value: collection.id,
-			})),
-			{label: "Back", value: ""},
-		],
-	})
-	if (isCancel(collectionId) || !collectionId) {
+	const selected = await selectCollections(snapshot.collections, snapshot.added)
+	if (isCancel(selected) || !selected) {
 		return
 	}
-	if (action === "add") {
-		const collection = addRoot(database, snapshot, collectionId)
-		console.log(`Added ${collection.name} (${collection.id})`)
-	} else {
-		removeRoot(database, collectionId)
-	}
-}
-
-function printCollections(
-	items: CaptureOneCollection[],
-	added: Set<string>,
-): void {
-	for (const collection of items) {
-		console.log(
-			`${added.has(collection.id) ? "[added]    " : "[not added]"} ${collectionLabel(collection, items)}`,
-		)
-	}
-}
-
-function collectionLabel(
-	collection: CaptureOneCollection,
-	items: CaptureOneCollection[],
-): string {
-	const names = [collection.name]
-	let parentId = collection.parentId
-	while (true) {
-		const parent = items.find(({id}) => id === parentId)
-		if (!parent) {
-			break
-		}
-		names.unshift(parent.name)
-		parentId = parent.parentId
-	}
-	return `${names.join(" / ")} [${collection.kind}] ${collection.id}`
+	saveRoots(database, snapshot, selected)
+	log.success(
+		"Collection selection saved. Run sync to update the local catalog.",
+	)
 }

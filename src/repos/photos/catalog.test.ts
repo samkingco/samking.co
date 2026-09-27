@@ -16,6 +16,7 @@ import {
 } from "./database-schema.ts"
 import {bindDocument, checkDocument, openPhotoDatabase} from "./database.ts"
 import {saveEquipmentAlias} from "./equipment.ts"
+import {configuredRootIds, saveRoots} from "./roots.ts"
 
 const date = "2025-01-01T00:00:00.000Z"
 const website = {
@@ -278,6 +279,42 @@ test("document checks do not bind the database or overwrite another catalog", (t
 	bindDocument(db, "one")
 	assert.throws(() => bindDocument(db, "two"))
 	assert.equal(db.select().from(catalog).get()?.documentId, "one")
+})
+
+test("saving collection selections is atomic and preserves descriptions", (t) => {
+	const db = fixture(t)
+	const snapshot = {
+		documentId: "one",
+		variants: [],
+		collections: readCollections(db).map((row) => ({
+			id: row.id,
+			parentId: row.parentId,
+			name: row.name,
+			kind: row.kind,
+			index: row.position,
+			sort: row.sortOrder,
+			reversed: row.reversed,
+			members: [],
+		})),
+	}
+	saveCollectionDescription(db, "album", "Keep this description")
+	saveRoots(db, snapshot, ["all"])
+	assert.deepEqual(configuredRootIds(db), ["all"])
+	assert.throws(() => saveRoots(db, snapshot, ["album", "missing"]))
+	assert.deepEqual(configuredRootIds(db), ["all"])
+	assert.throws(() =>
+		saveRoots(db, {...snapshot, documentId: "other"}, ["album"]),
+	)
+	assert.deepEqual(configuredRootIds(db), ["all"])
+	saveRoots(db, snapshot, ["album"])
+	assert.deepEqual(configuredRootIds(db), ["album"])
+	assert.equal(
+		readCollections(db).find(({id}) => id === "album")?.description,
+		"Keep this description",
+	)
+	saveRoots(db, snapshot, [])
+	assert.deepEqual(configuredRootIds(db), [])
+	assert.ok(readCollections(db).some(({id}) => id === "album"))
 })
 
 test("root selection includes nested members and excludes photos outside the root", (t) => {

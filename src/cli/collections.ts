@@ -30,7 +30,6 @@ export async function editCollectionDescriptions(): Promise<void> {
 	})
 
 	if (isCancel(selected)) {
-		log.info("Cancelled. No descriptions changed.")
 		return
 	}
 

@@ -36,6 +36,7 @@
 		"@atcute/password-session": "^1.0.2",
 		"@atcute/tid": "^1.1.4",
 		"@aws-sdk/client-s3": "^3.1140.0",
+		"@clack/core": "1.5.1",
 		"@clack/prompts": "^1.8.1",
 		"@tailwindcss/vite": "^4.3.3",
 		"astro": "^7.3.5",

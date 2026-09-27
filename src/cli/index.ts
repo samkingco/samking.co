@@ -1,4 +1,5 @@
-import {isCancel, select} from "@clack/prompts"
+import type {Key} from "node:readline"
+import {MULTISELECT_INSTRUCTIONS, SELECT_INSTRUCTIONS} from "@clack/prompts"
 import {Command} from "commander"
 import {
 	manageAtproto,
@@ -8,6 +9,7 @@ import {
 } from "./atproto.ts"
 import {editCollectionDescriptions} from "./collections.ts"
 import {editEquipment} from "./equipment.ts"
+import {errorMessage, menu} from "./menu.ts"
 import {createNote} from "./notes.ts"
 import {
 	emptyPhotoTrashCommand,
@@ -16,6 +18,9 @@ import {
 } from "./photos.ts"
 import {createPost} from "./posts.ts"
 import {setupPhotos} from "./setup.ts"
+
+SELECT_INSTRUCTIONS.push("Esc: back", "Ctrl+C: exit")
+MULTISELECT_INSTRUCTIONS.push("Esc: back", "Ctrl+C: exit")
 
 const program = new Command()
 	.name("content")
@@ -27,22 +32,16 @@ const program = new Command()
 			process.exitCode = 1
 			return
 		}
-		const args = await select({
-			message: "Content",
-			options: [
-				{label: "New note", value: ["note"]},
-				{label: "New post", value: ["journal"]},
-				{label: "Manage photos", value: ["photos"]},
-				{
-					label: "Manage AT Protocol",
-					value: ["atproto"],
-				},
+		await menu(
+			"Content",
+			[
+				{label: "New note", run: () => createNote(undefined, {})},
+				{label: "New post", run: () => createPost(undefined, {excerpt: ""})},
+				{label: "Manage photos", run: managePhotos},
+				{label: "Manage AT Protocol", run: manageAtproto},
 			],
-		})
-		if (isCancel(args)) {
-			return
-		}
-		await program.parseAsync(args, {from: "user"})
+			{root: true},
+		)
 	})
 
 program
@@ -62,43 +61,40 @@ program
 const photos = program
 	.command("photos")
 	.description("Manage photos")
-	.action(async () => {
-		if (!process.stdin.isTTY) {
-			photos.outputHelp()
-			process.exitCode = 1
-			return
-		}
-		const selectedCommand = await select({
-			message: "Photos",
-			options: photos.commands.map((command) => ({
-				label: command.description(),
-				value: command.name(),
-			})),
-		})
-		if (isCancel(selectedCommand)) {
-			return
-		}
-		await program.parseAsync(["photos", selectedCommand], {from: "user"})
-	})
+	.action(managePhotos)
 
-photos.command("sync").description("Sync photos").action(syncPhotosCommand)
-photos
-	.command("regenerate-og")
-	.description("Regenerate OG images")
-	.action(regenerateOpenGraphImagesCommand)
-photos
-	.command("setup")
-	.description("Choose collections to sync")
-	.action(setupPhotos)
-photos
-	.command("collections")
-	.description("Edit collection descriptions")
-	.action(editCollectionDescriptions)
-photos.command("equipment").description("Edit equipment").action(editEquipment)
-photos
-	.command("empty-trash")
-	.description("Empty photo trash")
-	.action(emptyPhotoTrashCommand)
+const photoActions = [
+	{name: "sync", label: "Sync photos", run: syncPhotosCommand},
+	{
+		name: "regenerate-og",
+		label: "Regenerate OG images",
+		run: regenerateOpenGraphImagesCommand,
+	},
+	{name: "setup", label: "Choose collections to sync", run: setupPhotos},
+	{
+		name: "collections",
+		label: "Edit collection descriptions",
+		run: editCollectionDescriptions,
+	},
+	{name: "equipment", label: "Edit equipment", run: editEquipment},
+	{
+		name: "empty-trash",
+		label: "Empty photo trash",
+		run: emptyPhotoTrashCommand,
+	},
+]
+for (const {name, label, run} of photoActions) {
+	photos.command(name).description(label).action(run)
+}
+
+async function managePhotos(): Promise<void> {
+	if (!process.stdin.isTTY) {
+		photos.outputHelp()
+		process.exitCode = 1
+		return
+	}
+	await menu("Photos", photoActions)
+}
 
 const atproto = program
 	.command("atproto")
@@ -132,19 +128,23 @@ atproto
 	.option("--yes", "Publish without an interactive confirmation")
 	.action(runBlueskyPublish)
 
+// Let Clack restore the terminal before exiting; Escape only leaves one prompt.
+function exitOnInterrupt(_value: string, key: Key): void {
+	if (key.ctrl && key.name === "c") {
+		queueMicrotask(() => process.exit(130))
+	}
+}
+
+process.stdin.on("keypress", exitOnInterrupt)
 try {
 	await program.parseAsync()
 } catch (error) {
 	console.error(`Error: ${errorMessage(error)}`)
 	process.exitCode = 1
-}
-
-function errorMessage(error: unknown): string {
-	if (!(error instanceof Error)) {
-		return String(error)
+} finally {
+	process.stdin.off("keypress", exitOnInterrupt)
+	if (process.stdin.isTTY) {
+		process.stdin.pause()
+		process.stdin.unref()
 	}
-	if (error.name === "DrizzleQueryError" && error.cause instanceof Error) {
-		return errorMessage(error.cause)
-	}
-	return error.message
 }

@@ -3,6 +3,8 @@ import {planBluesky, planRefrakt} from "../atproto/plan.ts"
 import {publishBluesky, requireBlueskyPublishing} from "../atproto/publish.ts"
 import type {RecordPlan} from "../atproto/records.ts"
 import {siteConfig} from "../site.config.ts"
+import {menu} from "./menu.ts"
+import {viewRecord} from "./record-detail.ts"
 
 const RECORD_LABELS: Record<string, string> = {
 	"app.bsky.feed.post": "Notes",
@@ -13,20 +15,10 @@ const RECORD_LABELS: Record<string, string> = {
 }
 
 export async function manageAtproto(): Promise<void> {
-	while (true) {
-		const action = await select({
-			message: "AT Protocol",
-			options: [
-				{value: runBlueskyPlan, label: "Plan Bluesky notes"},
-				{value: runRefraktPlan, label: "Plan Refrakt photos"},
-				{value: null, label: "Back"},
-			],
-		})
-		if (isCancel(action) || action === null) {
-			return
-		}
-		await action({json: false})
-	}
+	await menu("AT Protocol", [
+		{label: "Plan Bluesky notes", run: () => runBlueskyPlan({})},
+		{label: "Plan Refrakt photos", run: () => runRefraktPlan({})},
+	])
 }
 
 export function runBlueskyPlan(options: {json?: boolean}): Promise<void> {
@@ -62,12 +54,12 @@ export async function runBlueskyPublish(options: {
 async function confirmBlueskyPublish(
 	result: Awaited<ReturnType<typeof planBluesky>>,
 	yes = false,
-): Promise<void> {
+): Promise<boolean> {
 	requireBlueskyPublishing()
 	const count = result.plan.creates.length + result.plan.updates.length
 	if (count === 0) {
 		log.info("No changes to publish.")
-		return
+		return true
 	}
 	if (!yes) {
 		const approved = await confirm({
@@ -75,7 +67,7 @@ async function confirmBlueskyPublish(
 			initialValue: false,
 		})
 		if (isCancel(approved) || !approved) {
-			return
+			return false
 		}
 	}
 	const task = taskLog({title: "Publish Bluesky notes", output: process.stderr})
@@ -85,6 +77,7 @@ async function confirmBlueskyPublish(
 			task.message(`Published ${record.uri}`),
 		)
 		task.success(`Published ${published} records`)
+		return true
 	} catch (error) {
 		task.error("Publishing failed")
 		throw error
@@ -103,7 +96,7 @@ async function reviewPlanResult<T extends {plan: RecordPlan}>(
 	title: string,
 	buildPlan: () => Promise<T>,
 	options: {json?: boolean},
-	publish?: (result: T) => Promise<void>,
+	publish?: (result: T) => Promise<boolean>,
 ): Promise<void> {
 	const task = taskLog({title, output: process.stderr})
 	let result: T
@@ -149,25 +142,27 @@ function planSummary(plan: RecordPlan): string {
 
 async function reviewPlan(
 	plan: RecordPlan,
-	publish?: () => Promise<void>,
+	publish?: () => Promise<boolean>,
 ): Promise<void> {
+	let cursor = "changes"
 	while (true) {
 		const action = await select({
 			message: "Review plan",
+			initialValue: cursor,
 			options: [
 				{value: "changes", label: "View changes"},
 				...(publish ? [{value: "publish", label: "Publish"}] : []),
-				{value: "back", label: "Back"},
 			],
 		})
-		if (isCancel(action) || action === "back") {
+		if (isCancel(action)) {
 			return
 		}
-		if (action === "publish") {
-			await publish?.()
+		cursor = action
+		const finished =
+			action === "publish" ? await publish!() : await viewChanges(plan)
+		if (finished) {
 			return
 		}
-		await viewChanges(plan)
 	}
 }
 
@@ -180,24 +175,12 @@ async function viewChanges(plan: RecordPlan): Promise<void> {
 		log.info("No changes to publish.")
 		return
 	}
-	const selected = await select({
-		message: "Select a record",
-		maxItems: 12,
-		options: [
-			...changes.map(({action, record}, index) => ({
-				value: index,
-				label: record.label,
-				hint: `${action} · ${RECORD_LABELS[record.collection] ?? record.collection}`,
-			})),
-			{value: -1, label: "Back"},
-		],
-	})
-	if (isCancel(selected) || selected === -1) {
-		return
-	}
-	const {action, record} = changes[selected]!
-	note(
-		`${record.uri}\n\n${JSON.stringify(record.record, null, 2)}`,
-		`${action} record`,
+	await menu(
+		"Select a record",
+		changes.map(({action, record}) => ({
+			label: record.label,
+			hint: `${action} · ${RECORD_LABELS[record.collection] ?? record.collection}`,
+			run: () => viewRecord(action, record),
+		})),
 	)
 }

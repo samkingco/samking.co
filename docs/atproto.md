@@ -51,7 +51,7 @@ If publishing fails partway through, confirmed writes remain published. Run the 
 
 The conversion and comparison modules are useful starting points if you want this in another site. The CLI handles interaction separately.
 
-Markdown support is deliberately limited. Paragraphs, emphasis, code, and links become post text; unsupported structures such as images and lists cause an error. Posts must pass the Bluesky schema limits rather than being silently shortened.
+Markdown support is deliberately limited. Paragraphs, emphasis, code, and links become post text; unsupported structures such as images and lists cause an error for now. I might add embeds later. Posts must pass the Bluesky schema limits rather than being silently shortened.
 
 ## Refrakt
 

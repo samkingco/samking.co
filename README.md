@@ -38,3 +38,5 @@ pnpm lint          # Lint and type checks
 ```
 
 Settings are in [`src/site.config.ts`](src/site.config.ts#L1). The docs above cover setup for photos and publishing.
+
+`pnpm content` stays open between tasks. Esc returns to the previous menu; Ctrl+C closes the session. Esc at the top-level menu leaves it open. Direct commands such as `pnpm content photos sync` run once and exit.

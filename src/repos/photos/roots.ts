@@ -1,4 +1,4 @@
-import {asc, eq} from "drizzle-orm"
+import {asc, notInArray} from "drizzle-orm"
 import {type CaptureOneSnapshot, readCaptureOneRoots} from "./capture-one.ts"
 import {collectionRoots, collections} from "./database-schema.ts"
 import {bindDocument, checkDocument, type PhotoDatabase} from "./database.ts"
@@ -18,61 +18,70 @@ export async function loadRoots(database: PhotoDatabase) {
 	return {...snapshot, added: new Set(configuredRootIds(database))}
 }
 
-export function addRoot(
+export function saveRoots(
 	database: PhotoDatabase,
 	snapshot: CaptureOneSnapshot,
-	collectionId: string,
-) {
-	const collection = snapshot.collections.find(({id}) => id === collectionId)
-	if (!collection) {
-		throw new Error(`Capture One collection ${collectionId} was not found`)
-	}
-	return database.transaction(() => {
+	collectionIds: string[],
+): void {
+	const selected = [...new Set(collectionIds)].map((id) => {
+		const collection = snapshot.collections.find((row) => row.id === id)
+		if (!collection) {
+			throw new Error(`Capture One collection ${id} was not found`)
+		}
+		return collection
+	})
+	database.transaction(() => {
 		bindDocument(database, snapshot.documentId)
 		const now = new Date().toISOString()
-
 		database
-			.insert(collections)
-			.values({
-				id: collection.id,
+			.delete(collectionRoots)
+			.where(
+				collectionIds.length
+					? notInArray(collectionRoots.collectionId, collectionIds)
+					: undefined,
+			)
+			.run()
+		for (const collection of selected) {
+			saveRoot(database, collection, now)
+		}
+	})
+}
+
+function saveRoot(
+	database: PhotoDatabase,
+	collection: CaptureOneSnapshot["collections"][number],
+	now: string,
+): void {
+	database
+		.insert(collections)
+		.values({
+			id: collection.id,
+			parentId: collection.parentId,
+			name: collection.name,
+			kind: collection.kind,
+			position: collection.index,
+			sortOrder: collection.sort,
+			reversed: collection.reversed,
+			createdAt: now,
+			updatedAt: now,
+		})
+		.onConflictDoUpdate({
+			target: collections.id,
+			set: {
 				parentId: collection.parentId,
 				name: collection.name,
 				kind: collection.kind,
 				position: collection.index,
 				sortOrder: collection.sort,
 				reversed: collection.reversed,
-				createdAt: now,
 				updatedAt: now,
-			})
-			.onConflictDoUpdate({
-				target: collections.id,
-				set: {
-					parentId: collection.parentId,
-					name: collection.name,
-					kind: collection.kind,
-					position: collection.index,
-					sortOrder: collection.sort,
-					reversed: collection.reversed,
-					updatedAt: now,
-				},
-			})
-			.run()
+			},
+		})
+		.run()
 
-		database
-			.insert(collectionRoots)
-			.values({collectionId: collection.id, addedAt: now})
-			.onConflictDoNothing()
-			.run()
-		return collection
-	})
-}
-
-export function removeRoot(
-	database: PhotoDatabase,
-	collectionId: string,
-): void {
 	database
-		.delete(collectionRoots)
-		.where(eq(collectionRoots.collectionId, collectionId))
+		.insert(collectionRoots)
+		.values({collectionId: collection.id, addedAt: now})
+		.onConflictDoNothing()
 		.run()
 }

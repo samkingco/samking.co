@@ -1,9 +1,11 @@
 import assert from "node:assert/strict"
-import {spawnSync} from "node:child_process"
+import {spawn, spawnSync} from "node:child_process"
+import {once} from "node:events"
 import {mkdtemp, readFile, rm} from "node:fs/promises"
 import {tmpdir} from "node:os"
 import {join} from "node:path"
 import test, {type TestContext} from "node:test"
+import {setTimeout as delay} from "node:timers/promises"
 import {fileURLToPath} from "node:url"
 import type {RemoteRecord} from "../atproto/records.ts"
 import {readNotes, writeNote} from "../repos/notes.ts"
@@ -204,6 +206,40 @@ test("photo setup replaces the roots command", async (t) => {
 	assert.equal(run(cwd, ["photos", "setup", "--help"]).status, 0)
 	assert.equal(run(cwd, ["photos", "roots"]).status, 1)
 })
+
+test(
+	"Escape returns from a submenu but the root waits for Ctrl+C",
+	{timeout: 10_000},
+	async (t) => {
+		const cwd = await workspace(t)
+		const preload = `${noNetwork};
+		Object.assign(process.stdin, {isTTY: true, setRawMode() {}});
+	`
+		for (const args of [[], ["photos"]]) {
+			const child = spawn(
+				process.execPath,
+				[
+					"--import",
+					`data:text/javascript,${encodeURIComponent(preload)}`,
+					cli,
+					...args,
+				],
+				{cwd, stdio: ["pipe", "pipe", "pipe"]},
+			)
+			t.after(() => child.kill())
+			const exit = once(child, "exit")
+			await once(child.stdout, "data")
+			child.stdin.write("\x1b")
+			if (args.length === 0) {
+				await delay(100)
+				assert.equal(child.exitCode, null)
+				child.stdin.write("\x03")
+			}
+			const [code] = await exit
+			assert.equal(code, args.length === 0 ? 130 : 0)
+		}
+	},
+)
 
 test("failed mention lookup does not save a partially converted note", async (t) => {
 	const cwd = await workspace(t)

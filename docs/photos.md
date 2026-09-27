@@ -16,6 +16,12 @@ This is built around my catalog, not a general Capture One plugin. The [reader](
 
 Sync uses Capture One's export history to find files; it does not render RAW files. The catalog and exports must be available locally.
 
+### Choose collections
+
+The sync selection controls which Capture One collections are available in the local catalog. Selecting a parent includes its descendants, including collections added later. Sync preserves their hierarchy, photo membership, and order.
+
+Each destination assigns meaning to the collections it uses. For example, the website maps child albums in its configured “Sets” group to website sets. Refrakt can map those same albums to album records, or use a different collection entirely. These mappings are configured separately in [`src/site.config.ts`](../src/site.config.ts#L16). Changes in Capture One are read when you run `pnpm content photos sync`.
+
 ## Work offline
 
 Sync locally and preview photos:
@@ -55,7 +61,7 @@ Run `pnpm content photos sync` again. It checks pending image files with an R2 `
 
 After that, sync [backs up the SQLite database](../src/repos/photos/backup.ts#L9) to the backup bucket. Each backup has a timestamp and content hash in its name. This is the site's catalog backup, not a backup of the Capture One catalog or RAW files.
 
-Successful image uploads are recorded locally, so a later sync can retry pending files. Production builds [include only photos with uploaded image files](../src/repos/photos/catalog.ts#L17) and use the public CDN URLs. The build machine needs the SQLite catalog.
+Successful image uploads are recorded locally, so a later sync can retry pending files. Production builds [include only photos with uploaded image files](../src/repos/photos/catalog.ts#L17) and use the public CDN URLs. The build machine needs the SQLite catalog. I might add some way to use the latest backup from R2 as the catalog so you can build from other machines provided the backup is up to date (needs Capture One database access too to sync fresh).
 
 ## Reuse and automation
 
