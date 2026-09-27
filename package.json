@@ -10,7 +10,7 @@
 		"astro": "astro",
 		"ship": "pnpm build && wrangler pages deploy",
 		"content": "node --env-file-if-exists=.env src/cli/index.ts",
-		"photos:db:generate": "node src/cli/photo-migration.ts",
+		"photos:db:generate": "drizzle-kit generate --name",
 		"photos:db:migrate": "drizzle-kit migrate",
 		"test:atproto": "node --test src/atproto/*.test.ts",
 		"test": "node --test src/atproto/*.test.ts src/repos/*.test.ts src/repos/photos/*.test.ts src/loaders/*.test.ts src/cli/*.test.ts src/utils/*.test.mjs",

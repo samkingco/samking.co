@@ -74,8 +74,8 @@ Start with [the Capture One reader](../src/repos/photos/capture-one.ts#L84), [im
 After editing [`database-schema.ts`](../src/repos/photos/database-schema.ts#L1), generate a migration with an explicit name:
 
 ```sh
-pnpm photos:db:generate --name add_photo_field
+pnpm photos:db:generate add_photo_field
 pnpm photos:db:migrate
 ```
 
-`--name` is required. Use lowercase letters, numbers, hyphens, or underscores, starting with a letter.
+The script supplies `--name`; pass the migration name directly. Omitting it returns an error.
