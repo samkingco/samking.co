@@ -1,0 +1,45 @@
+---
+import type {PhotoContextReference} from "../PhotoContext.ts"
+import type {PhotoEntry} from "../../../repos/photos/schema.ts"
+import PhotoGrid from "./PhotoGrid.astro"
+import PhotoIndex from "./PhotoIndex.astro"
+import PhotoScroll from "./PhotoScroll.astro"
+
+interface Props {
+	photos: PhotoEntry[]
+	context?: PhotoContextReference
+}
+
+const {photos, context} = Astro.props
+---
+
+<section class="group/browser" data-photo-browser data-photo-layout="grid">
+	<script is:inline data-astro-rerun>
+		;(() => {
+			const browser = document.currentScript?.closest("[data-photo-browser]")
+			if (!(browser instanceof HTMLElement)) {
+				return
+			}
+
+			let layout = "grid"
+			try {
+				const saved = localStorage.getItem("photo-layout")
+				if (saved === "index" || saved === "grid" || saved === "scroll") {
+					layout = saved
+				}
+			} catch {
+				// Use the default when browser storage is unavailable.
+			}
+
+			browser.dataset.photoLayout = layout
+		})()
+	</script>
+	<PhotoGrid photos={photos} context={context} />
+	<PhotoScroll photos={photos} context={context} />
+	<PhotoIndex photos={photos} context={context} />
+
+	<script>
+		import {registerPhotoNavigation} from "../PhotoNavigation.client.ts"
+		registerPhotoNavigation()
+	</script>
+</section>

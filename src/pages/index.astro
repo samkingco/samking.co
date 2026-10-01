@@ -8,7 +8,7 @@ import Markdown from "../components/Markdown.astro"
 import {siteConfig} from "../site.config"
 import Layout from "../layouts/Default.astro"
 import {PhotoEntrySchema} from "../repos/photos/schema.ts"
-import {photoDetailHref} from "../components/PhotoContext.ts"
+import {photoDetailHref} from "../components/photos/PhotoContext.ts"
 
 const latestPhotos = siteConfig.photos.enabled
 	? (await getCollection("photos"))

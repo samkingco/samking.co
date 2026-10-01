@@ -1,15 +1,15 @@
 ---
 import {getCollection} from "astro:content"
 import * as v from "valibot"
-import PhotoCollection from "../../../../components/PhotoCollection.astro"
-import PhotoPageBar from "../../../../components/PhotoPageBar.astro"
+import PhotoCollection from "../../../../components/photos/browser/PhotoCollection.astro"
+import PhotoPageBar from "../../../../components/photos/browser/PhotoPageBar.astro"
 import SiteHeader from "../../../../components/SiteHeader.astro"
 import Layout from "../../../../layouts/Photos.astro"
-import type {PhotoContextReference} from "../../../../components/PhotoContext.ts"
+import type {PhotoContextReference} from "../../../../components/photos/PhotoContext.ts"
 import {
 	capturedDate,
 	newestCaptureFirst,
-} from "../../../../components/PhotoPresentation.ts"
+} from "../../../../components/photos/PhotoPresentation.ts"
 import {
 	type PhotoEntry,
 	PhotoEntrySchema,

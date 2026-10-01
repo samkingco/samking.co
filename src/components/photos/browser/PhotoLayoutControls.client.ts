@@ -48,8 +48,6 @@ function applyPhotoLayout(
 			activeView = view
 		}
 
-		view.hidden = !active
-
 		for (const link of view.querySelectorAll<HTMLAnchorElement>(
 			"[data-photo-id]",
 		)) {

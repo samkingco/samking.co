@@ -6,7 +6,7 @@ import {
 	capturedDateParts,
 	photoExposure,
 	photoTitle,
-} from "../../components/PhotoPresentation.ts"
+} from "../../components/photos/PhotoPresentation.ts"
 import {PHOTO_CDN_URL} from "../../repos/photos/r2.ts"
 import {
 	PhotoEntrySchema,

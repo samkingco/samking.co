@@ -20,7 +20,6 @@ type ZoomElements = {
 	originalImage: HTMLImageElement
 	actualButton: HTMLButtonElement
 	fitButton: HTMLButtonElement
-	navigation: HTMLElement | null
 }
 
 type ZoomState = {
@@ -30,31 +29,23 @@ type ZoomState = {
 	scale: number
 	panX: number
 	panY: number
-	suppressNavigationUntil: number
 	lastPoint: Point | null
 	pinch: Pinch | null
 	originalLoading: boolean
 	pointers: Map<number, Point>
-	wheelTime: number
-	wheelNavigated: boolean
-	edgeGesture: number
-	touchStart: Point | null
-	animation: Animation | null
 }
 
 function getZoomElements(
+	frame: HTMLElement,
 	detail: HTMLElement,
 	signal: AbortSignal,
 ): ZoomElements | null {
-	const viewport = detail.querySelector("[data-photo-viewport]")
-	const image = detail.querySelector("[data-photo-image]")
-	const originalImage = detail.querySelector("[data-photo-original]")
+	const image = frame.querySelector("[data-photo-image]")
+	const originalImage = frame.querySelector("[data-photo-original]")
 	const actualButton = detail.querySelector("[data-photo-actual]")
 	const fitButton = detail.querySelector("[data-photo-fit]")
-	const navigation = detail.querySelector("[data-context-navigation]")
 
 	if (
-		!(viewport instanceof HTMLElement) ||
 		!(image instanceof HTMLImageElement) ||
 		!(originalImage instanceof HTMLImageElement) ||
 		!(actualButton instanceof HTMLButtonElement) ||
@@ -64,10 +55,9 @@ function getZoomElements(
 	}
 
 	return {
-		viewport,
+		viewport: frame,
 		presentation:
-			viewport.querySelector<HTMLElement>("[data-photo-presentation]") ??
-			viewport,
+			frame.querySelector<HTMLElement>("[data-photo-presentation]") ?? frame,
 		detail,
 		signal,
 		loupeButton: detail.querySelector<HTMLButtonElement>("[data-photo-loupe]"),
@@ -75,7 +65,6 @@ function getZoomElements(
 		originalImage,
 		actualButton,
 		fitButton,
-		navigation: navigation instanceof HTMLElement ? navigation : null,
 	}
 }
 
@@ -87,16 +76,10 @@ function createZoomState(): ZoomState {
 		scale: 1,
 		panX: 0,
 		panY: 0,
-		suppressNavigationUntil: 0,
 		lastPoint: null,
 		pinch: null,
 		originalLoading: false,
 		pointers: new Map(),
-		wheelTime: 0,
-		wheelNavigated: false,
-		edgeGesture: 0,
-		touchStart: null,
-		animation: null,
 	}
 }
 
@@ -167,7 +150,6 @@ function animateZoom(
 			duration: 160,
 			easing: "ease-out",
 		})
-		state.animation = animation
 		elements.signal.addEventListener("abort", () => animation.cancel(), {
 			once: true,
 		})
@@ -213,7 +195,6 @@ function renderZoom(
 ): void {
 	const before = elements.image.getBoundingClientRect()
 	cancelZoomAnimation(elements)
-	state.animation = null
 	const maximum = maximumScale(elements)
 	state.scale = Math.max(1, Math.min(maximum, state.scale))
 
@@ -241,11 +222,6 @@ function renderZoom(
 	)
 	elements.fitButton.ariaPressed = String(state.scale === 1)
 
-	if (elements.navigation) {
-		elements.navigation.style.pointerEvents =
-			state.scale > 1 || state.pointers.size > 1 ? "none" : ""
-	}
-
 	elements.viewport.style.cursor = photoCursor(state)
 	elements.detail.dataset.photoZoomed = String(state.scale > 1)
 	elements.viewport.style.touchAction =
@@ -257,47 +233,6 @@ function cancelZoomAnimation(elements: ZoomElements): void {
 		for (const animation of image.getAnimations()) {
 			animation.cancel()
 		}
-	}
-}
-
-function edgeDirection(elements: ZoomElements, delta: number): number {
-	const viewport = elements.viewport
-	if (delta < 0 && viewport.scrollTop <= 1) {
-		return -1
-	}
-	if (
-		delta > 0 &&
-		viewport.scrollTop >= viewport.scrollHeight - viewport.clientHeight - 1
-	) {
-		return 1
-	}
-	return 0
-}
-
-function navigateFromZoom(
-	elements: ZoomElements,
-	state: ZoomState,
-	direction: number,
-): void {
-	const button = elements.detail.querySelector<HTMLElement>(
-		direction > 0 ? "[data-context-next]" : "[data-context-previous]",
-	)
-	if (!button || state.scale <= 1) {
-		return
-	}
-	state.mode = "fit"
-	state.scale = 1
-	state.suppressNavigationUntil = 0
-	renderZoom(elements, state, true)
-	const navigate = () => {
-		if (!elements.signal.aborted && state.scale === 1) {
-			button.click()
-		}
-	}
-	if (state.animation) {
-		void state.animation.finished.then(navigate, () => {})
-	} else {
-		navigate()
 	}
 }
 
@@ -419,7 +354,6 @@ function updatePinch(elements: ZoomElements, state: ZoomState): boolean {
 	}
 
 	state.scale = nextScale
-	state.suppressNavigationUntil = Date.now() + 500
 	renderZoom(elements, state)
 
 	return true
@@ -438,32 +372,9 @@ function updatePan(
 	state.panX += currentPoint.x - state.lastPoint.x
 	state.panY += currentPoint.y - state.lastPoint.y
 	state.lastPoint = currentPoint
-	state.suppressNavigationUntil = Date.now() + 500
 
 	renderZoom(elements, state)
 	elements.viewport.style.cursor = state.loupeActive ? "crosshair" : "grabbing"
-}
-
-function navigateFromTouch(
-	event: TouchEvent,
-	elements: ZoomElements,
-	state: ZoomState,
-): void {
-	const touch = event.touches[0]
-	if (!touch || !state.touchStart || !state.edgeGesture) {
-		return
-	}
-	const delta = state.touchStart.y - touch.clientY
-	const direction =
-		state.edgeGesture === 2 ? Math.sign(delta) : state.edgeGesture
-	if (
-		delta * direction > 60 &&
-		Math.abs(delta) > Math.abs(touch.clientX - state.touchStart.x)
-	) {
-		event.preventDefault()
-		navigateFromZoom(elements, state, direction)
-		state.edgeGesture = 0
-	}
 }
 
 function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
@@ -482,14 +393,6 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 	elements.viewport.addEventListener(
 		"touchstart",
 		(event) => {
-			const touch = event.touches[0]
-			state.touchStart = touch ? {x: touch.clientX, y: touch.clientY} : null
-			state.edgeGesture = 0
-			if (event.touches.length === 1 && state.scale > 1) {
-				const previous = edgeDirection(elements, -1)
-				const next = edgeDirection(elements, 1)
-				state.edgeGesture = previous && next ? 2 : previous + next
-			}
 			if (event.touches.length === 2) {
 				state.pointers.clear()
 				for (const finger of Array.from(event.touches)) {
@@ -519,7 +422,6 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 				updatePinch(elements, state)
 				return
 			}
-			navigateFromTouch(event, elements, state)
 		},
 		{passive: false, signal: elements.signal},
 	)
@@ -527,8 +429,6 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 		const pinching = state.pinch !== null
 		state.pointers.clear()
 		state.pinch = null
-		state.touchStart = null
-		state.edgeGesture = 0
 		if (pinching) {
 			renderZoom(elements, state)
 		}
@@ -561,7 +461,6 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 
 			if (state.pointers.size === 2) {
 				startPinch(state)
-				state.suppressNavigationUntil = Date.now() + 500
 				return
 			}
 
@@ -608,6 +507,42 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 	})
 }
 
+function fitZoom(elements: ZoomElements, state: ZoomState): void {
+	state.mode = "fit"
+	state.scale = 1
+	renderZoom(elements, state, true)
+}
+
+function actualZoom(
+	elements: ZoomElements,
+	state: ZoomState,
+	pointer?: Point,
+): void {
+	const scale = maximumScale(elements)
+	if (pointer) {
+		const image = elements.image.getBoundingClientRect()
+		const viewport = elements.viewport.getBoundingClientRect()
+		const ratio = scale / state.scale
+		state.panX =
+			pointer.x -
+			viewport.left -
+			viewport.width / 2 -
+			(pointer.x - image.left - image.width / 2) * ratio
+		state.panY =
+			pointer.y -
+			viewport.top -
+			viewport.height / 2 -
+			(pointer.y - image.top - image.height / 2) * ratio
+	} else {
+		state.panX = 0
+		state.panY = 0
+	}
+	state.scale = scale
+	state.mode = "actual"
+	loadOriginal(elements, state)
+	renderZoom(elements, state, true)
+}
+
 function zoomAtPoint(
 	elements: ZoomElements,
 	state: ZoomState,
@@ -617,32 +552,10 @@ function zoomAtPoint(
 		return
 	}
 	if (state.mode !== "fit") {
-		state.mode = "fit"
-		state.scale = 1
-		renderZoom(elements, state, true)
-		return
+		fitZoom(elements, state)
+	} else if (maximumScale(elements) > state.scale) {
+		actualZoom(elements, state, pointer)
 	}
-	const scale = maximumScale(elements)
-	if (scale <= state.scale) {
-		return
-	}
-	const image = elements.image.getBoundingClientRect()
-	const viewport = elements.viewport.getBoundingClientRect()
-	const ratio = scale / state.scale
-	state.panX =
-		pointer.x -
-		viewport.left -
-		viewport.width / 2 -
-		(pointer.x - image.left - image.width / 2) * ratio
-	state.panY =
-		pointer.y -
-		viewport.top -
-		viewport.height / 2 -
-		(pointer.y - image.top - image.height / 2) * ratio
-	state.scale = scale
-	state.mode = "actual"
-	loadOriginal(elements, state)
-	renderZoom(elements, state, true)
 }
 
 function bindDoubleZoom(elements: ZoomElements, state: ZoomState): void {
@@ -719,73 +632,6 @@ function bindDoubleZoom(elements: ZoomElements, state: ZoomState): void {
 	window.addEventListener("scroll", cancel, {...options, capture: true})
 }
 
-function bindZoomControls(elements: ZoomElements, state: ZoomState): void {
-	bindDoubleZoom(elements, state)
-	elements.actualButton.addEventListener(
-		"click",
-		() => {
-			state.mode = "actual"
-			loadOriginal(elements, state)
-			state.scale = maximumScale(elements)
-			state.panX = 0
-			state.panY = 0
-			renderZoom(elements, state, true)
-		},
-		{signal: elements.signal},
-	)
-
-	elements.fitButton.addEventListener(
-		"click",
-		() => {
-			state.mode = "fit"
-			state.scale = 1
-			renderZoom(elements, state, true)
-		},
-		{signal: elements.signal},
-	)
-
-	elements.viewport.addEventListener(
-		"wheel",
-		(event) => {
-			const now = performance.now()
-			const newGesture = now - state.wheelTime > 180
-			state.wheelTime = now
-			if (newGesture) {
-				state.wheelNavigated = false
-			}
-			if (state.wheelNavigated) {
-				event.preventDefault()
-				return
-			}
-			if (state.scale === 1) {
-				return
-			}
-
-			if (newGesture && Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-				const direction = edgeDirection(elements, event.deltaY)
-				if (direction) {
-					event.preventDefault()
-					state.wheelNavigated = true
-					navigateFromZoom(elements, state, direction)
-				}
-			}
-		},
-		{passive: false, signal: elements.signal},
-	)
-
-	if (elements.navigation) {
-		elements.navigation.addEventListener(
-			"click",
-			(event) => {
-				if (state.scale > 1 || Date.now() < state.suppressNavigationUntil) {
-					event.preventDefault()
-				}
-			},
-			{signal: elements.signal},
-		)
-	}
-}
-
 function observeZoomSize(elements: ZoomElements, state: ZoomState): void {
 	elements.image.addEventListener(
 		"load",
@@ -816,11 +662,6 @@ function observeZoomSize(elements: ZoomElements, state: ZoomState): void {
 	})
 }
 
-const sessions = new WeakMap<
-	HTMLElement,
-	{controller: AbortController; state: ZoomState}
->()
-
 function loupeContainsPointer(elements: ZoomElements, pointer: Point): boolean {
 	const bounds = elements.image.getBoundingClientRect()
 	const viewport = elements.viewport.getBoundingClientRect()
@@ -849,7 +690,7 @@ function synchronizeLoupe(elements: ZoomElements, state: ZoomState): void {
 	}
 }
 
-function bindLoupe(elements: ZoomElements, state: ZoomState): void {
+function bindLoupe(elements: ZoomElements, state: ZoomState) {
 	const loupe = document.createElement("div")
 	loupe.dataset.photoLoupeView = ""
 	loupe.setAttribute("aria-hidden", "true")
@@ -888,21 +729,6 @@ function bindLoupe(elements: ZoomElements, state: ZoomState): void {
 		loupe.style.backgroundPosition = `${size / 2 - ((pointer.x - bounds.left) / bounds.width) * width}px ${size / 2 - ((pointer.y - bounds.top) / bounds.height) * height}px`
 	}
 	const options = {signal: elements.signal}
-	elements.loupeButton?.addEventListener(
-		"click",
-		() => {
-			if (elements.loupeButton?.disabled) {
-				return
-			}
-			state.loupeActive = !state.loupeActive
-			elements.loupeButton!.ariaPressed = String(state.loupeActive)
-			if (state.loupeActive) {
-				loadOriginal(elements, state)
-			}
-			render()
-		},
-		options,
-	)
 	elements.detail.addEventListener(
 		"pointermove",
 		(event) => {
@@ -932,36 +758,56 @@ function bindLoupe(elements: ZoomElements, state: ZoomState): void {
 	if (elements.loupeButton) {
 		elements.loupeButton.ariaPressed = String(state.loupeActive)
 	}
+	return () => {
+		if (state.mode !== "fit") {
+			return
+		}
+		state.loupeActive = !state.loupeActive
+		synchronizeLoupe(elements, state)
+		if (state.loupeActive) {
+			loadOriginal(elements, state)
+		}
+		render()
+	}
 }
 
-export function initializePhotoZoom(detail: HTMLElement): void {
-	const previous = sessions.get(detail)
-	previous?.controller.abort()
+export function initializePhotoZoom(
+	frame: HTMLElement,
+	detail: HTMLElement,
+	loupeActive = false,
+) {
 	const controller = new AbortController()
-	const elements = getZoomElements(detail, controller.signal)
+	const elements = getZoomElements(frame, detail, controller.signal)
 	if (!elements) {
-		return
+		return null
 	}
 
 	const state = createZoomState()
-	state.loupeActive = previous?.state.loupeActive ?? false
-	sessions.set(detail, {controller, state})
+	state.loupeActive = loupeActive
 
 	elements.viewport.classList.add(
-		"[scrollbar-width:none]",
+		"scrollbar-none",
 		"[&::-webkit-scrollbar]:hidden",
 	)
-	bindZoomControls(elements, state)
+	bindDoubleZoom(elements, state)
 	bindPointerGestures(elements, state)
-	bindLoupe(elements, state)
+	const toggleLoupe = bindLoupe(elements, state)
 	observeZoomSize(elements, state)
 	renderZoom(elements, state)
-	document.addEventListener(
-		"astro:before-swap",
-		() => {
-			controller.abort()
-			sessions.delete(detail)
+	return {
+		fit() {
+			fitZoom(elements, state)
 		},
-		{once: true, signal: controller.signal},
-	)
+		actual() {
+			actualZoom(elements, state)
+		},
+		toggleLoupe,
+		get loupeActive() {
+			return state.loupeActive
+		},
+		dispose() {
+			controller.abort()
+			cancelZoomAnimation(elements)
+		},
+	}
 }

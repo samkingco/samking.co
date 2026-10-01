@@ -1,7 +1,7 @@
 ---
-import type {PhotoContextReference} from "./PhotoContext.ts"
-import {photoDetailHref} from "./PhotoContext.ts"
-import type {PhotoEntry} from "../repos/photos/schema.ts"
+import type {PhotoContextReference} from "../PhotoContext.ts"
+import {photoDetailHref} from "../PhotoContext.ts"
+import type {PhotoEntry} from "../../../repos/photos/schema.ts"
 import {
 	exposureSortValue,
 	formatAperture,
@@ -9,7 +9,7 @@ import {
 	formatPhotoDate,
 	formatShutter,
 	photoTitle,
-} from "./PhotoPresentation.ts"
+} from "../PhotoPresentation.ts"
 import PhotoHoverPreview from "./PhotoHoverPreview.astro"
 
 interface Props {
@@ -28,8 +28,7 @@ const indexColumnsClass =
 
 <div
 	id="photo-view-index"
-	class="scroll-mt-20"
-	hidden
+	class="hidden group-data-[photo-layout=index]/browser:block scroll-mt-20"
 	data-photo-view="index"
 	data-photo-index
 >

@@ -1,9 +1,16 @@
-import type {PhotoContext} from "./PhotoContext.ts"
-import {photoDetailHref} from "./PhotoContext.ts"
+import type {PhotoContext} from "../PhotoContext.ts"
+import {
+	parsePhotoContexts,
+	photoContextHref,
+	photoDetailHref,
+} from "../PhotoContext.ts"
 import {createPhotoScrollSpring} from "./PhotoScrollSpring.ts"
 
 export type PhotoSnapPage = {
-	detail: HTMLElement
+	id: string
+	contexts: PhotoContext[]
+	frame: HTMLElement
+	info: HTMLElement | null
 	title: string
 	metadata: Array<{selector: string; content: string}>
 }
@@ -12,20 +19,17 @@ type Panel = {element: HTMLElement; page: PhotoSnapPage; href: string}
 type Direction = -1 | 1
 
 const adjacentPanels = 4
-const scrollers = new WeakMap<HTMLElement, (direction: Direction) => boolean>()
 
-function markPanel(element: HTMLElement): void {
-	element.dataset.photoPanel = ""
-	for (const name of ["viewport", "image", "original"]) {
-		const target =
-			name === "viewport"
-				? element
-				: element.querySelector(`[data-photo-${name}]`)
-		target?.setAttribute(`data-panel-${name}`, "")
+function snapshot(
+	detail: HTMLElement,
+	sourceDocument: Document,
+): PhotoSnapPage | null {
+	const id = detail.dataset.photoId
+	const frame = detail.querySelector<HTMLElement>("[data-photo-frame]")
+	if (!id || !frame) {
+		return null
 	}
-}
-
-function snapshot(detail: HTMLElement, document: Document): PhotoSnapPage {
+	const info = detail.querySelector<HTMLElement>("[data-photo-info-content]")
 	const selectors = [
 		'meta[name="description"]',
 		'meta[property="og:title"]',
@@ -37,10 +41,15 @@ function snapshot(detail: HTMLElement, document: Document): PhotoSnapPage {
 		'meta[name="twitter:image"]',
 	]
 	return {
-		detail,
-		title: document.title,
+		id,
+		contexts: parsePhotoContexts(detail.dataset.photoContexts),
+		frame: document.importNode(frame, true),
+		info: info ? document.importNode(info, true) : null,
+		title: sourceDocument.title,
 		metadata: selectors.flatMap((selector) => {
-			const content = document.querySelector(selector)?.getAttribute("content")
+			const content = sourceDocument
+				.querySelector(selector)
+				?.getAttribute("content")
 			return content === null || content === undefined
 				? []
 				: [{selector, content}]
@@ -49,15 +58,11 @@ function snapshot(detail: HTMLElement, document: Document): PhotoSnapPage {
 }
 
 function panelFor(page: PhotoSnapPage, href: string): Panel | null {
-	const source = page.detail.querySelector("[data-photo-viewport]")
-	if (!(source instanceof HTMLElement)) {
-		return null
-	}
-	const element = source.cloneNode(true)
+	const element = page.frame.cloneNode(true)
 	if (!(element instanceof HTMLElement)) {
 		return null
 	}
-	markPanel(element)
+	element.dataset.photoPanel = ""
 	const panel = {element, page, href}
 	setActive(panel, false)
 	return panel
@@ -66,63 +71,39 @@ function panelFor(page: PhotoSnapPage, href: string): Panel | null {
 function setActive(panel: Panel, active: boolean): void {
 	panel.element.inert = !active
 	panel.element.setAttribute("aria-hidden", String(!active))
-	for (const name of ["viewport", "image", "original"]) {
-		const target =
-			name === "viewport"
-				? panel.element
-				: panel.element.querySelector(`[data-panel-${name}]`)
-		if (!(target instanceof HTMLElement)) {
-			continue
-		}
-		if (active) {
-			target.setAttribute(`data-photo-${name}`, "")
-		} else {
-			target.removeAttribute(`data-photo-${name}`)
-			target.style.transform = ""
-		}
-	}
-}
-
-export function scrollToAdjacentPhoto(
-	detail: HTMLElement,
-	direction: Direction,
-): boolean {
-	const step = scrollers.get(detail)
-	if (!step) {
-		return false
-	}
-	return step(direction)
 }
 
 export function initializePhotoSnap(
 	detail: HTMLElement,
-	contextFor: (source: HTMLElement) => PhotoContext | undefined,
-	activate: (page: PhotoSnapPage) => void,
-): void {
+	contextFor: (contexts: PhotoContext[]) => PhotoContext | undefined,
+	activate: (page: PhotoSnapPage, frame: HTMLElement) => void,
+) {
 	const scrollElement = detail.querySelector("[data-photo-scroll]")
-	const viewport = detail.querySelector("[data-photo-viewport]")
-	const context = contextFor(detail)
+	const viewport = detail.querySelector("[data-photo-frame]")
+	const context = contextFor(parsePhotoContexts(detail.dataset.photoContexts))
 	if (
 		!(scrollElement instanceof HTMLElement) ||
 		!(viewport instanceof HTMLElement) ||
 		!context ||
-		context.total < 2 ||
-		scrollers.has(detail)
+		context.total < 2
 	) {
-		return
+		return null
 	}
 
 	const scroll = scrollElement
+	const initial = snapshot(detail, document)
+	if (!initial) {
+		return null
+	}
 	const controller = new AbortController()
 	const {signal} = controller
 	const search = new URLSearchParams(location.search)
-	const initial = snapshot(detail.cloneNode(true) as HTMLElement, document)
 	const first: Panel = {
 		element: viewport,
 		page: initial,
 		href: `${location.pathname}${location.search}`,
 	}
-	markPanel(viewport)
+	viewport.dataset.photoPanel = ""
 
 	const panels = [first]
 	const pendingPrevious: Panel[] = []
@@ -137,30 +118,14 @@ export function initializePhotoSnap(
 	const failed = new Set<Direction>()
 	const pages = new Map<string, Promise<PhotoSnapPage>>()
 	pages.set(first.href, Promise.resolve(initial))
-	const navigation = detail.querySelector<HTMLElement>(
-		"[data-context-navigation]",
-	)
-	if (navigation) {
-		navigation.classList.add("pointer-events-none")
-	}
 
 	function hrefFor(panel: Panel, direction: Direction): string | null {
-		const selected = contextFor(panel.page.detail)
+		const selected = contextFor(panel.page.contexts)
 		const id = direction < 0 ? selected?.previousId : selected?.nextId
 		if (!id) {
 			return null
 		}
-		const url = new URL(
-			photoDetailHref(id, selected?.reference),
-			location.origin,
-		)
-		for (const key of ["sort", "direction"]) {
-			const value = search.get(key)
-			if (value) {
-				url.searchParams.set(key, value)
-			}
-		}
-		return `${url.pathname}${url.search}`
+		return photoContextHref(photoDetailHref(id, selected?.reference), search)
 	}
 
 	async function fetchPage(href: string): Promise<PhotoSnapPage> {
@@ -181,7 +146,11 @@ export function initializePhotoSnap(
 			if (!(source instanceof HTMLElement)) {
 				throw new Error("Photo page is missing its viewer")
 			}
-			return snapshot(source, parsed)
+			const page = snapshot(source, parsed)
+			if (!page) {
+				throw new Error("Photo page is missing its frame")
+			}
+			return page
 		})()
 		pages.set(href, request)
 		try {
@@ -251,7 +220,7 @@ export function initializePhotoSnap(
 			scroll.append(panel.element)
 		}
 		const preview =
-			panel.element.querySelector<HTMLImageElement>("[data-panel-image]")
+			panel.element.querySelector<HTMLImageElement>("[data-photo-image]")
 		if (preview) {
 			preview.loading = "eager"
 		}
@@ -314,7 +283,7 @@ export function initializePhotoSnap(
 			active = next
 			setActive(active, true)
 			history.replaceState(history.state, "", active.href)
-			activate(active.page)
+			activate(active.page, active.element)
 		}
 		void fill(-1)
 		void fill(1)
@@ -361,9 +330,6 @@ export function initializePhotoSnap(
 	}
 
 	async function step(direction: Direction): Promise<void> {
-		if (detail.dataset.photoZoomed === "true") {
-			detail.querySelector<HTMLElement>("[data-photo-fit]")?.click()
-		}
 		if (direction < 0) {
 			insertPrevious()
 		}
@@ -384,14 +350,6 @@ export function initializePhotoSnap(
 			moveTo(loaded)
 		}
 	}
-
-	scrollers.set(detail, (direction) => {
-		if (failed.has(direction)) {
-			return false
-		}
-		void step(direction)
-		return true
-	})
 
 	scroll.addEventListener(
 		"wheel",
@@ -427,29 +385,21 @@ export function initializePhotoSnap(
 		{signal},
 	)
 
-	const observer = new MutationObserver(() => {
-		const zoomed = detail.dataset.photoZoomed === "true"
-		scroll.classList.toggle("overflow-y-hidden", zoomed)
-		scroll.classList.toggle("overflow-y-auto", !zoomed)
-	})
-	observer.observe(detail, {
-		attributes: true,
-		attributeFilter: ["data-photo-zoomed"],
-	})
-
-	document.addEventListener(
-		"astro:before-swap",
-		() => {
-			controller.abort()
-			spring.cancel()
-			observer.disconnect()
-			cancelAnimationFrame(scrollFrame)
-			clearTimeout(settleTimer)
-			scrollers.delete(detail)
-		},
-		{once: true, signal},
-	)
-
 	void fill(-1)
 	void fill(1)
+	return {
+		step(direction: Direction): boolean {
+			if (failed.has(direction) || signal.aborted) {
+				return false
+			}
+			void step(direction)
+			return true
+		},
+		dispose() {
+			controller.abort()
+			spring.cancel()
+			cancelAnimationFrame(scrollFrame)
+			clearTimeout(settleTimer)
+		},
+	}
 }

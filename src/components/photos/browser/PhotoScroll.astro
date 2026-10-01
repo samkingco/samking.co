@@ -1,8 +1,8 @@
 ---
-import type {PhotoContextReference} from "./PhotoContext.ts"
-import {photoDetailHref} from "./PhotoContext.ts"
-import type {PhotoEntry} from "../repos/photos/schema.ts"
-import {formatPhotoDate, photoTitle} from "./PhotoPresentation.ts"
+import type {PhotoContextReference} from "../PhotoContext.ts"
+import {photoDetailHref} from "../PhotoContext.ts"
+import type {PhotoEntry} from "../../../repos/photos/schema.ts"
+import {formatPhotoDate, photoTitle} from "../PhotoPresentation.ts"
 
 interface Props {
 	photos: PhotoEntry[]
@@ -14,9 +14,8 @@ const {photos, context} = Astro.props
 
 <article
 	id="photo-view-scroll"
-	class="scroll-mt-20 space-y-10 px-5 md:px-10"
+	class="hidden group-data-[photo-layout=scroll]/browser:block scroll-mt-20 space-y-10 px-5 md:px-10"
 	data-photo-view="scroll"
-	hidden
 >
 	{photos.map((photo) => <figure
 		style={`width: min(100%, ${photo.metadata.width}px, calc(70dvh * ${photo.metadata.width / photo.metadata.height}))`}

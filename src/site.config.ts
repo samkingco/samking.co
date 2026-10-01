@@ -14,7 +14,7 @@ export const siteConfig = {
 	ogImage: "/og.png",
 	supportUrl: "https://buy.stripe.com/7sY5kC2YF9zCbJ5diV77O00",
 	photos: {
-		enabled: true,
+		enabled: false,
 		captureOneCatalogPath:
 			"~/Dropbox/photography/Capture One/sk-archive.cocatalog",
 		allPhotosCollectionId: "775",
