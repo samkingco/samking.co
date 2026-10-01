@@ -12,6 +12,21 @@
 		"Liberation Mono", Menlo, monospace;
 
 	--text-base: 0.75rem;
+
+	--animate-photo-panel: photo-panel linear both;
+
+	@keyframes photo-panel {
+		0%,
+		100% {
+			scale: 0.96;
+			opacity: 0.6;
+		}
+		40%,
+		60% {
+			scale: 1;
+			opacity: 1;
+		}
+	}
 }
 
 @layer base {

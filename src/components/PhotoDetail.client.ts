@@ -1,5 +1,6 @@
 import {navigate} from "astro:transitions/client"
 import {type PhotoContext, photoDetailHref} from "./PhotoContext.ts"
+import {initializePhotoSnap, scrollToAdjacentPhoto} from "./PhotoSnap.client.ts"
 import {initializePhotoZoom} from "./PhotoZoom.client.ts"
 
 function parseContexts(detail: HTMLElement): PhotoContext[] {
@@ -188,6 +189,14 @@ function navigateWithinDetail(
 ): void {
 	if (link.matches("[data-context-previous], [data-context-next]")) {
 		event.preventDefault()
+		if (
+			scrollToAdjacentPhoto(
+				detail,
+				link.matches("[data-context-previous]") ? -1 : 1,
+			)
+		) {
+			return
+		}
 		void navigate(link.href, {
 			history: "replace",
 			state: history.state,
@@ -267,6 +276,9 @@ const keyboardControlSelectors: Record<string, string> = {
 	Escape: "[data-context-close]",
 	ArrowLeft: "[data-context-previous]",
 	ArrowRight: "[data-context-next]",
+	ArrowUp: "[data-context-previous]",
+	ArrowDown: "[data-context-next]",
+	p: "[data-photo-loupe]",
 	"=": "[data-photo-actual]",
 	"+": "[data-photo-actual]",
 	"-": "[data-photo-fit]",
@@ -277,8 +289,21 @@ function hasKeyboardModifier(event: KeyboardEvent): boolean {
 	return event.metaKey || event.ctrlKey || event.altKey
 }
 
+function ignoresViewerKey(event: KeyboardEvent): boolean {
+	return (
+		event.defaultPrevented ||
+		hasKeyboardModifier(event) ||
+		(event.target instanceof Element &&
+			Boolean(
+				event.target.closest(
+					"input, textarea, select, [contenteditable]:not([contenteditable='false'])",
+				),
+			))
+	)
+}
+
 function handlePhotoKeydown(event: KeyboardEvent): void {
-	if (hasKeyboardModifier(event)) {
+	if (ignoresViewerKey(event)) {
 		return
 	}
 
@@ -296,7 +321,9 @@ function handlePhotoKeydown(event: KeyboardEvent): void {
 		return
 	}
 
-	const selector = keyboardControlSelectors[event.key]
+	const selector =
+		keyboardControlSelectors[event.key] ??
+		keyboardControlSelectors[event.key.toLowerCase()]
 	if (!selector) {
 		return
 	}
@@ -320,6 +347,37 @@ function initializePhotoDetail(): void {
 	}
 
 	initializePhotoInfo(detail)
+	initializePhotoSnap(
+		detail,
+		(source) => selectedContext(parseContexts(source), search),
+		(page) => {
+			detail.dataset.photoId = page.detail.dataset.photoId
+			detail.dataset.photoContexts = page.detail.dataset.photoContexts
+			const sourceInfo = page.detail.querySelector("[data-photo-info-content]")
+			const info = detail.querySelector("[data-photo-info-content]")
+			if (sourceInfo && info) {
+				info.replaceChildren(
+					...Array.from(sourceInfo.childNodes, (node) => node.cloneNode(true)),
+				)
+			}
+			const nextContext = selectedContext(parseContexts(detail), search)
+			if (nextContext) {
+				applyContext(detail, nextContext, search)
+			}
+			const navigation = detail.querySelector<HTMLElement>(
+				"[data-context-navigation]",
+			)
+			if (navigation) {
+				navigation.style.pointerEvents = "none"
+			}
+			document.title = page.title
+			for (const {selector, content} of page.metadata) {
+				document.querySelector(selector)?.setAttribute("content", content)
+			}
+			initializePhotoZoom(detail)
+			detail.dispatchEvent(new Event("photo:change"))
+		},
+	)
 	initializePhotoZoom(detail)
 }
 
