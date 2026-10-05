@@ -236,8 +236,6 @@ function renderZoom(
 	elements.fitButton.ariaPressed = String(state.scale === 1)
 
 	elements.viewport.style.cursor = photoCursor(state)
-	elements.viewport.style.touchAction =
-		state.scale > 1 ? "pan-x pan-y" : "pan-y"
 }
 
 function cancelZoomAnimation(elements: ZoomElements): void {
@@ -559,8 +557,14 @@ function zoomAtPoint(
 
 function bindDoubleZoom(elements: ZoomElements, state: ZoomState): void {
 	const options = {signal: elements.signal}
-	let touch: {id: number; point: Point; time: number} | null = null
-	let previous: {point: Point; time: number} | null = null
+	const scroll = elements.viewport.closest<HTMLElement>("[data-photo-scroll]")
+	const scrollPosition = (): Point => ({
+		x: elements.viewport.scrollLeft + (scroll?.scrollLeft ?? 0),
+		y: elements.viewport.scrollTop + (scroll?.scrollTop ?? 0),
+	})
+	type Tap = {point: Point; time: number; scroll: Point}
+	let touch: (Tap & {id: number}) | null = null
+	let previous: Tap | null = null
 	elements.viewport.addEventListener(
 		"dblclick",
 		(event) => {
@@ -583,6 +587,7 @@ function bindDoubleZoom(elements: ZoomElements, state: ZoomState): void {
 				id: event.pointerId,
 				point: point(event),
 				time: performance.now(),
+				scroll: scrollPosition(),
 			}
 		},
 		options,
@@ -600,10 +605,14 @@ function bindDoubleZoom(elements: ZoomElements, state: ZoomState): void {
 	elements.viewport.addEventListener(
 		"pointerup",
 		(event) => {
-			if (!touch || touch.id !== event.pointerId) {
+			if (touch?.id !== event.pointerId) {
 				return
 			}
-			const tap = {point: point(event), time: performance.now()}
+			const tap = {
+				point: point(event),
+				time: performance.now(),
+				scroll: scrollPosition(),
+			}
 			const valid = tap.time - touch.time < 300
 			touch = null
 			if (!valid) {
@@ -613,7 +622,8 @@ function bindDoubleZoom(elements: ZoomElements, state: ZoomState): void {
 			if (
 				previous &&
 				tap.time - previous.time < 300 &&
-				distance(previous.point, tap.point) < 24
+				distance(previous.point, tap.point) < 24 &&
+				distance(previous.scroll, tap.scroll) <= 12
 			) {
 				zoomAtPoint(elements, state, tap.point)
 				previous = null
@@ -628,7 +638,17 @@ function bindDoubleZoom(elements: ZoomElements, state: ZoomState): void {
 		previous = null
 	}
 	elements.viewport.addEventListener("pointercancel", cancel, options)
-	window.addEventListener("scroll", cancel, {...options, capture: true})
+	window.addEventListener(
+		"scroll",
+		() => {
+			const start = touch ?? previous
+			// Native snap can still move a few pixels between intentional taps.
+			if (start && distance(start.scroll, scrollPosition()) > 12) {
+				cancel()
+			}
+		},
+		{...options, capture: true},
+	)
 }
 
 function observeZoomSize(elements: ZoomElements, state: ZoomState): void {
@@ -687,6 +707,11 @@ function synchronizeLoupe(elements: ZoomElements, state: ZoomState): void {
 		elements.loupeButton.disabled = !available
 		elements.loupeButton.ariaPressed = String(state.loupeActive)
 	}
+	elements.viewport.style.touchAction = state.loupeActive
+		? "none"
+		: state.scale > 1
+			? "pan-x pan-y"
+			: "pan-y"
 }
 
 function bindLoupe(elements: ZoomElements, state: ZoomState) {
@@ -728,9 +753,33 @@ function bindLoupe(elements: ZoomElements, state: ZoomState) {
 		loupe.style.backgroundPosition = `${size / 2 - ((pointer.x - bounds.left) / bounds.width) * width}px ${size / 2 - ((pointer.y - bounds.top) / bounds.height) * height}px`
 	}
 	const options = {signal: elements.signal}
+	let touchPointer: number | null = null
+	elements.viewport.addEventListener(
+		"pointerdown",
+		(event) => {
+			if (event.pointerType !== "touch" || !state.loupeActive) {
+				return
+			}
+			if (!event.isPrimary) {
+				touchPointer = null
+				state.loupePoint = null
+				render()
+				return
+			}
+			event.preventDefault()
+			touchPointer = event.pointerId
+			elements.viewport.setPointerCapture(event.pointerId)
+			state.loupePoint = point(event)
+			render()
+		},
+		options,
+	)
 	elements.detail.addEventListener(
 		"pointermove",
 		(event) => {
+			if (event.pointerType === "touch" && event.pointerId !== touchPointer) {
+				return
+			}
 			state.loupePoint = point(event)
 			render()
 		},
@@ -744,6 +793,16 @@ function bindLoupe(elements: ZoomElements, state: ZoomState) {
 		},
 		options,
 	)
+	const endTouch = (event: PointerEvent) => {
+		if (event.pointerId === touchPointer) {
+			touchPointer = null
+			state.loupePoint = null
+			render()
+		}
+	}
+	elements.viewport.addEventListener("pointerup", endTouch, options)
+	elements.viewport.addEventListener("pointercancel", endTouch, options)
+	elements.viewport.addEventListener("lostpointercapture", endTouch, options)
 	window.addEventListener(
 		"scroll",
 		() => {

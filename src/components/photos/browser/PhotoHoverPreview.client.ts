@@ -185,7 +185,18 @@ function initializePhotoPreview(index: HTMLElement): void {
 
 	preview.addEventListener("load", positionPreview)
 
+	index.addEventListener("pointerdown", (event) => {
+		if (event.pointerType !== "mouse") {
+			clearPreview()
+		}
+	})
+
 	index.addEventListener("pointermove", (event) => {
+		if (event.pointerType !== "mouse") {
+			clearPreview()
+			return
+		}
+
 		const target = previewTarget(index, event.target)
 
 		if (!target && !focusTarget) {
@@ -210,28 +221,16 @@ function initializePhotoPreview(index: HTMLElement): void {
 
 	index.addEventListener("focusin", (event) => {
 		const target = previewTarget(index, event.target)
-		if (!target) {
+		if (!target?.matches(":focus-visible")) {
 			return
 		}
 
-		if (target.matches(":focus-visible")) {
-			pointer = null
-		}
-
+		pointer = null
 		focusTarget = target
 		showPreview(target)
 	})
 
-	index.addEventListener("focusout", (event) => {
-		const target = previewTarget(index, event.relatedTarget)
-		if (!target) {
-			clearPreview()
-			return
-		}
-
-		focusTarget = target
-		showPreview(target)
-	})
+	index.addEventListener("focusout", clearPreview)
 }
 
 function initializePhotoPreviews(): void {

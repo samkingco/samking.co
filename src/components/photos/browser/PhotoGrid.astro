@@ -17,7 +17,7 @@ const {photos, context} = Astro.props
 	data-photo-view="grid"
 >
 	<ul
-		class="grid grid-cols-[repeat(auto-fill,minmax(min(--spacing(48),100%),1fr))] items-start gap-5 md:gap-10 list-none"
+		class="grid grid-cols-[repeat(auto-fill,minmax(min(--spacing(36),100%),1fr))] md:grid-cols-[repeat(auto-fill,minmax(min(--spacing(56),100%),1fr))] items-start gap-5 md:gap-10 list-none"
 	>
 		{photos.map((photo) => <li>
 			<a
