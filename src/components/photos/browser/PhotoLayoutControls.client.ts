@@ -100,13 +100,23 @@ function bindLayoutButton(
 
 function photoLayoutElements(controls: HTMLElement): {
 	layoutBar: HTMLElement
-	scope: HTMLElement
 	browser: HTMLElement
-} | null {
+} {
 	const layoutBar = controls.closest<HTMLElement>("[data-photo-layout-bar]")
-	const scope = layoutBar?.parentElement
-	const browser = scope?.querySelector<HTMLElement>("[data-photo-browser]")
-	return browser && layoutBar && scope ? {layoutBar, scope, browser} : null
+	const viewId = controls
+		.querySelector("[aria-controls]")
+		?.getAttribute("aria-controls")
+	const browser = viewId
+		? document
+				.getElementById(viewId)
+				?.closest<HTMLElement>("[data-photo-browser]")
+		: null
+	if (!layoutBar || !browser) {
+		throw new Error(
+			"Photo layout controls require a layout bar and an aria-controls target in the photo browser",
+		)
+	}
+	return {layoutBar, browser}
 }
 
 function initializePhotoLayoutControls(controls: HTMLElement): void {
@@ -114,19 +124,14 @@ function initializePhotoLayoutControls(controls: HTMLElement): void {
 		return
 	}
 
-	const elements = photoLayoutElements(controls)
-	if (!elements) {
-		return
-	}
-
-	const {layoutBar, scope, browser} = elements
+	const {layoutBar, browser} = photoLayoutElements(controls)
 
 	controls.dataset.photoLayoutControlsReady = "true"
 	const buttons = controls.querySelectorAll<HTMLButtonElement>(
 		"[data-photo-layout-option]",
 	)
 
-	observeLayoutBar(layoutBar, scope)
+	observeLayoutBar(layoutBar, browser)
 
 	const initialLayout = browser.dataset.photoLayout
 	applyPhotoLayout(

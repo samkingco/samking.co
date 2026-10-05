@@ -1,8 +1,8 @@
 import {
+	adjacentPhotoHref,
 	parsePhotoContexts,
 	type PhotoContext,
 	photoContextHref,
-	photoDetailHref,
 	selectedPhotoContext,
 } from "../PhotoContext.ts"
 import {
@@ -17,8 +17,33 @@ let registered = false
 let photoInfoOpen = false
 let disposeDetail: (() => void) | undefined
 
+function bindDetail(detail: HTMLElement) {
+	const frame = detail.querySelector("[data-photo-frame]")
+	const info = detail.querySelector("[data-photo-info]")
+	const content = detail.querySelector("[data-photo-info-content]")
+	const summary = detail.querySelector("[data-photo-info] summary")
+	const label = detail.querySelector("[data-context-label]")
+	const position = detail.querySelector("[data-context-position]")
+	const close = detail.querySelector("[data-context-close]")
+	if (
+		!(frame instanceof HTMLElement) ||
+		!(info instanceof HTMLDetailsElement) ||
+		!(content instanceof HTMLElement) ||
+		!(summary instanceof HTMLElement) ||
+		!(label instanceof HTMLElement) ||
+		!(position instanceof HTMLElement) ||
+		!(close instanceof HTMLAnchorElement)
+	) {
+		throw new Error(
+			"Photo detail requires its frame, info panel, and context controls",
+		)
+	}
+	return {frame, info, content, summary, label, position, close}
+}
+
 function applyContext(
-	detail: HTMLElement,
+	elements: ReturnType<typeof bindDetail>,
+	photoId: string | undefined,
 	contexts: PhotoContext[],
 	search: URLSearchParams,
 ): void {
@@ -26,36 +51,25 @@ function applyContext(
 	if (!context) {
 		return
 	}
-	const label = detail.querySelector<HTMLElement>("[data-context-label]")
-	const position = detail.querySelector<HTMLElement>("[data-context-position]")
-	const close = detail.querySelector<HTMLAnchorElement>("[data-context-close]")
-	if (label) {
-		label.textContent = context.label
-	}
-	if (position) {
-		position.textContent = `${context.index}/${context.total}`
-	}
-	if (close) {
-		close.href = photoContextHref(
-			`${context.path}#photo-${detail.dataset.photoId}`,
-			search,
-		)
-	}
+	elements.label.textContent = context.label
+	elements.position.textContent = `${context.index}/${context.total}`
+	elements.close.href = photoContextHref(
+		`${context.path}#photo-${photoId}`,
+		search,
+	)
 }
 
-function updateInfo(detail: HTMLElement, source: HTMLElement | null): void {
-	const content = detail.querySelector<HTMLElement>("[data-photo-info-content]")
-	if (!content || !source) {
-		return
-	}
+function updateInfo(
+	elements: ReturnType<typeof bindDetail>,
+	source: HTMLElement,
+): void {
+	const {content, summary} = elements
 	const focused = content.contains(document.activeElement)
 	content.replaceChildren(
 		...Array.from(source.childNodes, (node) => node.cloneNode(true)),
 	)
 	if (focused) {
-		detail
-			.querySelector<HTMLElement>("[data-photo-info] summary")
-			?.focus({preventScroll: true})
+		summary.focus({preventScroll: true})
 	}
 }
 
@@ -77,36 +91,33 @@ function ignoresViewerKey(event: KeyboardEvent): boolean {
 function initializePhotoDetail(): void {
 	disposeDetail?.()
 	const root = document.querySelector<HTMLElement>("[data-photo-detail]")
-	const frame = root?.querySelector<HTMLElement>("[data-photo-frame]")
-	if (!root || !frame) {
+	if (!root) {
 		photoInfoOpen = false
 		return
 	}
 	const detail = root
+	const elements = bindDetail(detail)
+	const {frame, info} = elements
 	const controller = new AbortController()
 	const {signal} = controller
 	const search = new URLSearchParams(location.search)
 	let contexts = parsePhotoContexts(detail.dataset.photoContexts)
-	let zoom: ReturnType<typeof initializePhotoZoom> = null
-	applyContext(detail, contexts, search)
-
-	const info = detail.querySelector<HTMLDetailsElement>("[data-photo-info]")
-	if (info) {
-		info.open = photoInfoOpen
-		info.addEventListener(
-			"toggle",
-			() => {
-				photoInfoOpen = info.open
-			},
-			{signal},
-		)
-	}
+	let zoom: ReturnType<typeof initializePhotoZoom> | null = null
+	applyContext(elements, detail.dataset.photoId, contexts, search)
+	info.open = photoInfoOpen
+	info.addEventListener(
+		"toggle",
+		() => {
+			photoInfoOpen = info.open
+		},
+		{signal},
+	)
 
 	function activate(page: PhotoSnapPage, activeFrame: HTMLElement): void {
 		contexts = page.contexts
 		detail.dataset.photoId = page.id
-		updateInfo(detail, page.info)
-		applyContext(detail, contexts, search)
+		updateInfo(elements, page.info)
+		applyContext(elements, page.id, contexts, search)
 		document.title = page.title
 		for (const {selector, content} of page.metadata) {
 			document.querySelector(selector)?.setAttribute("content", content)
@@ -123,40 +134,45 @@ function initializePhotoDetail(): void {
 	)
 	zoom = initializePhotoZoom(frame, detail)
 
-	function step(direction: -1 | 1): void {
-		const context = selectedPhotoContext(contexts, search)
-		if (!context) {
-			return
-		}
-		const id = direction < 0 ? context.previousId : context.nextId
-		if (!id) {
+	async function step(direction: -1 | 1): Promise<void> {
+		const href = adjacentPhotoHref(
+			selectedPhotoContext(contexts, search),
+			direction,
+			search,
+		)
+		if (!href) {
 			return
 		}
 		if (detail.dataset.photoZoomed === "true") {
 			zoom?.fit()
 		}
-		if (!scroll?.step(direction)) {
-			replacePhotoDetail(
-				photoContextHref(photoDetailHref(id, context.reference), search),
-			)
+		const handled = await scroll?.step(direction)
+		if (!handled && !signal.aborted) {
+			replacePhotoDetail(href)
 		}
 	}
 
 	const actions: Record<string, () => void> = {
 		escape: () => closePhotoDetail(detail),
-		arrowleft: () => step(-1),
-		arrowup: () => step(-1),
-		arrowright: () => step(1),
-		arrowdown: () => step(1),
+		arrowleft: () => {
+			void step(-1)
+		},
+		arrowup: () => {
+			void step(-1)
+		},
+		arrowright: () => {
+			void step(1)
+		},
+		arrowdown: () => {
+			void step(1)
+		},
 		p: () => zoom?.toggleLoupe(),
 		"=": () => zoom?.actual(),
 		"+": () => zoom?.actual(),
 		"-": () => zoom?.fit(),
 		_: () => zoom?.fit(),
 		i: () => {
-			if (info) {
-				info.open = !info.open
-			}
+			info.open = !info.open
 		},
 	}
 	document.addEventListener(

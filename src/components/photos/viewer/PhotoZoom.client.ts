@@ -16,6 +16,8 @@ type ZoomElements = {
 	loupeButton: HTMLButtonElement | null
 	viewport: HTMLElement
 	presentation: HTMLElement
+	imageLayers: HTMLElement[]
+	animations: Set<Animation>
 	image: HTMLImageElement
 	originalImage: HTMLImageElement
 	actualButton: HTMLButtonElement
@@ -29,7 +31,6 @@ type ZoomState = {
 	scale: number
 	panX: number
 	panY: number
-	lastPoint: Point | null
 	pinch: Pinch | null
 	originalLoading: boolean
 	pointers: Map<number, Point>
@@ -39,7 +40,12 @@ function getZoomElements(
 	frame: HTMLElement,
 	detail: HTMLElement,
 	signal: AbortSignal,
-): ZoomElements | null {
+): ZoomElements {
+	const presentation = frame.querySelector("[data-photo-presentation]")
+	const imageLayer = frame.querySelector('[data-photo-image-layer="detail"]')
+	const originalLayer = frame.querySelector(
+		'[data-photo-image-layer="original"]',
+	)
 	const image = frame.querySelector("[data-photo-image]")
 	const originalImage = frame.querySelector("[data-photo-original]")
 	const actualButton = detail.querySelector("[data-photo-actual]")
@@ -51,13 +57,25 @@ function getZoomElements(
 		!(actualButton instanceof HTMLButtonElement) ||
 		!(fitButton instanceof HTMLButtonElement)
 	) {
-		return null
+		throw new Error(
+			"PhotoZoom requires image elements [data-photo-image], [data-photo-original] and buttons [data-photo-actual], [data-photo-fit]",
+		)
+	}
+	if (
+		!(presentation instanceof HTMLElement) ||
+		!(imageLayer instanceof HTMLElement) ||
+		!(originalLayer instanceof HTMLElement)
+	) {
+		throw new Error(
+			'PhotoZoom requires [data-photo-presentation] and [data-photo-image-layer="detail"/"original"] elements',
+		)
 	}
 
 	return {
 		viewport: frame,
-		presentation:
-			frame.querySelector<HTMLElement>("[data-photo-presentation]") ?? frame,
+		presentation,
+		imageLayers: [imageLayer, originalLayer],
+		animations: new Set(),
 		detail,
 		signal,
 		loupeButton: detail.querySelector<HTMLButtonElement>("[data-photo-loupe]"),
@@ -76,7 +94,6 @@ function createZoomState(): ZoomState {
 		scale: 1,
 		panX: 0,
 		panY: 0,
-		lastPoint: null,
 		pinch: null,
 		originalLoading: false,
 		pointers: new Map(),
@@ -150,9 +167,10 @@ function animateZoom(
 			duration: 160,
 			easing: "ease-out",
 		})
-		elements.signal.addEventListener("abort", () => animation.cancel(), {
-			once: true,
-		})
+		elements.animations.add(animation)
+		animation.onfinish = animation.oncancel = () => {
+			elements.animations.delete(animation)
+		}
 	}
 }
 
@@ -178,13 +196,8 @@ function sizeZoomCanvas(elements: ZoomElements, state: ZoomState): void {
 				top: `${(canvasHeight - height) / 2}px`,
 			}
 		: {position: "", inset: "", width: "", height: "", left: "", top: ""}
-	for (const wrapper of new Set([
-		elements.image.parentElement,
-		elements.originalImage.parentElement,
-	])) {
-		if (wrapper) {
-			Object.assign(wrapper.style, style)
-		}
+	for (const layer of elements.imageLayers) {
+		Object.assign(layer.style, style)
 	}
 }
 
@@ -223,17 +236,15 @@ function renderZoom(
 	elements.fitButton.ariaPressed = String(state.scale === 1)
 
 	elements.viewport.style.cursor = photoCursor(state)
-	elements.detail.dataset.photoZoomed = String(state.scale > 1)
 	elements.viewport.style.touchAction =
 		state.scale > 1 ? "pan-x pan-y" : "pan-y"
 }
 
 function cancelZoomAnimation(elements: ZoomElements): void {
-	for (const image of [elements.image, elements.originalImage]) {
-		for (const animation of image.getAnimations()) {
-			animation.cancel()
-		}
+	for (const animation of elements.animations) {
+		animation.cancel()
 	}
+	elements.animations.clear()
 }
 
 function loadOriginal(elements: ZoomElements, state: ZoomState): void {
@@ -359,24 +370,6 @@ function updatePinch(elements: ZoomElements, state: ZoomState): boolean {
 	return true
 }
 
-function updatePan(
-	event: PointerEvent,
-	elements: ZoomElements,
-	state: ZoomState,
-): void {
-	if (state.scale <= 1 || !state.lastPoint) {
-		return
-	}
-
-	const currentPoint = point(event)
-	state.panX += currentPoint.x - state.lastPoint.x
-	state.panY += currentPoint.y - state.lastPoint.y
-	state.lastPoint = currentPoint
-
-	renderZoom(elements, state)
-	elements.viewport.style.cursor = state.loupeActive ? "crosshair" : "grabbing"
-}
-
 function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 	elements.viewport.addEventListener(
 		"scroll",
@@ -464,7 +457,6 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 				return
 			}
 
-			state.lastPoint = point(event)
 			if (state.scale > 1) {
 				elements.viewport.setPointerCapture(event.pointerId)
 			}
@@ -475,7 +467,8 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 	elements.viewport.addEventListener(
 		"pointermove",
 		(event) => {
-			if (!state.pointers.has(event.pointerId)) {
+			const previous = state.pointers.get(event.pointerId)
+			if (!previous) {
 				return
 			}
 
@@ -484,7 +477,14 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 				return
 			}
 
-			updatePan(event, elements, state)
+			if (state.scale > 1) {
+				state.panX += event.clientX - previous.x
+				state.panY += event.clientY - previous.y
+				renderZoom(elements, state)
+				elements.viewport.style.cursor = state.loupeActive
+					? "crosshair"
+					: "grabbing"
+			}
 		},
 		{signal: elements.signal},
 	)
@@ -495,7 +495,6 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 		}
 		state.pointers.delete(event.pointerId)
 		state.pinch = null
-		state.lastPoint = [...state.pointers.values()][0] ?? null
 		renderZoom(elements, state)
 	}
 
@@ -778,9 +777,6 @@ export function initializePhotoZoom(
 ) {
 	const controller = new AbortController()
 	const elements = getZoomElements(frame, detail, controller.signal)
-	if (!elements) {
-		return null
-	}
 
 	const state = createZoomState()
 	state.loupeActive = loupeActive

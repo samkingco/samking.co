@@ -65,3 +65,14 @@ export const photoDetailHref = (
 	const search = new URLSearchParams({ctx: context.type, ctxid: context.id})
 	return `${path}?${search}`
 }
+
+export function adjacentPhotoHref(
+	context: PhotoContext | undefined,
+	direction: -1 | 1,
+	search: URLSearchParams,
+): string | null {
+	const id = direction < 0 ? context?.previousId : context?.nextId
+	return id
+		? photoContextHref(photoDetailHref(id, context?.reference), search)
+		: null
+}

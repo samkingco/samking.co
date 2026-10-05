@@ -1,16 +1,12 @@
 import type {PhotoContext} from "../PhotoContext.ts"
-import {
-	parsePhotoContexts,
-	photoContextHref,
-	photoDetailHref,
-} from "../PhotoContext.ts"
+import {adjacentPhotoHref, parsePhotoContexts} from "../PhotoContext.ts"
 import {createPhotoScrollSpring} from "./PhotoScrollSpring.ts"
 
 export type PhotoSnapPage = {
 	id: string
 	contexts: PhotoContext[]
 	frame: HTMLElement
-	info: HTMLElement | null
+	info: HTMLElement
 	title: string
 	metadata: Array<{selector: string; content: string}>
 }
@@ -26,10 +22,10 @@ function snapshot(
 ): PhotoSnapPage | null {
 	const id = detail.dataset.photoId
 	const frame = detail.querySelector<HTMLElement>("[data-photo-frame]")
-	if (!id || !frame) {
+	const info = detail.querySelector<HTMLElement>("[data-photo-info-content]")
+	if (!id || !frame || !info) {
 		return null
 	}
-	const info = detail.querySelector<HTMLElement>("[data-photo-info-content]")
 	const selectors = [
 		'meta[name="description"]',
 		'meta[property="og:title"]',
@@ -44,7 +40,7 @@ function snapshot(
 		id,
 		contexts: parsePhotoContexts(detail.dataset.photoContexts),
 		frame: document.importNode(frame, true),
-		info: info ? document.importNode(info, true) : null,
+		info: document.importNode(info, true),
 		title: sourceDocument.title,
 		metadata: selectors.flatMap((selector) => {
 			const content = sourceDocument
@@ -80,20 +76,23 @@ export function initializePhotoSnap(
 ) {
 	const scrollElement = detail.querySelector("[data-photo-scroll]")
 	const viewport = detail.querySelector("[data-photo-frame]")
-	const context = contextFor(parsePhotoContexts(detail.dataset.photoContexts))
 	if (
 		!(scrollElement instanceof HTMLElement) ||
-		!(viewport instanceof HTMLElement) ||
-		!context ||
-		context.total < 2
+		!(viewport instanceof HTMLElement)
 	) {
+		throw new Error(
+			"Photo scrolling requires [data-photo-scroll] and [data-photo-frame]",
+		)
+	}
+	const context = contextFor(parsePhotoContexts(detail.dataset.photoContexts))
+	if (!context || context.total < 2) {
 		return null
 	}
 
 	const scroll = scrollElement
 	const initial = snapshot(detail, document)
 	if (!initial) {
-		return null
+		throw new Error("Photo scrolling requires a photo ID, frame, and info")
 	}
 	const controller = new AbortController()
 	const {signal} = controller
@@ -113,6 +112,7 @@ export function initializePhotoSnap(
 	let scrollFrame = 0
 	let lastScroll = 0
 	let settleTimer = 0
+	let navigationVersion = 0
 	const spring = createPhotoScrollSpring(scroll, settle)
 	const filling = new Map<Direction, Promise<void>>()
 	const failed = new Set<Direction>()
@@ -120,12 +120,7 @@ export function initializePhotoSnap(
 	pages.set(first.href, Promise.resolve(initial))
 
 	function hrefFor(panel: Panel, direction: Direction): string | null {
-		const selected = contextFor(panel.page.contexts)
-		const id = direction < 0 ? selected?.previousId : selected?.nextId
-		if (!id) {
-			return null
-		}
-		return photoContextHref(photoDetailHref(id, selected?.reference), search)
+		return adjacentPhotoHref(contextFor(panel.page.contexts), direction, search)
 	}
 
 	async function fetchPage(href: string): Promise<PhotoSnapPage> {
@@ -148,7 +143,7 @@ export function initializePhotoSnap(
 			}
 			const page = snapshot(source, parsed)
 			if (!page) {
-				throw new Error("Photo page is missing its frame")
+				throw new Error("Photo page is missing its frame or info")
 			}
 			return page
 		})()
@@ -194,6 +189,12 @@ export function initializePhotoSnap(
 		})
 	}
 
+	function edgePanel(direction: Direction): Panel | undefined {
+		return direction < 0
+			? (pendingPrevious[0] ?? panels[0])
+			: panels[panels.length - 1]
+	}
+
 	function nextHref(direction: Direction): string | null {
 		const index = panels.indexOf(destination ?? active)
 		const available =
@@ -201,10 +202,7 @@ export function initializePhotoSnap(
 		if (available >= adjacentPanels) {
 			return null
 		}
-		const edge =
-			direction < 0
-				? (pendingPrevious[0] ?? panels[0])
-				: panels[panels.length - 1]
+		const edge = edgePanel(direction)
 		return edge ? hrefFor(edge, direction) : null
 	}
 
@@ -227,6 +225,7 @@ export function initializePhotoSnap(
 	}
 
 	async function loadAdjacent(direction: Direction): Promise<boolean> {
+		const edge = edgePanel(direction)
 		const href = nextHref(direction)
 		if (!href || signal.aborted) {
 			return false
@@ -234,6 +233,10 @@ export function initializePhotoSnap(
 		const page = await fetchPage(href)
 		if (signal.aborted) {
 			return false
+		}
+		// A requested step and prefetch may share this fetch; insert its frame once.
+		if (edge !== edgePanel(direction)) {
+			return true
 		}
 		const panel = panelFor(page, href)
 		if (!panel) {
@@ -329,36 +332,35 @@ export function initializePhotoSnap(
 		return panels[panels.indexOf(destination ?? active) + direction]
 	}
 
-	async function step(direction: Direction): Promise<void> {
-		if (direction < 0) {
-			insertPrevious()
-		}
-		const next = adjacentTarget(direction)
-		if (next) {
-			moveTo(next)
-			return
-		}
-		await fill(direction)
-		if (signal.aborted) {
-			return
-		}
-		if (direction < 0) {
-			insertPrevious()
-		}
-		const loaded = adjacentTarget(direction)
-		if (loaded) {
-			moveTo(loaded)
-		}
+	function navigationCancelled(version: number): boolean {
+		return signal.aborted || version !== navigationVersion
 	}
 
-	scroll.addEventListener(
-		"wheel",
-		() => {
-			spring.cancel()
-			destination = null
-		},
-		{signal, passive: true},
-	)
+	async function step(direction: Direction, version: number): Promise<boolean> {
+		while (!navigationCancelled(version)) {
+			if (direction < 0) {
+				insertPrevious()
+			}
+			const next = adjacentTarget(direction)
+			if (next) {
+				moveTo(next)
+				return true
+			}
+			if (failed.has(direction) || !(await loadAdjacent(direction))) {
+				return navigationCancelled(version)
+			}
+		}
+		// Cancellation is handled, not a reason to navigate to another page.
+		return true
+	}
+
+	function cancelNavigation(): void {
+		navigationVersion += 1
+		spring.cancel()
+		destination = null
+	}
+
+	scroll.addEventListener("wheel", cancelNavigation, {signal, passive: true})
 
 	scroll.addEventListener(
 		"scroll",
@@ -376,28 +378,18 @@ export function initializePhotoSnap(
 	)
 	scroll.addEventListener("scrollend", settle, {signal})
 
-	scroll.addEventListener(
-		"pointerdown",
-		() => {
-			spring.cancel()
-			destination = null
-		},
-		{signal},
-	)
+	scroll.addEventListener("pointerdown", cancelNavigation, {signal})
 
 	void fill(-1)
 	void fill(1)
 	return {
-		step(direction: Direction): boolean {
-			if (failed.has(direction) || signal.aborted) {
-				return false
-			}
-			void step(direction)
-			return true
+		step(direction: Direction): Promise<boolean> {
+			const version = navigationVersion
+			return step(direction, version).catch(() => navigationCancelled(version))
 		},
 		dispose() {
 			controller.abort()
-			spring.cancel()
+			cancelNavigation()
 			cancelAnimationFrame(scrollFrame)
 			clearTimeout(settleTimer)
 		},
