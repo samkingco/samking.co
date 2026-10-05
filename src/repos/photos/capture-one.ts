@@ -25,6 +25,7 @@ const OutputEventSchema = v.object({
 const CaptureOneVariantSchema = v.object({
 	id: v.string(),
 	name: v.string(),
+	filename: v.string(),
 	outputs: v.array(OutputEventSchema),
 })
 
@@ -294,6 +295,7 @@ function addVariant(
 	variants.set(row.variantId, {
 		id: row.variantId,
 		name: row.name,
+		filename: row.filename,
 		outputs: [],
 	})
 }

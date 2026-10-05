@@ -20,11 +20,13 @@ There’s also a local [alt-text generator](../src/repos/photos/alt-text.ts#L224
 
 Open Manage photos → Alt text to generate or review text, or run `pnpm content photos alt generate` directly. The CLI starts Ollama and installs the model if needed.
 
+Review generated text shows one photo at a time with Approve, Edit, and Skip actions. It only includes generated text, not missing, IPTC, approved, or edited text. Each approval or edit is saved immediately. Skipped photos remain generated for the next review.
+
 ## Local files and R2
 
 `photos/catalog.sqlite` stores metadata and collection membership. Source JPEGs and generated images are stored in `photos/objects/`. With `pnpm dev`, [Astro serves those local files through `/cdn`](../astro.config.mjs#L23), so I can preview photos before uploading them.
 
-Sync finishes the local work before attempting R2 uploads. It [checks hashes and sizes](../src/repos/photos/r2.ts#L72) to avoid uploading the same files again and [backs up the SQLite catalog](../src/repos/photos/backup.ts#L9) too.
+Sync finishes the local work before attempting R2 uploads. Missing exports do not stop the remaining photos from syncing and uploading. Sync lists their filenames so I can export them and run sync again. It [checks hashes and sizes](../src/repos/photos/r2.ts#L72) to avoid uploading the same files again and [backs up the SQLite catalog](../src/repos/photos/backup.ts#L9) too.
 
 Production builds only include photos with uploaded images and use the public CDN URLs. The build machine needs a copy of the catalog.
 

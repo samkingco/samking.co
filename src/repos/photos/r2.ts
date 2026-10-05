@@ -18,6 +18,8 @@ const R2ConfigSchema = v.object({
 export type R2Config = v.InferOutput<typeof R2ConfigSchema>
 
 export const PHOTO_CDN_URL = "https://cdn.samking.co"
+// Match the SDK's default socket capacity without opening every queued file.
+export const R2_MAX_CONNECTIONS = 50
 
 const CONNECTION_ERRORS = new Set([
 	"ENOTFOUND",
@@ -63,12 +65,48 @@ export function createR2Client(config: R2Config): S3Client {
 		region: "auto",
 		endpoint: config.endpoint,
 		forcePathStyle: true,
+		requestHandler: {
+			httpAgent: {maxSockets: R2_MAX_CONNECTIONS},
+			httpsAgent: {maxSockets: R2_MAX_CONNECTIONS},
+		},
 		credentials: {
 			accessKeyId: config.accessKeyId,
 			secretAccessKey: config.secretAccessKey,
 		},
 	})
 }
+
+export async function runR2Tasks<T>(
+	items: T[],
+	task: (item: T) => Promise<void>,
+): Promise<void> {
+	const pending = items.values()
+	let failed = false
+	// Let active work finish before callers close their database and R2 client.
+	const results = await Promise.allSettled(
+		Array.from(
+			{length: Math.min(items.length, R2_MAX_CONNECTIONS)},
+			async () => {
+				for (const item of pending) {
+					if (failed) {
+						return
+					}
+					try {
+						await task(item)
+					} catch (error) {
+						failed = true
+						throw error
+					}
+				}
+			},
+		),
+	)
+	const failure = results.find((result) => result.status === "rejected")
+	if (failure) {
+		throw failure.reason
+	}
+}
+
 export async function uploadR2File(input: {
 	client: S3Client
 	config: R2Config

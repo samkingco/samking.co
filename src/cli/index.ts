@@ -13,6 +13,7 @@ import {editEquipment} from "./equipment.ts"
 import {errorMessage, menu} from "./menu.ts"
 import {createNote} from "./notes.ts"
 import {
+	backupPhotoCatalogCommand,
 	emptyPhotoTrashCommand,
 	regenerateOpenGraphImagesCommand,
 	syncPhotosCommand,
@@ -73,6 +74,7 @@ const photoActions = [
 		run: editCollectionDescriptions,
 	},
 	{name: "equipment", label: "Edit equipment", run: editEquipment},
+	{name: "backup", label: "Backup catalog", run: backupPhotoCatalogCommand},
 	{
 		name: "empty-trash",
 		label: "Empty photo trash",

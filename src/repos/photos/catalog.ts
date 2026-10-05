@@ -11,7 +11,7 @@ import {
 } from "./database-schema.ts"
 import type {PhotoDatabase} from "./database.ts"
 import {readEquipmentAliases, resolveEquipment} from "./equipment.ts"
-import {NormalizedMetadataSchema} from "./schema.ts"
+import {type NormalizedMetadata, NormalizedMetadataSchema} from "./schema.ts"
 
 /** Website selection and availability rules live here, not in the Astro loader. */
 export function readWebsiteCatalog(
@@ -48,15 +48,16 @@ export function readWebsiteCatalog(
 	return {
 		photos: rows
 			.filter((row) => positions.has(row.id) && row.metadataJson)
-			.map((row) => ({
-				...assemblePhoto(
+			.map((row) => {
+				const photo = assemblePhoto(
 					row,
 					memberships.get(row.id) ?? [],
 					derivatives.get(row.selectedExport.id) ?? [],
 					aliases,
-				),
-				position: positions.get(row.id)!,
-			}))
+				)
+				photo.metadata.tags = sortTags(photo.metadata)
+				return {...photo, position: positions.get(row.id)!}
+			})
 			.sort((a, b) => b.position - a.position),
 		albums: assembleAlbums(
 			albums,
@@ -274,6 +275,40 @@ function assemblePhoto(
 		})),
 		derivatives,
 	}
+}
+
+function sortTags({tags, tagEdges}: NormalizedMetadata) {
+	const compare = (a: (typeof tags)[number], b: (typeof tags)[number]) =>
+		a.name.localeCompare(b.name)
+	const ordered = tags.toSorted(compare)
+	const byKey = new Map(tags.map((tag) => [tag.key, tag]))
+	const edges = tagEdges.filter(
+		({parentKey, childKey}) => byKey.has(parentKey) && byKey.has(childKey),
+	)
+	const children = Map.groupBy(edges, ({parentKey}) => parentKey)
+	const hasParent = new Set(edges.map(({childKey}) => childKey))
+	const seen = new Set<string>()
+	const result: typeof tags = []
+	function append(tag: (typeof tags)[number]) {
+		if (seen.has(tag.key)) {
+			return
+		}
+		seen.add(tag.key)
+		result.push(tag)
+		for (const child of (children.get(tag.key) ?? [])
+			.map(({childKey}) => byKey.get(childKey)!)
+			.sort(compare)) {
+			append(child)
+		}
+	}
+	for (const tag of ordered.filter(({key}) => !hasParent.has(key))) {
+		append(tag)
+	}
+	// Keep tags visible even if their imported relationships contain a cycle.
+	for (const tag of ordered) {
+		append(tag)
+	}
+	return result
 }
 
 function assembleAlbums(

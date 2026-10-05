@@ -1,11 +1,22 @@
-import {isCancel, log, multiline, multiselect, taskLog} from "@clack/prompts"
+import {
+	type CommonOptions,
+	isCancel,
+	log,
+	multiline,
+	multiselect,
+	select,
+	taskLog,
+} from "@clack/prompts"
 import {
 	type AltTextPhoto,
 	generateAltText,
 	readAltTextPhotos,
 	saveAltText,
 } from "../repos/photos/alt-text.ts"
-import {openPhotoDatabase} from "../repos/photos/database.ts"
+import {
+	openPhotoDatabase,
+	type PhotoDatabase,
+} from "../repos/photos/database.ts"
 import {menu} from "./menu.ts"
 
 export async function generateAltTextCommand(ids?: string[]): Promise<void> {
@@ -40,9 +51,59 @@ export async function manageAltText(): Promise<void> {
 			label: "Generate missing or changed text",
 			run: () => generateAltTextCommand(),
 		},
+		{
+			label: "Review generated text",
+			run: async () => {
+				const database = openPhotoDatabase()
+				using _ = database.$client
+				await reviewGeneratedAltText(database)
+			},
+		},
 		{label: "Review / edit text", run: () => selectAltText(false)},
 		{label: "Regenerate selected photos", run: () => selectAltText(true)},
 	])
+}
+
+export async function reviewGeneratedAltText(
+	database: PhotoDatabase,
+	options: CommonOptions = {},
+): Promise<void> {
+	const queue = readAltTextPhotos(database).filter(
+		(photo) =>
+			!photo.metadata.alt &&
+			photo.altTextStatus === "generated" &&
+			photo.altText?.trim(),
+	)
+	if (queue.length === 0) {
+		log.info("No generated alt text to review.", options)
+		return
+	}
+	for (const [index, photo] of queue.entries()) {
+		showPhotoContext(photo, options)
+		log.info(`Alt text: ${photo.altText}`, options)
+		const action = await select({
+			...options,
+			message: `${index + 1}/${queue.length} — ${photo.captureOneVariantName}`,
+			options: [
+				{value: "approve", label: "Approve"},
+				{value: "edit", label: "Edit"},
+				{value: "skip", label: "Skip"},
+			],
+		})
+		if (isCancel(action)) {
+			return
+		}
+		if (action === "skip") {
+			continue
+		}
+		const text =
+			action === "edit" ? await editAltText(photo, options) : photo.altText!
+		if (isCancel(text)) {
+			return
+		}
+		saveAltText(database, photo, text)
+	}
+	log.success("Review complete. Skipped text stays generated.", options)
 }
 
 async function selectAltText(regenerate: boolean): Promise<void> {
@@ -87,15 +148,21 @@ async function selectAltText(regenerate: boolean): Promise<void> {
 	}
 }
 
-function editAltText(photo: AltTextPhoto) {
+function showPhotoContext(photo: AltTextPhoto, options: CommonOptions = {}) {
 	log.info(
 		[
 			`http://localhost:4321/photos/${photo.id}/`,
 			`Title: ${photo.metadata.title ?? photo.metadata.headline ?? "—"}`,
 			`Description: ${photo.metadata.caption ?? "—"}`,
 		].join("\n"),
+		options,
 	)
+}
+
+function editAltText(photo: AltTextPhoto, options: CommonOptions = {}) {
+	showPhotoContext(photo, options)
 	return multiline({
+		...options,
 		message:
 			"Submit to save and approve, or press Escape to leave without saving",
 		initialValue: photo.altText ?? "",

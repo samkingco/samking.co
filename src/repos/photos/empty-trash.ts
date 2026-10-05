@@ -14,6 +14,7 @@ import {
 	deleteR2File,
 	loadR2Config,
 	type R2Config,
+	runR2Tasks,
 } from "./r2.ts"
 
 type DerivativeTrashRow = ReturnType<typeof derivativeTrashRows>[number]
@@ -106,15 +107,17 @@ async function emptyDerivatives(
 	rows: DerivativeTrashRow[],
 	progress: (message: string) => void,
 ): Promise<void> {
-	for (const [index, row] of rows.entries()) {
-		progress(`${index + 1}/${rows.length} ${row.r2Key}`)
+	let completed = 0
+	await runR2Tasks(rows, async (row) => {
 		await deleteRemoteDerivative(row, remote.r2, remote.config)
 		await rm(row.path, {force: true})
 		database
 			.delete(photoDerivatives)
 			.where(eq(photoDerivatives.id, row.id))
 			.run()
-	}
+		completed += 1
+		progress(`${completed}/${rows.length} ${row.r2Key}`)
+	})
 }
 
 async function deleteRemoteDerivative(

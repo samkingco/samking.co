@@ -38,6 +38,7 @@ import {
 	createR2Client,
 	loadR2Config,
 	type R2Config,
+	runR2Tasks,
 	uploadR2File,
 } from "./r2.ts"
 import {configuredRootIds} from "./roots.ts"
@@ -92,6 +93,7 @@ export async function syncPhotos(
 			.map(({id, variantId}) => [variantId, id]),
 	)
 	const currentExports = readCurrentExports(database)
+	const missingExports: string[] = []
 	for (const [index, variant] of snapshot.variants.entries()) {
 		progress(`${index + 1}/${snapshot.variants.length} ${variant.name}`)
 		const photoId = photoIds.get(variant.id) ?? photoIdForVariant(variant.id)
@@ -100,7 +102,15 @@ export async function syncPhotos(
 		const profiles =
 			currentExports.get(photoId) ?? new Map<string, CurrentExport>()
 		currentExports.set(photoId, profiles)
-		await syncVariant(database, photoId, variant, profiles)
+		const missingExport = await syncVariant(
+			database,
+			photoId,
+			variant,
+			profiles,
+		)
+		if (missingExport !== undefined) {
+			missingExports.push(missingExport)
+		}
 	}
 	persistCollections(database, snapshot, photoIds)
 	markMissingPhotos(database, new Set(snapshot.variants.map(({id}) => id)))
@@ -116,7 +126,7 @@ export async function syncPhotos(
 			.where(eq(photos.id, source.photoId))
 			.run()
 	}
-	return snapshot.variants.length
+	return {synced: snapshot.variants.length, missingExports}
 }
 
 export async function regenerateOpenGraphImages(
@@ -247,14 +257,10 @@ async function syncVariant(
 	photoId: string,
 	variant: CaptureOneVariant,
 	profiles: Map<string, CurrentExport>,
-): Promise<void> {
+): Promise<string | undefined> {
 	const candidates = await exportCandidates(variant)
 	if (candidates.length === 0) {
-		if (profiles.size === 0) {
-			throw new Error("has no current JPEG export in photos/exports")
-		}
-
-		return
+		return profiles.size === 0 ? variant.filename : undefined
 	}
 	for (const candidate of candidates) {
 		const current = await syncExport(
@@ -329,8 +335,11 @@ async function exportCandidates(
 						profile: parts[0] ?? "default",
 						modified: (await stat(path)).mtimeMs,
 					}
-				} catch {
-					return null
+				} catch (error) {
+					if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+						return null
+					}
+					throw error
 				}
 			}),
 		)
@@ -723,8 +732,7 @@ async function uploadPendingFiles(
 		.all()
 	let uploaded = 0
 	let reused = 0
-	for (const [index, row] of rows.entries()) {
-		progress(`${index + 1}/${rows.length} ${row.r2Key}`)
+	await runR2Tasks(rows, async (row) => {
 		const result = await uploadR2File({
 			client,
 			config,
@@ -744,6 +752,7 @@ async function uploadPendingFiles(
 			.set({uploadedAt: new Date().toISOString()})
 			.where(eq(photoDerivatives.id, row.id))
 			.run()
-	}
+		progress(`${uploaded + reused}/${rows.length} ${row.r2Key}`)
+	})
 	progress(`Uploaded ${uploaded} files; reused ${reused} files in R2`)
 }

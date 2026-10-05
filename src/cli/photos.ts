@@ -1,6 +1,12 @@
 import {log, taskLog} from "@clack/prompts"
+import {backupPhotoDatabase} from "../repos/photos/backup.ts"
+import {openPhotoDatabase} from "../repos/photos/database.ts"
 import {emptyPhotoTrash} from "../repos/photos/empty-trash.ts"
-import {isR2ConnectionError} from "../repos/photos/r2.ts"
+import {
+	createR2Client,
+	isR2ConnectionError,
+	loadR2Config,
+} from "../repos/photos/r2.ts"
 import {
 	regenerateOpenGraphImages,
 	syncPhotos,
@@ -9,14 +15,47 @@ import {
 
 export async function syncPhotosCommand(): Promise<void> {
 	const task = taskLog({title: "Sync local photos", limit: 5, retainLog: true})
+	let missingExports: string[]
 	try {
-		const count = await syncPhotos(task.message)
-		task.success(`Synced ${count} photos to the local catalog`)
+		const result = await syncPhotos(task.message)
+		missingExports = result.missingExports
+		task.success(`Synced ${result.synced} photos to the local catalog`)
 	} catch (error) {
 		task.error("Local sync failed")
 		throw error
 	}
-	await uploadPhotoChanges({backupCatalog: true})
+	try {
+		await uploadPhotoChanges({backupCatalog: true})
+	} finally {
+		if (missingExports.length > 0) {
+			log.warn(
+				`Missing exports — export these files, then run sync again:\n${missingExports.join("\n")}`,
+			)
+		}
+	}
+}
+
+export async function backupPhotoCatalogCommand(): Promise<void> {
+	const task = taskLog({
+		title: "Back up photo catalog",
+		limit: 5,
+		retainLog: true,
+	})
+	try {
+		const config = loadR2Config()
+		const database = openPhotoDatabase()
+		using _ = database.$client
+		const client = createR2Client(config)
+		try {
+			const key = await backupPhotoDatabase(database, client, config)
+			task.success(`Saved catalog backup to R2: ${key}`)
+		} finally {
+			client.destroy()
+		}
+	} catch (error) {
+		task.error("Catalog backup failed; local changes are saved")
+		throw error
+	}
 }
 
 export async function regenerateOpenGraphImagesCommand(): Promise<void> {
