@@ -1,5 +1,9 @@
 type Point = {x: number; y: number}
 
+const loupeInput = window.matchMedia(
+	"(any-hover: hover) and (any-pointer: fine)",
+)
+
 type Pinch = {
 	distance: number
 	scale: number
@@ -693,7 +697,7 @@ function loupeContainsPointer(elements: ZoomElements, pointer: Point): boolean {
 }
 
 function synchronizeLoupe(elements: ZoomElements, state: ZoomState): void {
-	const available = state.mode === "fit"
+	const available = loupeInput.matches && state.mode === "fit"
 	if (!available) {
 		state.loupeActive = false
 		const loupe = elements.detail.querySelector<HTMLElement>(
@@ -704,14 +708,12 @@ function synchronizeLoupe(elements: ZoomElements, state: ZoomState): void {
 		}
 	}
 	if (elements.loupeButton) {
+		elements.loupeButton.hidden = !loupeInput.matches
 		elements.loupeButton.disabled = !available
 		elements.loupeButton.ariaPressed = String(state.loupeActive)
 	}
-	elements.viewport.style.touchAction = state.loupeActive
-		? "none"
-		: state.scale > 1
-			? "pan-x pan-y"
-			: "pan-y"
+	elements.viewport.style.touchAction =
+		state.scale > 1 ? "pan-x pan-y" : "pan-y"
 }
 
 function bindLoupe(elements: ZoomElements, state: ZoomState) {
@@ -753,34 +755,20 @@ function bindLoupe(elements: ZoomElements, state: ZoomState) {
 		loupe.style.backgroundPosition = `${size / 2 - ((pointer.x - bounds.left) / bounds.width) * width}px ${size / 2 - ((pointer.y - bounds.top) / bounds.height) * height}px`
 	}
 	const options = {signal: elements.signal}
-	let touchPointer: number | null = null
 	elements.viewport.addEventListener(
 		"pointerdown",
 		(event) => {
-			if (event.pointerType !== "touch" || !state.loupeActive) {
-				return
-			}
-			if (!event.isPrimary) {
-				touchPointer = null
+			if (event.pointerType === "touch") {
 				state.loupePoint = null
 				render()
-				return
 			}
-			event.preventDefault()
-			touchPointer = event.pointerId
-			elements.viewport.setPointerCapture(event.pointerId)
-			state.loupePoint = point(event)
-			render()
 		},
 		options,
 	)
 	elements.detail.addEventListener(
 		"pointermove",
 		(event) => {
-			if (event.pointerType === "touch" && event.pointerId !== touchPointer) {
-				return
-			}
-			state.loupePoint = point(event)
+			state.loupePoint = event.pointerType === "touch" ? null : point(event)
 			render()
 		},
 		options,
@@ -793,16 +781,6 @@ function bindLoupe(elements: ZoomElements, state: ZoomState) {
 		},
 		options,
 	)
-	const endTouch = (event: PointerEvent) => {
-		if (event.pointerId === touchPointer) {
-			touchPointer = null
-			state.loupePoint = null
-			render()
-		}
-	}
-	elements.viewport.addEventListener("pointerup", endTouch, options)
-	elements.viewport.addEventListener("pointercancel", endTouch, options)
-	elements.viewport.addEventListener("lostpointercapture", endTouch, options)
 	window.addEventListener(
 		"scroll",
 		() => {
@@ -813,11 +791,17 @@ function bindLoupe(elements: ZoomElements, state: ZoomState) {
 	)
 	window.addEventListener("resize", render, options)
 	elements.signal.addEventListener("abort", () => loupe.remove(), {once: true})
-	if (elements.loupeButton) {
-		elements.loupeButton.ariaPressed = String(state.loupeActive)
-	}
+	loupeInput.addEventListener(
+		"change",
+		() => {
+			state.loupePoint = null
+			synchronizeLoupe(elements, state)
+			render()
+		},
+		options,
+	)
 	return () => {
-		if (state.mode !== "fit") {
+		if (!loupeInput.matches || state.mode !== "fit") {
 			return
 		}
 		state.loupeActive = !state.loupeActive
