@@ -45,7 +45,10 @@ const facetItems = (items: PhotoGroup[]): IndexItem[] =>
 
 const dateGroups = groups.dates.map((group) => ({
 	year: indexItem(group.year),
-	months: group.months.map(indexItem),
+	months: group.months.map((month) => ({
+		...indexItem(month),
+		label: month.label.replace(` ${group.year.label}`, ""),
+	})),
 }))
 const setItems = groups.sets.map(indexItem)
 const tagItems = facetItems(groups.tags)
