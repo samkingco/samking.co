@@ -280,17 +280,28 @@ function synchronizeHorizontalScroll(
 	headerViewport: HTMLElement,
 	indexViewport: HTMLElement,
 ): void {
-	headerViewport.addEventListener("scroll", () => {
-		if (indexViewport.scrollLeft !== headerViewport.scrollLeft) {
-			indexViewport.scrollLeft = headerViewport.scrollLeft
-		}
-	})
+	let activeViewport = indexViewport
 
-	indexViewport.addEventListener("scroll", () => {
-		if (headerViewport.scrollLeft !== indexViewport.scrollLeft) {
-			headerViewport.scrollLeft = indexViewport.scrollLeft
+	for (const viewport of [headerViewport, indexViewport]) {
+		const follower =
+			viewport === headerViewport ? indexViewport : headerViewport
+		const activate = () => {
+			activeViewport = viewport
 		}
-	})
+		viewport.addEventListener("pointerdown", activate, {passive: true})
+		viewport.addEventListener("wheel", activate, {passive: true})
+		viewport.addEventListener("focusin", activate)
+		viewport.addEventListener(
+			"scroll",
+			() => {
+				// Never write back into the viewport with native momentum or bounce.
+				if (viewport === activeViewport) {
+					follower.scrollLeft = viewport.scrollLeft
+				}
+			},
+			{passive: true},
+		)
+	}
 }
 
 function initializePhotoIndex(indexView: HTMLElement): void {
