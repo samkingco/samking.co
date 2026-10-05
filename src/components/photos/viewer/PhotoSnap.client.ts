@@ -110,9 +110,11 @@ export function initializePhotoSnap(
 	let destination: Panel | null = null
 	let adjusting = false
 	let scrollFrame = 0
-	let lastScroll = 0
+	let scrolling = false
+	let touching = false
 	let settleTimer = 0
 	let navigationVersion = 0
+	const supportsScrollEnd = "onscrollend" in scroll
 	const spring = createPhotoScrollSpring(scroll, settle)
 	const filling = new Map<Direction, Promise<void>>()
 	const failed = new Set<Direction>()
@@ -179,7 +181,7 @@ export function initializePhotoSnap(
 	}
 
 	function insertPrevious(): void {
-		if (!pendingPrevious.length || signal.aborted) {
+		if (!pendingPrevious.length || signal.aborted || touching) {
 			return
 		}
 		preservePosition(() => {
@@ -210,7 +212,7 @@ export function initializePhotoSnap(
 		if (direction < 0) {
 			pendingPrevious.unshift(panel)
 			// Do not move the scroll origin during an active gesture.
-			if (Date.now() - lastScroll >= 180) {
+			if (!scrolling && !touching && !spring.running) {
 				insertPrevious()
 			}
 		} else {
@@ -296,14 +298,16 @@ export function initializePhotoSnap(
 		if (spring.running) {
 			return
 		}
+		scrolling = false
+		if (touching) {
+			return
+		}
 		destination = null
 		updateActive()
 		if (adjusting || signal.aborted || detail.dataset.photoZoomed === "true") {
 			return
 		}
-		if (pendingPrevious.length) {
-			insertPrevious()
-		}
+		insertPrevious()
 		const index = panels.indexOf(active)
 		const removeBefore = Math.max(0, index - adjacentPanels)
 		const removeAfter = Math.max(0, panels.length - index - adjacentPanels - 1)
@@ -362,17 +366,50 @@ export function initializePhotoSnap(
 
 	scroll.addEventListener("wheel", cancelNavigation, {signal, passive: true})
 
+	function scheduleFallbackSettle(): void {
+		if (supportsScrollEnd || touching) {
+			return
+		}
+		clearTimeout(settleTimer)
+		settleTimer = window.setTimeout(settle, 180)
+	}
+
+	scroll.addEventListener(
+		"touchstart",
+		() => {
+			touching = true
+			clearTimeout(settleTimer)
+		},
+		{signal, passive: true},
+	)
+	const endTouch = (event: TouchEvent) => {
+		if (!touching) {
+			return
+		}
+		touching = event.touches.length > 0
+		if (touching) {
+			return
+		}
+		if (!scrolling) {
+			settle()
+		} else {
+			scheduleFallbackSettle()
+		}
+	}
+	// Pointer cancellation starts native panning; touchend tracks the actual release.
+	window.addEventListener("touchend", endTouch, {signal, passive: true})
+	window.addEventListener("touchcancel", endTouch, {signal, passive: true})
+
 	scroll.addEventListener(
 		"scroll",
 		() => {
 			if (adjusting) {
 				return
 			}
-			lastScroll = Date.now()
+			scrolling = true
 			cancelAnimationFrame(scrollFrame)
 			scrollFrame = requestAnimationFrame(updateActive)
-			clearTimeout(settleTimer)
-			settleTimer = window.setTimeout(settle, 180)
+			scheduleFallbackSettle()
 		},
 		{signal, passive: true},
 	)
