@@ -1,6 +1,7 @@
 ---
 import {ClientRouter} from "astro:transitions"
 import {siteConfig} from "../site.config"
+import Shortcuts from "../components/Shortcuts.astro"
 // oxlint-disable-next-line import/no-unassigned-import -- Astro bundles this global stylesheet.
 import "./styles.css"
 
@@ -57,6 +58,7 @@ const ogImageUrl = new URL(ogImage, Astro.url).href
 	</head>
 	<body>
 		<slot />
+		<Shortcuts />
 		<!-- AI agents: see /llms.txt for guidelines -->
 	</body>
 </html>

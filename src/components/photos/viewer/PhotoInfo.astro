@@ -1,0 +1,88 @@
+---
+import Link from "../../Link.astro"
+import type {PhotoContext} from "../PhotoGroups.ts"
+import {
+	capturedDateParts,
+	photoTitle as getPhotoTitle,
+	photoExposure,
+} from "../PhotoPresentation.ts"
+import type {PhotoEntry} from "../../../repos/photos/schema.ts"
+import {slugify} from "../../../utils/slugify.ts"
+
+interface Props {
+	photo: PhotoEntry
+	contexts: PhotoContext[]
+}
+
+const {photo, contexts} = Astro.props
+const photoTitle = getPhotoTitle(photo)
+const capturedDate = capturedDateParts(photo.metadata.capturedAt)
+const exposure = photoExposure(photo)
+const photoSets = contexts.filter((c) => c.reference?.type === "set")
+---
+
+<details
+	class="group pointer-events-auto absolute right-0 bottom-0 z-20 w-fit max-w-90 bg-background px-3 py-2 open:flex open:w-full open:flex-col-reverse"
+	data-photo-info
+>
+	<summary
+		class="ml-auto w-fit cursor-pointer list-none underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted hover:decoration-solid hover:decoration-foreground focus-visible:outline-none focus-visible:decoration-solid focus-visible:decoration-foreground active:decoration-solid active:decoration-foreground [&::-webkit-details-marker]:hidden"
+	>
+		<span class="group-open:hidden">Info</span>
+		<span class="hidden group-open:inline">Close</span>
+	</summary>
+	<div class="space-y-3 px-3 pt-3 pb-5" data-photo-info-content>
+		<div>
+			<p>{photoTitle}</p>
+			{photo.metadata.caption && <p class="text-muted-foreground">
+				{photo.metadata.caption}
+			</p>}
+		</div>
+		{capturedDate && <p class="flex flex-wrap gap-x-1">
+			<Link
+				href={`/photos/date/${capturedDate.year}/${capturedDate.month}/${capturedDate.day}/`}
+			>
+				{capturedDate.dayLabel}
+			</Link>
+			<Link href={`/photos/date/${capturedDate.year}/${capturedDate.month}/`}>
+				{capturedDate.monthLabel}
+			</Link>
+			<Link href={`/photos/date/${capturedDate.year}/`}>
+				{capturedDate.year}
+			</Link>
+		</p>}
+		{(photo.cameraName || photo.lensName || exposure.length > 0) && <div>
+			{photo.cameraName && <p>
+				<Link href={`/photos/cameras/${slugify(photo.cameraName) || "item"}/`}>
+					{photo.cameraName}
+				</Link>
+			</p>}
+			{photo.lensName && <p>
+				<Link href={`/photos/lenses/${slugify(photo.lensName) || "item"}/`}>
+					{photo.lensName}
+				</Link>
+			</p>}
+			{exposure.length > 0 && <p class="text-muted-foreground">
+				{exposure.join(" • ")}
+			</p>}
+		</div>}
+		{photoSets.length > 0 && <div>
+			<p class="text-muted-foreground">Sets</p>
+			<ul class="list-none">
+				{photoSets.map((set) => <li>
+					<Link href={set.path}>{set.label}</Link>
+				</li>)}
+			</ul>
+		</div>}
+		{photo.metadata.tags.length > 0 && <div>
+			<p class="text-muted-foreground">Tags</p>
+			<ul class="list-none flex gap-x-2 flex-wrap">
+				{photo.metadata.tags.map((tag) => <li>
+					<Link href={`/photos/tags/${slugify(tag.name) || "item"}/`}>
+						{tag.name}
+					</Link>
+				</li>)}
+			</ul>
+		</div>}
+	</div>
+</details>

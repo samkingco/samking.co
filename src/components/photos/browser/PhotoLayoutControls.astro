@@ -1,4 +1,6 @@
 ---
+import TextButton from "../../TextButton.astro"
+
 const layoutOptions = [
 	{label: "Grid", value: "grid"},
 	{label: "Scroll", value: "scroll"},
@@ -13,16 +15,16 @@ const layoutOptions = [
 >
 	{layoutOptions.map(({label, value}, index) => (
 		<>
-			<button
-				type="button"
-				class="cursor-pointer text-muted-foreground underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted hover:text-foreground hover:decoration-solid hover:decoration-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:decoration-solid focus-visible:decoration-foreground active:decoration-solid active:decoration-foreground aria-pressed:text-foreground aria-pressed:no-underline disabled:cursor-default"
+			<TextButton
+				variant="muted"
+				class="aria-pressed:no-underline"
 				aria-controls={`photo-view-${value}`}
-				aria-pressed={value === "grid" ? "true" : "false"}
+				active={value === "grid"}
 				disabled={value === "grid"}
 				data-photo-layout-option={value}
 			>
 				{label}
-			</button>
+			</TextButton>
 			{index < layoutOptions.length - 1 && <span
 				class="text-muted-foreground/60"
 				aria-hidden="true"

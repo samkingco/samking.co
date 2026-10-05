@@ -1,7 +1,7 @@
 import type {PhotoContext, PhotoContextReference} from "./PhotoContext.ts"
 export type {PhotoContext} from "./PhotoContext.ts"
-import type {PhotoEntry, PhotoSetEntry} from "../repos/photos/schema.ts"
-import {slugify} from "../utils/slugify.ts"
+import type {PhotoEntry, PhotoSetEntry} from "../../repos/photos/schema.ts"
+import {slugify} from "../../utils/slugify.ts"
 import {capturedDate, newestCaptureFirst} from "./PhotoPresentation.ts"
 
 export interface PhotoGroup {

@@ -1,7 +1,7 @@
 ---
-import type {PhotoContextReference} from "./PhotoContext.ts"
-import {photoDetailHref} from "./PhotoContext.ts"
-import type {PhotoEntry} from "../repos/photos/schema.ts"
+import type {PhotoContextReference} from "../PhotoContext.ts"
+import {photoDetailHref} from "../PhotoContext.ts"
+import type {PhotoEntry} from "../../../repos/photos/schema.ts"
 
 interface Props {
 	photos: PhotoEntry[]
@@ -13,7 +13,7 @@ const {photos, context} = Astro.props
 
 <div
 	id="photo-view-grid"
-	class="scroll-mt-20 px-5 md:px-10"
+	class="hidden group-data-[photo-layout=grid]/browser:block scroll-mt-20 px-5 md:px-10"
 	data-photo-view="grid"
 >
 	<ul
@@ -22,6 +22,7 @@ const {photos, context} = Astro.props
 		{photos.map((photo) => <li>
 			<a
 				href={photoDetailHref(photo.id, context)}
+				id={`photo-${photo.id}`}
 				data-photo-id={photo.id}
 				class="block scroll-mt-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
 			>

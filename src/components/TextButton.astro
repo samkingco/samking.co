@@ -1,0 +1,30 @@
+---
+import type {HTMLAttributes} from "astro/types"
+
+type Props = HTMLAttributes<"button"> & {
+	active?: boolean
+	variant?: "default" | "muted"
+}
+
+const {
+	active,
+	variant = "default",
+	class: className,
+	type = "button",
+	...attributes
+} = Astro.props
+---
+
+<button
+	{...attributes}
+	type={type}
+	aria-pressed={active}
+	class:list={[
+		"cursor-pointer underline underline-offset-[0.125em] decoration-muted-foreground/80 decoration-dotted enabled:hover:decoration-solid enabled:hover:decoration-foreground focus-visible:outline-none focus-visible:decoration-solid focus-visible:decoration-foreground active:decoration-solid active:decoration-foreground disabled:cursor-default",
+		variant === "muted" &&
+			"text-muted-foreground enabled:hover:text-foreground focus-visible:text-foreground aria-pressed:text-foreground",
+		className,
+	]}
+>
+	<slot />
+</button>

@@ -1,4 +1,4 @@
-import type {PhotoEntry} from "../repos/photos/schema.ts"
+import type {PhotoEntry} from "../../repos/photos/schema.ts"
 
 const shortDateFormatter = new Intl.DateTimeFormat("en-GB", {
 	day: "numeric",
