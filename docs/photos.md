@@ -16,15 +16,17 @@ The CLI lets me change camera and lens display names, add collection description
 
 Capture One’s Description is the caption. Alt text comes from IPTC `AltTextAccessibility` when it’s set, otherwise from the catalog’s alt-text field.
 
-There’s also a local [alt-text generator](../src/repos/photos/alt-text.ts#L224) using Ollama. It gets a resized image plus metadata such as tags and album descriptions. The cache includes the image, metadata, prompt settings, and model revision, so unchanged photos don’t need another inference run. Generation skips text I’ve edited or approved.
+There’s also a local [alt-text generator](../src/repos/photos/alt-text.ts#L280) using Ollama. It gets a resized image plus metadata such as tags and album descriptions. The cache includes the image, metadata, prompt settings, and model revision, so unchanged photos don’t need another inference run. Generation skips text I’ve edited or approved.
 
 Open Manage photos → Alt text to generate or review text, or run `pnpm content photos alt generate` directly. The CLI starts Ollama and installs the model if needed.
 
 Review generated text shows one photo at a time with Approve, Edit, and Skip actions. It only includes generated text, not missing, IPTC, approved, or edited text. Each approval or edit is saved immediately. Skipped photos remain generated for the next review.
 
+For a photo grid, run `pnpm dev` and open `http://localhost:4321/admin/alt-text`. Edit the text below each photo, then use Save to save every displayed photo in one transaction. Unchanged text becomes approved; changed text becomes edited. This page is local-only and is not included in production builds.
+
 ## Local files and R2
 
-`photos/catalog.sqlite` stores metadata and collection membership. Source JPEGs and generated images are stored in `photos/objects/`. With `pnpm dev`, [Astro serves those local files through `/cdn`](../astro.config.mjs#L23), so I can preview photos before uploading them.
+`photos/catalog.sqlite` stores metadata and collection membership. Source JPEGs and generated images are stored in `photos/objects/`. With `pnpm dev`, [Astro serves those local files through `/cdn`](../astro.config.mjs#L22), so I can preview photos before uploading them.
 
 Sync finishes the local work before attempting R2 uploads. Missing exports do not stop the remaining photos from syncing and uploading. Sync lists their filenames so I can export them and run sync again. It [checks hashes and sizes](../src/repos/photos/r2.ts#L72) to avoid uploading the same files again and [backs up the SQLite catalog](../src/repos/photos/backup.ts#L9) too.
 

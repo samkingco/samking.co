@@ -3,6 +3,7 @@ import {createHash} from "node:crypto"
 import {resolve} from "node:path"
 import {setTimeout as delay} from "node:timers/promises"
 import {and, asc, desc, eq, isNotNull, isNull} from "drizzle-orm"
+import {alias} from "drizzle-orm/sqlite-core"
 import sharp from "sharp"
 import * as v from "valibot"
 import {siteConfig} from "../../site.config.ts"
@@ -28,6 +29,7 @@ export function readAltTextPhotos(
 	database: Pick<PhotoDatabase, "select">,
 	id?: string,
 ) {
+	const thumbnail = alias(photoDerivatives, "thumbnail")
 	const memberships = database
 		.select({
 			photoId: collectionPhotos.photoId,
@@ -52,10 +54,20 @@ export function readAltTextPhotos(
 			photo: photos,
 			path: photoDerivatives.path,
 			hash: photoDerivatives.sha256,
+			sourceKey: photoDerivatives.r2Key,
+			thumbnailKey: thumbnail.r2Key,
 		})
 		.from(photos)
 		.innerJoin(photoExports, eq(photoExports.photoId, photos.id))
 		.innerJoin(photoDerivatives, eq(photoDerivatives.exportId, photoExports.id))
+		.leftJoin(
+			thumbnail,
+			and(
+				eq(thumbnail.exportId, photoExports.id),
+				eq(thumbnail.kind, "thumb"),
+				isNull(thumbnail.deletedAt),
+			),
+		)
 		.where(
 			and(
 				eq(photos.status, "active"),
@@ -70,7 +82,7 @@ export function readAltTextPhotos(
 		)
 		.orderBy(desc(photoExports.createdAt), asc(photos.id))
 		.all()
-		.map(({photo, path, hash}) => {
+		.map(({photo, path, hash, sourceKey, thumbnailKey}) => {
 			const metadata = v.parse(
 				NormalizedMetadataSchema,
 				JSON.parse(photo.metadataJson!),
@@ -90,14 +102,58 @@ export function readAltTextPhotos(
 					JSON.stringify([hash, context, prompt, settings, "oriented-srgb-v1"]),
 				)
 				.digest("hex")
-			return {...photo, metadata, path, context, inputHash}
+			return {
+				...photo,
+				metadata,
+				path,
+				context,
+				inputHash,
+				previewKey: thumbnailKey ?? sourceKey,
+			}
 		})
 }
 
 export type AltTextPhoto = ReturnType<typeof readAltTextPhotos>[number]
 
+export function readGeneratedAltTextPhotos(
+	database: Pick<PhotoDatabase, "select">,
+) {
+	return readAltTextPhotos(database).filter(
+		(photo) =>
+			!photo.metadata.alt &&
+			photo.altTextStatus === "generated" &&
+			photo.altText?.trim(),
+	)
+}
+
+export function saveReviewedAltText(database: PhotoDatabase, input: unknown) {
+	const edits = v.parse(
+		v.array(
+			v.object({
+				id: v.string(),
+				inputHash: v.string(),
+				altText: v.string(),
+				text: v.string(),
+			}),
+		),
+		input,
+	)
+	database.transaction((tx) => {
+		const queue = new Map(
+			readGeneratedAltTextPhotos(tx).map((photo) => [photo.id, photo]),
+		)
+		for (const {id, inputHash, altText, text} of edits) {
+			const photo = queue.get(id)
+			if (!photo) {
+				throw new Error(`Photo ${id} changed; reopen it before saving`)
+			}
+			saveAltText(tx, {...photo, inputHash, altText}, text)
+		}
+	})
+}
+
 export function saveAltText(
-	database: PhotoDatabase,
+	database: Pick<PhotoDatabase, "transaction">,
 	photo: AltTextPhoto,
 	text: string,
 	generatedHash?: string,

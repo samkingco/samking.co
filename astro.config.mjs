@@ -6,7 +6,6 @@ import sitemap from "@astrojs/sitemap"
 import tailwindcss from "@tailwindcss/vite"
 import {defineConfig} from "astro/config"
 import {FontaineTransform} from "fontaine"
-import {siteConfig} from "./src/site.config.ts"
 import {markdownImages} from "./src/utils/markdown-images.mjs"
 
 const PHOTO_OBJECT_ROOT = resolve("photos/objects")
@@ -65,6 +64,21 @@ const localPhotos = {
 	},
 }
 
+const localAdmin = {
+	name: "local-admin",
+	hooks: {
+		"astro:config:setup": ({command, injectRoute}) => {
+			if (command === "dev") {
+				injectRoute({
+					pattern: "/admin/alt-text",
+					entrypoint: "./src/admin/alt-text.astro",
+					prerender: false,
+				})
+			}
+		},
+	},
+}
+
 export default defineConfig({
 	site: "https://samking.co",
 	output: "static",
@@ -73,14 +87,14 @@ export default defineConfig({
 	image: {
 		layout: "constrained",
 	},
-	integrations: [sitemap()],
+	integrations: [sitemap(), localAdmin],
 	markdown: {
 		processor: satteri({hastPlugins: [markdownImages]}),
 	},
 	vite: {
 		plugins: [
 			tailwindcss(),
-			...(siteConfig.photos.enabled ? [localPhotos] : []),
+			localPhotos,
 			FontaineTransform.vite({
 				fallbacks: ["Arial"],
 				resolvePath: (id) => new URL(`./public${id}`, import.meta.url),

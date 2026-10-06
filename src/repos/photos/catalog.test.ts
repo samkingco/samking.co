@@ -8,7 +8,13 @@ import {eq} from "drizzle-orm"
 import {migrate} from "drizzle-orm/node-sqlite/migrator"
 import sharp from "sharp"
 import {createRefraktRecords} from "../../atproto/refrakt.ts"
-import {generateAltText, readAltTextPhotos, saveAltText} from "./alt-text.ts"
+import {
+	generateAltText,
+	readAltTextPhotos,
+	readGeneratedAltTextPhotos,
+	saveAltText,
+	saveReviewedAltText,
+} from "./alt-text.ts"
 import {readRefraktCatalog, readWebsiteCatalog} from "./catalog.ts"
 import {readCollections, saveCollectionDescription} from "./collections.ts"
 import {
@@ -292,6 +298,92 @@ test("generation and stale review cannot overwrite a concurrent human edit", asy
 	await assert.rejects(generateAltText(db))
 	assert.throws(() => saveAltText(db, snapshot, "Stale edit"))
 	assert.equal(readAltTextPhotos(db, "a")[0]!.altText, "Human edit")
+})
+
+test("bulk alt review saves only submitted photos using the existing statuses", (t) => {
+	const db = fixture(t)
+	db.update(photos)
+		.set({
+			metadataJson: JSON.stringify({...metadata, alt: null}),
+			altText: "Generated text",
+			altTextStatus: "generated",
+			altTextInputHash: "generation-hash",
+		})
+		.run()
+	const queue = readGeneratedAltTextPhotos(db)
+	assert.equal(queue[0]!.previewKey, "photos/a/website/thumb")
+	saveReviewedAltText(
+		db,
+		queue.slice(0, 2).map((photo, index) => ({
+			id: photo.id,
+			inputHash: photo.inputHash,
+			altText: photo.altText,
+			text: index === 0 ? photo.altText : "  Human edit  ",
+		})),
+	)
+	assert.deepEqual(
+		readAltTextPhotos(db).map((photo) => [
+			photo.id,
+			photo.altText,
+			photo.altTextStatus,
+			photo.altTextInputHash,
+		]),
+		[
+			["a", "Generated text", "approved", "generation-hash"],
+			["b", "Human edit", "edited", "generation-hash"],
+			["outside", "Generated text", "generated", "generation-hash"],
+		],
+	)
+	assert.deepEqual(
+		readGeneratedAltTextPhotos(db).map(({id}) => id),
+		["outside"],
+	)
+	db.update(photos)
+		.set({metadataJson: JSON.stringify(metadata)})
+		.where(eq(photos.id, "outside"))
+		.run()
+	assert.deepEqual(readGeneratedAltTextPhotos(db), [])
+})
+
+test("bulk alt review rolls back the whole save on invalid or stale input", (t) => {
+	const db = fixture(t)
+	db.update(photos)
+		.set({
+			metadataJson: JSON.stringify({...metadata, alt: null}),
+			altText: "Generated text",
+			altTextStatus: "generated",
+		})
+		.run()
+	const queue = readGeneratedAltTextPhotos(db)
+	const edits = queue.slice(0, 2).map((photo) => ({
+		id: photo.id,
+		inputHash: photo.inputHash,
+		altText: photo.altText,
+		text: "Human edit",
+	}))
+	for (const invalid of [
+		{text: " "},
+		{text: "a".repeat(1001)},
+		{text: null},
+		{inputHash: "stale"},
+		{altText: "stale"},
+		{id: "missing"},
+	]) {
+		assert.throws(() =>
+			saveReviewedAltText(db, [edits[0], {...edits[1], ...invalid}]),
+		)
+		assert.deepEqual(
+			readAltTextPhotos(db).map(({altText, altTextStatus}) => [
+				altText,
+				altTextStatus,
+			]),
+			Array.from({length: 3}, () => ["Generated text", "generated"]),
+		)
+	}
+	saveAltText(db, queue[1]!, "Concurrent edit")
+	assert.throws(() => saveReviewedAltText(db, edits))
+	assert.equal(readAltTextPhotos(db, "a")[0]!.altTextStatus, "generated")
+	assert.equal(readAltTextPhotos(db, "b")[0]!.altText, "Concurrent edit")
 })
 
 test("catalog reads preserve membership order and use edits in both destinations", async (t) => {

@@ -11,6 +11,7 @@ import {
 	type AltTextPhoto,
 	generateAltText,
 	readAltTextPhotos,
+	readGeneratedAltTextPhotos,
 	saveAltText,
 } from "../repos/photos/alt-text.ts"
 import {
@@ -68,12 +69,7 @@ export async function reviewGeneratedAltText(
 	database: PhotoDatabase,
 	options: CommonOptions = {},
 ): Promise<void> {
-	const queue = readAltTextPhotos(database).filter(
-		(photo) =>
-			!photo.metadata.alt &&
-			photo.altTextStatus === "generated" &&
-			photo.altText?.trim(),
-	)
+	const queue = readGeneratedAltTextPhotos(database)
 	if (queue.length === 0) {
 		log.info("No generated alt text to review.", options)
 		return
