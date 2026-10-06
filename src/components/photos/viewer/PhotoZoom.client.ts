@@ -1,14 +1,21 @@
-type Point = {x: number; y: number}
+import {
+	actualScale,
+	panBounds,
+	pinchPan,
+	type Point,
+	resumeZoom,
+	type ZoomPosition,
+	zoomScales,
+	zoomTransform,
+} from "./PhotoZoomGeometry.ts"
 
 const loupeInput = window.matchMedia(
 	"(any-hover: hover) and (any-pointer: fine)",
 )
 
-type Pinch = {
+type Pinch = ZoomPosition & {
 	distance: number
-	scale: number
-	panX: number
-	panY: number
+	logScale: number
 	center: Point
 }
 
@@ -28,14 +35,14 @@ type ZoomElements = {
 	fitButton: HTMLButtonElement
 }
 
-type ZoomState = {
+type ZoomState = ZoomPosition & {
 	loupeActive: boolean
 	loupePoint: Point | null
 	mode: ZoomMode
-	scale: number
-	panX: number
-	panY: number
+	scroll: Point
 	pinch: Pinch | null
+	pinchLogScale: number | null
+	pinchCenter: Point | null
 	originalLoading: boolean
 	pointers: Map<number, Point>
 }
@@ -98,47 +105,41 @@ function createZoomState(): ZoomState {
 		scale: 1,
 		panX: 0,
 		panY: 0,
+		scroll: {x: 0, y: 0},
 		pinch: null,
+		pinchLogScale: null,
+		pinchCenter: null,
 		originalLoading: false,
 		pointers: new Map(),
 	}
 }
 
-function maximumScale(elements: ZoomElements): number {
-	const sourceLongEdge = Math.max(
-		Number(elements.image.dataset.photoWidth),
-		Number(elements.image.dataset.photoHeight),
-	)
-	const displayedLongEdge = Math.max(
-		elements.image.clientWidth,
-		elements.image.clientHeight,
-	)
+function imageSize(elements: ZoomElements): {width: number; height: number} {
+	const style = getComputedStyle(elements.image)
+	return {
+		width: parseFloat(style.width) || 0,
+		height: parseFloat(style.height) || 0,
+	}
+}
 
-	return Math.max(
-		1,
-		sourceLongEdge /
-			(Math.max(1, window.devicePixelRatio) * Math.max(1, displayedLongEdge)),
+function maximumScale(elements: ZoomElements): number {
+	return actualScale(
+		{
+			width: Number(elements.image.dataset.photoWidth),
+			height: Number(elements.image.dataset.photoHeight),
+		},
+		imageSize(elements),
+		window.devicePixelRatio,
 	)
 }
 
 function panLimits(elements: ZoomElements, state: ZoomState): Point {
-	const padding = state.scale > 1 ? 80 : 0
-	const x =
-		Math.max(
-			0,
-			(elements.image.clientWidth * state.scale -
-				elements.viewport.clientWidth) /
-				2,
-		) + padding
-
-	const y =
-		Math.max(
-			0,
-			(elements.image.clientHeight * state.scale -
-				elements.viewport.clientHeight) /
-				2,
-		) + padding
-	return {x, y}
+	return panBounds(
+		imageSize(elements),
+		elements.viewport.getBoundingClientRect(),
+		state.scale,
+		state.pinchLogScale !== null,
+	)
 }
 
 function clampPan(elements: ZoomElements, state: ZoomState): void {
@@ -155,6 +156,7 @@ function animateZoom(
 	elements: ZoomElements,
 	state: ZoomState,
 	before: DOMRect,
+	kind: "zoom" | "spring",
 ): void {
 	const after = elements.image.getBoundingClientRect()
 	if (
@@ -164,12 +166,13 @@ function animateZoom(
 	) {
 		return
 	}
-	const transform = `scale(${state.scale})`
-	const from = `translate(${before.left - after.left + (before.width - after.width) / 2}px, ${before.top - after.top + (before.height - after.height) / 2}px) scale(${(state.scale * before.width) / after.width})`
+	const transform = elements.image.style.transform
+	const layer = elements.imageLayers[0].getBoundingClientRect()
+	const from = `translate(${before.left + before.width / 2 - layer.left - layer.width / 2}px, ${before.top + before.height / 2 - layer.top - layer.height / 2}px) scale(${(state.scale * before.width) / after.width})`
 	for (const image of [elements.image, elements.originalImage]) {
 		const animation = image.animate([{transform: from}, {transform}], {
-			duration: 160,
-			easing: "ease-out",
+			duration: kind === "spring" ? 320 : 160,
+			easing: kind === "spring" ? "cubic-bezier(0.2, 1.3, 0.3, 1)" : "ease-out",
 		})
 		elements.animations.add(animation)
 		animation.onfinish = animation.oncancel = () => {
@@ -179,17 +182,18 @@ function animateZoom(
 }
 
 function sizeZoomCanvas(elements: ZoomElements, state: ZoomState): void {
-	const width = elements.viewport.clientWidth
-	const height = elements.viewport.clientHeight
+	const {width, height} = elements.viewport.getBoundingClientRect()
 	const limits = panLimits(elements, state)
 	const canvasWidth = width + limits.x * 2
 	const canvasHeight = height + limits.y * 2
-	const zoomed = state.scale > 1
+	const zoomed = state.scale > 1 || state.pinchLogScale !== null
 	elements.detail.dataset.photoZoomed = String(zoomed)
 	elements.viewport.style.overflow = zoomed ? "auto" : ""
 	elements.viewport.style.overscrollBehavior = zoomed ? "contain" : ""
 	elements.presentation.style.width = zoomed ? `${canvasWidth}px` : ""
 	elements.presentation.style.height = zoomed ? `${canvasHeight}px` : ""
+	// Elastic image transforms must not expand the native scroll bounds.
+	elements.presentation.style.overflow = "clip"
 	const style = zoomed
 		? {
 				position: "absolute",
@@ -208,14 +212,15 @@ function sizeZoomCanvas(elements: ZoomElements, state: ZoomState): void {
 function renderZoom(
 	elements: ZoomElements,
 	state: ZoomState,
-	animate = false,
+	animation?: "zoom" | "spring",
 ): void {
 	const before = elements.image.getBoundingClientRect()
 	cancelZoomAnimation(elements)
 	const maximum = maximumScale(elements)
 	state.scale = Math.max(1, Math.min(maximum, state.scale))
 
-	if (state.scale === 1) {
+	// Keep the gesture's position through fit; recenter only after release.
+	if (state.scale === 1 && state.pinchLogScale === null) {
 		state.panX = 0
 		state.panY = 0
 	}
@@ -224,14 +229,32 @@ function renderZoom(
 	synchronizeLoupe(elements, state)
 
 	sizeZoomCanvas(elements, state)
-	const transform = `scale(${state.scale})`
-	elements.image.style.transform = transform
-	elements.originalImage.style.transform = transform
 	const limits = panLimits(elements, state)
 	elements.viewport.scrollLeft = limits.x - state.panX
 	elements.viewport.scrollTop = limits.y - state.panY
-	if (animate) {
-		animateZoom(elements, state, before)
+	state.scroll = {
+		x: elements.viewport.scrollLeft,
+		y: elements.viewport.scrollTop,
+	}
+
+	// Keep the image center in fractional viewport CSS pixels. Native scroll
+	// positions can be rounded; compensate visually, never feed rounding back.
+	const {x, y, scale} = zoomTransform(
+		state,
+		elements.viewport.getBoundingClientRect(),
+		elements.imageLayers[0].getBoundingClientRect(),
+		state.pinchLogScale !== null && state.pinchCenter
+			? {
+					center: state.pinchCenter,
+					ratio: elasticRatio(elements, state),
+				}
+			: undefined,
+	)
+	const transform = `translate(${x}px, ${y}px) scale(${scale})`
+	elements.image.style.transform = transform
+	elements.originalImage.style.transform = transform
+	if (animation) {
+		animateZoom(elements, state, before, animation)
 	}
 
 	elements.actualButton.ariaPressed = String(
@@ -294,15 +317,46 @@ function center(left: Point, right: Point): Point {
 	return {x: (left.x + right.x) / 2, y: (left.y + right.y) / 2}
 }
 
-function startPinch(state: ZoomState): void {
+function synchronizePan(elements: ZoomElements, state: ZoomState): void {
+	const {scrollLeft, scrollTop} = elements.viewport
+	const ratio = elasticRatio(elements, state)
+	state.panX += (state.scroll.x - scrollLeft) / ratio
+	state.panY += (state.scroll.y - scrollTop) / ratio
+	state.scroll = {x: scrollLeft, y: scrollTop}
+}
+
+function resumePinch(
+	elements: ZoomElements,
+	state: ZoomState,
+	pointer: Point,
+): void {
+	synchronizePan(elements, state)
+	if (!elements.animations.size) {
+		return
+	}
+	const {logScale, ...position} = resumeZoom(
+		elements.image.getBoundingClientRect(),
+		elements.viewport.getBoundingClientRect(),
+		pointer,
+		{fitWidth: imageSize(elements).width, maximum: maximumScale(elements)},
+	)
+	Object.assign(state, position)
+	state.pinchLogScale = logScale
+	state.pinchCenter = pointer
+	cancelZoomAnimation(elements)
+}
+
+function startPinch(elements: ZoomElements, state: ZoomState): void {
 	const [left, right] = [...state.pointers.values()]
 	if (!left || !right) {
 		return
 	}
 
+	resumePinch(elements, state, center(left, right))
 	state.pinch = {
 		distance: distance(left, right),
 		scale: state.scale,
+		logScale: state.pinchLogScale ?? Math.log(state.scale),
 		panX: state.panX,
 		panY: state.panY,
 		center: center(left, right),
@@ -316,7 +370,7 @@ function updatePinch(elements: ZoomElements, state: ZoomState): boolean {
 	}
 
 	if (!state.pinch) {
-		startPinch(state)
+		startPinch(elements, state)
 	}
 
 	const pinch = state.pinch
@@ -326,61 +380,91 @@ function updatePinch(elements: ZoomElements, state: ZoomState): boolean {
 
 	applyPinch(elements, state, pinch, {
 		center: center(left, right),
-		scale: pinch.scale * (distance(left, right) / Math.max(1, pinch.distance)),
+		logScale:
+			pinch.logScale +
+			Math.log(distance(left, right) / Math.max(1, pinch.distance)),
 	})
 
 	return true
 }
 
+function scaleMode(scale: number, maximum: number): ZoomMode {
+	return scale === 1
+		? "fit"
+		: Math.abs(scale - maximum) < 0.01
+			? "actual"
+			: "custom"
+}
+
+function elasticRatio(elements: ZoomElements, state: ZoomState): number {
+	return state.pinchLogScale === null
+		? 1
+		: zoomScales(state.pinchLogScale, maximumScale(elements)).elasticScale /
+				state.scale
+}
+
 function applyPinch(
 	elements: ZoomElements,
 	state: ZoomState,
-	pinch: Omit<Pinch, "distance">,
-	current: Pick<Pinch, "center" | "scale">,
+	pinch: Omit<Pinch, "distance" | "logScale">,
+	current: {center: Point; logScale: number},
 ): void {
-	const nextScale = Math.max(1, Math.min(maximumScale(elements), current.scale))
-	const ratio = nextScale / pinch.scale
+	state.pinchLogScale = current.logScale
+	state.pinchCenter = current.center
+	const maximum = maximumScale(elements)
+	const {scale} = zoomScales(current.logScale, maximum)
+	Object.assign(
+		state,
+		pinchPan(
+			pinch,
+			{scale, center: current.center},
+			elements.viewport.getBoundingClientRect(),
+		),
+	)
+	state.mode = scaleMode(scale, maximum)
 
-	const bounds = elements.viewport.getBoundingClientRect()
-	const viewportCenter = {
-		x: bounds.left + bounds.width / 2,
-		y: bounds.top + bounds.height / 2,
-	}
-
-	state.panX =
-		current.center.x -
-		viewportCenter.x -
-		(pinch.center.x - viewportCenter.x - pinch.panX) * ratio
-	state.panY =
-		current.center.y -
-		viewportCenter.y -
-		(pinch.center.y - viewportCenter.y - pinch.panY) * ratio
-	state.mode =
-		nextScale === 1
-			? "fit"
-			: Math.abs(nextScale - maximumScale(elements)) < 0.01
-				? "actual"
-				: "custom"
-
-	if (nextScale > 1) {
+	if (scale > 1) {
 		loadOriginal(elements, state)
 	}
 
-	state.scale = nextScale
+	state.scale = scale
 	renderZoom(elements, state)
+}
+
+function settlePinch(elements: ZoomElements, state: ZoomState): void {
+	if (state.pinchLogScale === null) {
+		return
+	}
+	const stretched =
+		state.pinchLogScale < 0 ||
+		state.pinchLogScale > Math.log(maximumScale(elements))
+	state.pinchLogScale = null
+	state.pinchCenter = null
+	const maximum = maximumScale(elements)
+	const bounded = Math.max(1, Math.min(maximum, state.scale))
+	state.mode = scaleMode(bounded, maximum)
+	renderZoom(elements, state, stretched || bounded === 1 ? "spring" : undefined)
 }
 
 function bindTrackpadGestures(elements: ZoomElements, state: ZoomState): void {
 	const options = {passive: false, signal: elements.signal}
 	let gestureScale: number | null = null
-	const zoom = (pointer: Point, ratio: number) => {
+	let wheelEnd: ReturnType<typeof setTimeout> | undefined
+	const zoom = (pointer: Point, logRatio: number) => {
+		resumePinch(elements, state, pointer)
 		applyPinch(
 			elements,
 			state,
 			{scale: state.scale, panX: state.panX, panY: state.panY, center: pointer},
-			{center: pointer, scale: state.scale * ratio},
+			{
+				center: pointer,
+				logScale: (state.pinchLogScale ?? Math.log(state.scale)) + logRatio,
+			},
 		)
 	}
+	elements.signal.addEventListener("abort", () => clearTimeout(wheelEnd), {
+		once: true,
+	})
 
 	// Chrome and Firefox report trackpad pinches as Ctrl+wheel.
 	elements.viewport.addEventListener(
@@ -399,7 +483,10 @@ function bindTrackpadGestures(elements: ZoomElements, state: ZoomState): void {
 					: event.deltaMode === 2
 						? elements.viewport.clientHeight
 						: 1
-			zoom(point(event), Math.exp(-event.deltaY * unit * 0.01))
+			zoom(point(event), -event.deltaY * unit * 0.01)
+			clearTimeout(wheelEnd)
+			// Wheel has no gesture-end event; settle after a short pause.
+			wheelEnd = setTimeout(() => settlePinch(elements, state), 150)
 		},
 		options,
 	)
@@ -413,6 +500,7 @@ function bindTrackpadGestures(elements: ZoomElements, state: ZoomState): void {
 				return
 			}
 			event.preventDefault()
+			clearTimeout(wheelEnd)
 			gestureScale = (event as GestureEvent).scale
 		},
 		options,
@@ -425,7 +513,7 @@ function bindTrackpadGestures(elements: ZoomElements, state: ZoomState): void {
 			}
 			event.preventDefault()
 			const gesture = event as GestureEvent
-			zoom(point(gesture), gesture.scale / gestureScale)
+			zoom(point(gesture), Math.log(gesture.scale / gestureScale))
 			gestureScale = gesture.scale
 		},
 		options,
@@ -436,6 +524,7 @@ function bindTrackpadGestures(elements: ZoomElements, state: ZoomState): void {
 			if (gestureScale !== null) {
 				event.preventDefault()
 				gestureScale = null
+				settlePinch(elements, state)
 			}
 		},
 		options,
@@ -445,14 +534,7 @@ function bindTrackpadGestures(elements: ZoomElements, state: ZoomState): void {
 function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 	elements.viewport.addEventListener(
 		"scroll",
-		() => {
-			state.panX =
-				(elements.viewport.scrollWidth - elements.viewport.clientWidth) / 2 -
-				elements.viewport.scrollLeft
-			state.panY =
-				(elements.viewport.scrollHeight - elements.viewport.clientHeight) / 2 -
-				elements.viewport.scrollTop
-		},
+		() => synchronizePan(elements, state),
 		{signal: elements.signal},
 	)
 	elements.viewport.addEventListener(
@@ -467,7 +549,7 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 					})
 				}
 				state.pinch = null
-				startPinch(state)
+				startPinch(elements, state)
 			}
 		},
 		{passive: true, signal: elements.signal},
@@ -495,7 +577,7 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 		state.pointers.clear()
 		state.pinch = null
 		if (pinching) {
-			renderZoom(elements, state)
+			settlePinch(elements, state)
 		}
 	}
 	elements.viewport.addEventListener("touchend", endTouch, {
@@ -522,10 +604,14 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 			if (event.pointerType === "touch") {
 				return
 			}
+			if (elements.animations.size) {
+				resumePinch(elements, state, point(event))
+				renderZoom(elements, state)
+			}
 			state.pointers.set(event.pointerId, point(event))
 
 			if (state.pointers.size === 2) {
-				startPinch(state)
+				startPinch(elements, state)
 				return
 			}
 
@@ -550,8 +636,9 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 			}
 
 			if (state.scale > 1) {
-				state.panX += event.clientX - previous.x
-				state.panY += event.clientY - previous.y
+				const ratio = elasticRatio(elements, state)
+				state.panX += (event.clientX - previous.x) / ratio
+				state.panY += (event.clientY - previous.y) / ratio
 				renderZoom(elements, state)
 				elements.viewport.style.cursor = state.loupeActive
 					? "crosshair"
@@ -567,7 +654,11 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 		}
 		state.pointers.delete(event.pointerId)
 		state.pinch = null
-		renderZoom(elements, state)
+		if (state.pinchLogScale !== null) {
+			settlePinch(elements, state)
+		} else {
+			renderZoom(elements, state)
+		}
 	}
 
 	window.addEventListener("pointerup", endPointer, {
@@ -579,9 +670,11 @@ function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
 }
 
 function fitZoom(elements: ZoomElements, state: ZoomState): void {
+	state.pinchLogScale = null
+	state.pinchCenter = null
 	state.mode = "fit"
 	state.scale = 1
-	renderZoom(elements, state, true)
+	renderZoom(elements, state, "zoom")
 }
 
 function actualZoom(
@@ -589,6 +682,8 @@ function actualZoom(
 	state: ZoomState,
 	pointer?: Point,
 ): void {
+	state.pinchLogScale = null
+	state.pinchCenter = null
 	const scale = maximumScale(elements)
 	if (pointer) {
 		const image = elements.image.getBoundingClientRect()
@@ -611,7 +706,7 @@ function actualZoom(
 	state.scale = scale
 	state.mode = "actual"
 	loadOriginal(elements, state)
-	renderZoom(elements, state, true)
+	renderZoom(elements, state, "zoom")
 }
 
 function zoomAtPoint(
@@ -767,7 +862,8 @@ function loupeContainsPointer(elements: ZoomElements, pointer: Point): boolean {
 }
 
 function synchronizeLoupe(elements: ZoomElements, state: ZoomState): void {
-	const available = loupeInput.matches && state.mode === "fit"
+	const available =
+		loupeInput.matches && state.mode === "fit" && state.pinchLogScale === null
 	if (!available) {
 		state.loupeActive = false
 		const loupe = elements.detail.querySelector<HTMLElement>(
