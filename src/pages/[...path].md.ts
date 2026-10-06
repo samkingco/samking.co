@@ -22,7 +22,7 @@ const images = import.meta.glob<{default: ImageMetadata}>(
 )
 
 function link(title: string, path: string) {
-	return `[${title.replace(/[\\[\]]/g, "\\$&").replace(/\s+/g, " ")}](<${new URL(path, site).href}>)`
+	return `[${title.replace(/[\\[\]]/g, "\\$&").replace(/\s+/g, " ")}](${new URL(path, site).href})`
 }
 
 function source(entry: {id: string; body?: string}) {
@@ -180,7 +180,8 @@ export async function getStaticPaths() {
 		...siteConfig.bio,
 		...(siteConfig.photos.enabled
 			? [
-					"## Recently",
+					"## Recent photos",
+					link("View", "/photos/"),
 					photos
 						.slice(0, 3)
 						.map(
@@ -196,10 +197,12 @@ export async function getStaticPaths() {
 		"## Email",
 		link("mail@samking.co", "mailto:mail@samking.co"),
 		"## More",
-		["journal", "now", "freelance", "links", "cv"]
-			.map((path) => `- ${link(path, `/${path}/`)}`)
-			.join("\n"),
-		link("Support me", siteConfig.supportUrl),
+		[
+			...["journal", "now", "freelance", "links", "cv"].map(
+				(path) => `- ${link(path, `/${path}/`)}`,
+			),
+			`- ${link("Support me", siteConfig.supportUrl)}`,
+		].join("\n"),
 	)
 	const latestPost = journal.find((entry) => entry.collection === "posts")
 	const latestVideo = await getLatestVideoInfo(siteConfig.youtube.channelId)
