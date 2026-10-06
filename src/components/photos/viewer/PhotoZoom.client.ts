@@ -249,43 +249,37 @@ function cancelZoomAnimation(elements: ZoomElements): void {
 	elements.animations.clear()
 }
 
-function loadOriginal(elements: ZoomElements, state: ZoomState): void {
+async function loadOriginal(
+	elements: ZoomElements,
+	state: ZoomState,
+): Promise<void> {
 	const source = elements.originalImage.dataset.photoSource
-	if (!source || state.originalLoading) {
-		return
-	}
-
 	if (
-		elements.originalImage.complete &&
-		elements.originalImage.naturalWidth > 0
+		!source ||
+		state.originalLoading ||
+		elements.originalImage.style.opacity === "1"
 	) {
-		elements.originalImage.style.opacity = "1"
 		return
 	}
 	state.originalLoading = true
-	elements.originalImage.addEventListener(
-		"load",
-		() => {
-			state.originalLoading = false
-			requestAnimationFrame(() => {
-				if (!elements.signal.aborted) {
-					elements.originalImage.style.opacity = "1"
-				}
-			})
-		},
-		{once: true, signal: elements.signal},
-	)
-	elements.originalImage.addEventListener(
-		"error",
-		() => {
-			state.originalLoading = false
-			elements.originalImage.removeAttribute("src")
-		},
-		{once: true, signal: elements.signal},
-	)
 	if (elements.originalImage.getAttribute("src") !== source) {
 		elements.originalImage.src = source
 	}
+	try {
+		await elements.originalImage.decode()
+	} catch {
+		state.originalLoading = false
+		if (!elements.signal.aborted) {
+			elements.originalImage.removeAttribute("src")
+		}
+		return
+	}
+	requestAnimationFrame(() => {
+		state.originalLoading = false
+		if (!elements.signal.aborted) {
+			elements.originalImage.style.opacity = "1"
+		}
+	})
 }
 
 function point(event: MouseEvent): Point {
@@ -330,15 +324,21 @@ function updatePinch(elements: ZoomElements, state: ZoomState): boolean {
 		return false
 	}
 
-	const currentCenter = center(left, right)
-	const nextScale = Math.max(
-		1,
-		Math.min(
-			maximumScale(elements),
-			pinch.scale * (distance(left, right) / Math.max(1, pinch.distance)),
-		),
-	)
+	applyPinch(elements, state, pinch, {
+		center: center(left, right),
+		scale: pinch.scale * (distance(left, right) / Math.max(1, pinch.distance)),
+	})
 
+	return true
+}
+
+function applyPinch(
+	elements: ZoomElements,
+	state: ZoomState,
+	pinch: Omit<Pinch, "distance">,
+	current: Pick<Pinch, "center" | "scale">,
+): void {
+	const nextScale = Math.max(1, Math.min(maximumScale(elements), current.scale))
 	const ratio = nextScale / pinch.scale
 
 	const bounds = elements.viewport.getBoundingClientRect()
@@ -348,11 +348,11 @@ function updatePinch(elements: ZoomElements, state: ZoomState): boolean {
 	}
 
 	state.panX =
-		currentCenter.x -
+		current.center.x -
 		viewportCenter.x -
 		(pinch.center.x - viewportCenter.x - pinch.panX) * ratio
 	state.panY =
-		currentCenter.y -
+		current.center.y -
 		viewportCenter.y -
 		(pinch.center.y - viewportCenter.y - pinch.panY) * ratio
 	state.mode =
@@ -368,8 +368,78 @@ function updatePinch(elements: ZoomElements, state: ZoomState): boolean {
 
 	state.scale = nextScale
 	renderZoom(elements, state)
+}
 
-	return true
+function bindTrackpadGestures(elements: ZoomElements, state: ZoomState): void {
+	const options = {passive: false, signal: elements.signal}
+	let gestureScale: number | null = null
+	const zoom = (pointer: Point, ratio: number) => {
+		applyPinch(
+			elements,
+			state,
+			{scale: state.scale, panX: state.panX, panY: state.panY, center: pointer},
+			{center: pointer, scale: state.scale * ratio},
+		)
+	}
+
+	// Chrome and Firefox report trackpad pinches as Ctrl+wheel.
+	elements.viewport.addEventListener(
+		"wheel",
+		(event) => {
+			if (!event.ctrlKey) {
+				return
+			}
+			event.preventDefault()
+			if (gestureScale !== null) {
+				return
+			}
+			const unit =
+				event.deltaMode === 1
+					? 16
+					: event.deltaMode === 2
+						? elements.viewport.clientHeight
+						: 1
+			zoom(point(event), Math.exp(-event.deltaY * unit * 0.01))
+		},
+		options,
+	)
+
+	// Safari uses gesture events instead. Ignore its matching wheel events.
+	type GestureEvent = MouseEvent & {scale: number}
+	elements.viewport.addEventListener(
+		"gesturestart",
+		(event) => {
+			if (state.pointers.size > 1) {
+				return
+			}
+			event.preventDefault()
+			gestureScale = (event as GestureEvent).scale
+		},
+		options,
+	)
+	elements.viewport.addEventListener(
+		"gesturechange",
+		(event) => {
+			if (gestureScale === null) {
+				return
+			}
+			event.preventDefault()
+			const gesture = event as GestureEvent
+			zoom(point(gesture), gesture.scale / gestureScale)
+			gestureScale = gesture.scale
+		},
+		options,
+	)
+	elements.viewport.addEventListener(
+		"gestureend",
+		(event) => {
+			if (gestureScale !== null) {
+				event.preventDefault()
+				gestureScale = null
+			}
+		},
+		options,
+	)
 }
 
 function bindPointerGestures(elements: ZoomElements, state: ZoomState): void {
@@ -830,6 +900,7 @@ export function initializePhotoZoom(
 	)
 	bindDoubleZoom(elements, state)
 	bindPointerGestures(elements, state)
+	bindTrackpadGestures(elements, state)
 	const toggleLoupe = bindLoupe(elements, state)
 	observeZoomSize(elements, state)
 	renderZoom(elements, state)
