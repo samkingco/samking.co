@@ -7,6 +7,11 @@ type PreviewPosition = {
 	top: number
 }
 
+type PreviewSize = {
+	width: number
+	height: number
+}
+
 const previewUrls = new WeakMap<HTMLElement, string[]>()
 
 function urlsFor(target: HTMLElement): string[] {
@@ -45,62 +50,71 @@ function previewTarget(
 	return !layout || activeLayout === layout ? target : null
 }
 
+// Sides are chosen against the largest preview the CSS allows rather than the
+// current image, so cycling between portrait and landscape photos never flips
+// the preview across the cursor.
 function pointerPosition(
 	pointer: PointerEvent,
-	width: number,
-	height: number,
+	size: PreviewSize,
+	room: PreviewSize,
 ): PreviewPosition {
-	const right = pointer.clientX + previewGap
-	const bottom = pointer.clientY + previewGap
+	const rightSpace = window.innerWidth - pointer.clientX - previewGap * 2
+	const leftSpace = pointer.clientX - previewGap * 2
+	const belowSpace = window.innerHeight - pointer.clientY - previewGap * 2
+	const aboveSpace = pointer.clientY - previewGap * 2
 
 	return {
 		left:
-			right + width <= window.innerWidth - previewGap
-				? right
-				: pointer.clientX - width - previewGap,
+			rightSpace >= room.width || rightSpace >= leftSpace
+				? pointer.clientX + previewGap
+				: pointer.clientX - size.width - previewGap,
 		top:
-			bottom + height <= window.innerHeight - previewGap
-				? bottom
-				: pointer.clientY - height - previewGap,
+			belowSpace >= room.height || belowSpace >= aboveSpace
+				? pointer.clientY + previewGap
+				: pointer.clientY - size.height - previewGap,
 	}
 }
 
 function focusPosition(
 	target: HTMLElement,
-	width: number,
-	height: number,
+	size: PreviewSize,
+	room: PreviewSize,
 ): PreviewPosition {
 	const bounds = target.getBoundingClientRect()
 	const rightSpace = window.innerWidth - bounds.right - previewGap
 	const leftSpace = bounds.left - previewGap
 
-	if (rightSpace >= width) {
+	if (rightSpace >= room.width) {
 		return {left: bounds.right + previewGap, top: bounds.top}
 	}
 
-	if (leftSpace >= width) {
-		return {left: bounds.left - width - previewGap, top: bounds.top}
+	if (leftSpace >= room.width) {
+		return {left: bounds.left - size.width - previewGap, top: bounds.top}
 	}
 
-	const below = window.innerHeight - bounds.bottom - previewGap >= height
+	const belowSpace = window.innerHeight - bounds.bottom - previewGap
+	const aboveSpace = bounds.top - previewGap
+	const below = belowSpace >= room.height || belowSpace >= aboveSpace
 	return {
 		left: bounds.left,
-		top: below ? bounds.bottom + previewGap : bounds.top - height - previewGap,
+		top: below
+			? bounds.bottom + previewGap
+			: bounds.top - size.height - previewGap,
 	}
 }
 
 function previewPosition(
 	pointer: PointerEvent | null,
 	focusTarget: HTMLElement | null,
-	width: number,
-	height: number,
+	size: PreviewSize,
+	room: PreviewSize,
 ): PreviewPosition | null {
 	if (pointer) {
-		return pointerPosition(pointer, width, height)
+		return pointerPosition(pointer, size, room)
 	}
 
 	if (focusTarget) {
-		return focusPosition(focusTarget, width, height)
+		return focusPosition(focusTarget, size, room)
 	}
 
 	return null
@@ -139,15 +153,19 @@ function initializePhotoPreview(index: HTMLElement): void {
 	let hideTimer: number | undefined
 
 	const positionPreview = () => {
-		const width = preview.offsetWidth
-		const height = preview.offsetHeight
-		const position = previewPosition(pointer, focusTarget, width, height)
+		const style = getComputedStyle(preview)
+		const size = {width: preview.offsetWidth, height: preview.offsetHeight}
+		const room = {
+			width: parseFloat(style.maxWidth),
+			height: parseFloat(style.maxHeight),
+		}
+		const position = previewPosition(pointer, focusTarget, size, room)
 		if (!position) {
 			return
 		}
 
-		const left = clampToViewport(position.left, width, window.innerWidth)
-		const top = clampToViewport(position.top, height, window.innerHeight)
+		const left = clampToViewport(position.left, size.width, window.innerWidth)
+		const top = clampToViewport(position.top, size.height, window.innerHeight)
 
 		preview.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`
 	}
