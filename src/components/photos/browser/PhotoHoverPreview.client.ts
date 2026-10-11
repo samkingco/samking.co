@@ -1,5 +1,6 @@
 const previewGap = 16
 const cycleTime = 400
+const hideDelay = 150
 
 type PreviewPosition = {
 	left: number
@@ -135,6 +136,7 @@ function initializePhotoPreview(index: HTMLElement): void {
 	let focusTarget: HTMLElement | null = null
 	let activeTarget: HTMLElement | null = null
 	let timer: number | undefined
+	let hideTimer: number | undefined
 
 	const positionPreview = () => {
 		const width = preview.offsetWidth
@@ -150,7 +152,13 @@ function initializePhotoPreview(index: HTMLElement): void {
 		preview.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`
 	}
 
+	const cancelHide = () => {
+		window.clearTimeout(hideTimer)
+		hideTimer = undefined
+	}
+
 	const clearPreview = () => {
+		cancelHide()
 		window.clearInterval(timer)
 		pointer = null
 		focusTarget = null
@@ -158,7 +166,12 @@ function initializePhotoPreview(index: HTMLElement): void {
 		preview.hidden = true
 	}
 
+	const scheduleHide = () => {
+		hideTimer ??= window.setTimeout(clearPreview, hideDelay)
+	}
+
 	const showPreview = (target: HTMLElement) => {
+		cancelHide()
 		window.clearInterval(timer)
 
 		const urls = urlsFor(target)
@@ -199,13 +212,18 @@ function initializePhotoPreview(index: HTMLElement): void {
 
 		const target = previewTarget(index, event.target)
 
-		if (!target && !focusTarget) {
-			clearPreview()
-		}
 		if (!target) {
+			// Keep the preview alive across the gaps between links so moving
+			// from one link to the next swaps the image instead of flashing.
+			if (activeTarget && !focusTarget) {
+				pointer = event
+				positionPreview()
+				scheduleHide()
+			}
 			return
 		}
 
+		cancelHide()
 		pointer = event
 		focusTarget = null
 
