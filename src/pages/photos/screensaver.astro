@@ -1,0 +1,54 @@
+---
+import {getCollection} from "astro:content"
+import * as v from "valibot"
+import TextButton from "../../components/TextButton.astro"
+import Layout from "../../layouts/Photos.astro"
+import {PhotoEntrySchema} from "../../repos/photos/schema.ts"
+
+const photos = (await getCollection("photos"))
+	.map((entry) => v.parse(PhotoEntrySchema, entry.data))
+	.sort((left, right) => right.position - left.position)
+const screensaverPhotos = photos.map((photo) => ({
+	id: photo.id,
+	src: photo.detailUrl,
+	ratio: photo.metadata.width / photo.metadata.height,
+	alt: photo.metadata.alt ?? "View photo",
+}))
+---
+
+<Layout title="Screensaver | Photos | Sam King" ogImage={photos[0]?.ogUrl}>
+	<main
+		class="group/screensaver fixed inset-0 overflow-hidden bg-background data-idle:cursor-none"
+		data-screensaver
+		data-screensaver-photos={JSON.stringify(screensaverPhotos)}
+	>
+		<h1 class="sr-only">Photo screensaver</h1>
+
+		{[0, 1].map(() => <div
+			class="pointer-events-none absolute inset-0 grid place-items-center px-5 py-10 md:p-10 lg:p-16 [container-type:size]"
+		>
+			<a
+				draggable="false"
+				class="pointer-events-auto invisible opacity-0 transition-[opacity,visibility] duration-3000 ease-in-out data-active:visible data-active:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground group-data-idle/screensaver:cursor-none"
+				data-screensaver-photo
+			>
+				<img
+					alt=""
+					draggable="false"
+					class="block aspect-(--photo-ratio) w-[min(100cqw,100cqh*var(--photo-ratio))] select-none"
+				/>
+			</a>
+		</div>)}
+
+		<div
+			class="absolute top-0 right-0 bg-background px-3 py-2 transition-opacity duration-200 group-data-idle/screensaver:pointer-events-none group-data-idle/screensaver:opacity-0 group-data-idle/screensaver:duration-1000"
+		>
+			<TextButton data-screensaver-close>Esc</TextButton>
+		</div>
+	</main>
+</Layout>
+
+<script>
+	import {registerScreensaver} from "../../components/photos/screensaver/PhotoScreensaver.client.ts"
+	registerScreensaver()
+</script>

@@ -3,7 +3,7 @@ import {navigate} from "astro:transitions/client"
 let registered = false
 let photoToReveal: string | undefined
 
-function photoReturnPath(state: unknown): string | undefined {
+export function photoReturnPath(state: unknown): string | undefined {
 	if (
 		typeof state !== "object" ||
 		state === null ||
@@ -43,6 +43,14 @@ export function closePhotoDetail(detail: HTMLElement): void {
 	void navigate(link.href, {sourceElement: link})
 }
 
+function returnsToCurrentPage(link: HTMLAnchorElement): boolean {
+	return (
+		(link.matches("[data-photo-id]") &&
+			Boolean(link.closest("[data-photo-browser]"))) ||
+		link.matches("[data-photo-return]")
+	)
+}
+
 function handlePhotoNavigation(event: MouseEvent): void {
 	if (!isPlainNavigation(event) || !(event.target instanceof Element)) {
 		return
@@ -51,7 +59,7 @@ function handlePhotoNavigation(event: MouseEvent): void {
 	if (!link) {
 		return
 	}
-	if (link.matches("[data-photo-id]") && link.closest("[data-photo-browser]")) {
+	if (returnsToCurrentPage(link)) {
 		event.preventDefault()
 		void navigate(link.href, {
 			state: {photoReturnPath: `${location.pathname}${location.search}`},

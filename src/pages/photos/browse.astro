@@ -68,7 +68,9 @@ const lensItems = facetItems(groups.lenses)
 					{label: "Browse"},
 				]}
 			>
-				<div slot="controls" class="shrink-0">
+				<div slot="controls" class="flex shrink-0 items-baseline gap-x-2">
+					<Link href="/photos/screensaver/" data-photo-return>Screensaver</Link>
+					<span class="text-muted-foreground/60" aria-hidden="true">•</span>
 					<Link href="/photos/rss.xml">RSS</Link>
 				</div>
 			</PhotoPageBar>
@@ -119,3 +121,8 @@ const lensItems = facetItems(groups.lenses)
 		</section>
 	</main>
 </Layout>
+
+<script>
+	import {registerPhotoNavigation} from "../../components/photos/PhotoNavigation.client.ts"
+	registerPhotoNavigation()
+</script>
