@@ -1,4 +1,9 @@
 import {confirm, isCancel, log, note, select, taskLog} from "@clack/prompts"
+import {
+	LOCALNET,
+	publishRefraktToLocalnet,
+	resolveLocalnetDid,
+} from "../atproto/localnet.ts"
 import {planBluesky, planRefrakt} from "../atproto/plan.ts"
 import {publishBluesky, requireBlueskyPublishing} from "../atproto/publish.ts"
 import type {RecordPlan} from "../atproto/records.ts"
@@ -86,12 +91,84 @@ async function confirmBlueskyPublish(
 	}
 }
 
-export function runRefraktPlan(options: {json?: boolean}): Promise<void> {
+export function runRefraktPlan(options: {
+	json?: boolean
+	localnet?: boolean
+}): Promise<void> {
+	if (options.localnet) {
+		return reviewPlanResult(
+			"Refrakt localnet plan",
+			() => buildLocalnetRefraktPlan(),
+			options,
+			(result) => confirmLocalnetPublish(result),
+		)
+	}
 	return reviewPlanResult(
 		"Refrakt plan",
 		() => planRefrakt(siteConfig.atproto.did, siteConfig.atproto.refrakt),
 		options,
 	)
+}
+
+async function buildLocalnetRefraktPlan(limit?: number) {
+	return planRefrakt(await resolveLocalnetDid(), siteConfig.atproto.refrakt, {
+		endpoint: LOCALNET.service,
+		limit,
+	})
+}
+
+export async function runRefraktPublish(options: {
+	localnet?: boolean
+	yes?: boolean
+	limit?: number
+}): Promise<void> {
+	if (!options.localnet) {
+		throw new Error(
+			`Refrakt publishing only works on localnet for now. Use --localnet to publish to ${LOCALNET.identifier}.`,
+		)
+	}
+	if (!options.yes && !process.stdin.isTTY) {
+		throw new Error("Use --yes to publish without an interactive confirmation.")
+	}
+	const result = await buildLocalnetRefraktPlan(options.limit)
+	note(planSummary(result.plan), "Refrakt localnet plan")
+	await confirmLocalnetPublish(result, options.yes)
+}
+
+async function confirmLocalnetPublish(
+	result: Awaited<ReturnType<typeof planRefrakt>>,
+	yes = false,
+): Promise<boolean> {
+	const count = result.plan.creates.length + result.plan.updates.length
+	if (count === 0) {
+		log.info("No changes to publish.")
+		return true
+	}
+	if (!yes) {
+		const approved = await confirm({
+			message: `Publish ${count} record changes to ${LOCALNET.identifier} on localnet?`,
+			initialValue: false,
+		})
+		if (isCancel(approved) || !approved) {
+			return false
+		}
+	}
+	const task = taskLog({
+		title: "Publish Refrakt photos to localnet",
+		output: process.stderr,
+		limit: 10,
+	})
+	try {
+		task.message("Signing in to localnet")
+		const published = await publishRefraktToLocalnet(result, (record) =>
+			task.message(`Published ${record.uri}`),
+		)
+		task.success(`Published ${published} records`)
+		return true
+	} catch (error) {
+		task.error("Publishing failed")
+		throw error
+	}
 }
 
 async function reviewPlanResult<T extends {plan: RecordPlan}>(

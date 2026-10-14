@@ -139,6 +139,20 @@ export function readRefraktCatalog(
 	}
 }
 
+export function readExportFiles(database: PhotoDatabase, profile: string) {
+	return database
+		.select({sha256: photoExports.sha256, sourcePath: photoExports.sourcePath})
+		.from(photoExports)
+		.where(
+			and(
+				eq(photoExports.profile, profile),
+				eq(photoExports.current, true),
+				isNull(photoExports.deletedAt),
+			),
+		)
+		.all()
+}
+
 function memberPhotoIds(database: PhotoDatabase, collectionIds: string[]) {
 	return database
 		.select({id: collectionPhotos.photoId})

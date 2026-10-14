@@ -8,8 +8,9 @@ import type {RemoteRecord} from "./records.ts"
 export async function readRemoteRecords(
 	did: string,
 	collections: readonly string[],
+	service?: string,
 ): Promise<{endpoint: string; records: RemoteRecord[]}> {
-	const endpoint = await resolvePds(did)
+	const endpoint = service ?? (await resolvePds(did))
 	const client = new Client({handler: simpleFetchHandler({service: endpoint})})
 	const repo = parse(didString(), did)
 	const records = await Promise.all(

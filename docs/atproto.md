@@ -46,4 +46,14 @@ Planning needs a network connection, but no app password. Publishing builds a fr
 
 The [Refrakt planner](../src/atproto/plan.ts#L15) reads the [photo catalog](photos.md) and prepares photo and album records, including their order. It compares those with the remote records in the same way as the Bluesky planner.
 
-Refrakt publishing and blob uploads aren’t implemented yet as Refrakt isn't fully on AT Protocol just yet. `pnpm content atproto plan refrakt --json` shows the plan.
+Publishing to my own PDS isn’t implemented yet as Refrakt isn't fully on AT Protocol just yet. `pnpm content atproto plan refrakt --json` shows the plan.
+
+To try the records in Refrakt, I publish them to `sam.test` on Refrakt's local network instead. [The localnet publisher](../src/atproto/localnet.ts#L52) signs in with the local network's shared test password, uploads each photo's Refrakt export as a blob, and writes the same records with the same record keys. It never reads `ATPROTO_APP_PASSWORD` or contacts my real PDS. Refrakt's localnet must be running and seeded, which creates `sam.test`.
+
+```sh
+pnpm content atproto plan refrakt --localnet
+pnpm content atproto publish refrakt --localnet --limit 3
+pnpm content atproto publish refrakt --localnet
+```
+
+`--limit` publishes only the first few photos, with the albums they belong to. Running the full publish afterwards adds the rest and updates album order. Unchanged records are skipped, so it's safe to run again after a failure.

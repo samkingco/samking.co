@@ -15,6 +15,7 @@ import {createRefraktRecords, REFRAKT_COLLECTIONS} from "./refrakt.ts"
 export async function planRefrakt(
 	did: string,
 	config: typeof siteConfig.atproto.refrakt,
+	options: {endpoint?: string; limit?: number} = {},
 ) {
 	const database = openReadonlyPhotoDatabase()
 	let catalog: ReturnType<typeof readRefraktCatalog>
@@ -23,8 +24,15 @@ export async function planRefrakt(
 	} finally {
 		database.$client.close()
 	}
-	const desired = await createRefraktRecords({did, catalog})
-	const {endpoint, records} = await readRemoteRecords(did, REFRAKT_COLLECTIONS)
+	const desired = await createRefraktRecords({
+		did,
+		catalog: firstPhotos(catalog, options.limit),
+	})
+	const {endpoint, records} = await readRemoteRecords(
+		did,
+		REFRAKT_COLLECTIONS,
+		options.endpoint,
+	)
 	return {
 		destination: "refrakt" as const,
 		did,
@@ -32,6 +40,24 @@ export async function planRefrakt(
 		profile: config.exportProfile,
 		endpoint,
 		plan: compareRecords(desired, records),
+	}
+}
+
+function firstPhotos(
+	catalog: ReturnType<typeof readRefraktCatalog>,
+	limit: number | undefined,
+) {
+	if (limit === undefined) {
+		return catalog
+	}
+	const photos = catalog.photos.slice(0, limit)
+	const ids = new Set(photos.map(({id}) => id))
+	return {
+		...catalog,
+		photos,
+		albums: catalog.albums.filter(({photoIds}) =>
+			photoIds.some((id) => ids.has(id)),
+		),
 	}
 }
 

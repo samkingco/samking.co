@@ -1,12 +1,13 @@
 import type {Key} from "node:readline"
 import {MULTISELECT_INSTRUCTIONS, SELECT_INSTRUCTIONS} from "@clack/prompts"
-import {Command} from "commander"
+import {Command, InvalidArgumentError} from "commander"
 import {generateAltTextCommand, manageAltText} from "./alt-text.ts"
 import {
 	manageAtproto,
 	runBlueskyPlan,
 	runBlueskyPublish,
 	runRefraktPlan,
+	runRefraktPublish,
 } from "./atproto.ts"
 import {editCollectionDescriptions} from "./collections.ts"
 import {editEquipment} from "./equipment.ts"
@@ -133,15 +134,30 @@ plan
 	.command("refrakt")
 	.description("Plan Refrakt photos")
 	.option("--json", "Print plan as JSON")
+	.option("--localnet", "Plan against sam.test on Refrakt's localnet")
 	.action(runRefraktPlan)
 
-atproto
-	.command("publish")
-	.description("Publish record changes")
+const publish = atproto.command("publish").description("Publish record changes")
+publish
 	.command("bluesky")
 	.description("Publish Bluesky notes")
 	.option("--yes", "Publish without an interactive confirmation")
 	.action(runBlueskyPublish)
+publish
+	.command("refrakt")
+	.description("Publish Refrakt photos")
+	.option("--localnet", "Publish to sam.test on Refrakt's localnet")
+	.option("--limit <count>", "Publish only the first <count> photos", count)
+	.option("--yes", "Publish without an interactive confirmation")
+	.action(runRefraktPublish)
+
+function count(value: string): number {
+	const parsed = Number(value)
+	if (!Number.isInteger(parsed) || parsed < 1) {
+		throw new InvalidArgumentError("Expected a positive whole number.")
+	}
+	return parsed
+}
 
 // Let Clack restore the terminal before exiting; Escape only leaves one prompt.
 function exitOnInterrupt(_value: string, key: Key): void {
