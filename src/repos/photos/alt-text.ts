@@ -1,6 +1,5 @@
 import {spawn} from "node:child_process"
 import {createHash} from "node:crypto"
-import {resolve} from "node:path"
 import {setTimeout as delay} from "node:timers/promises"
 import {and, asc, desc, eq, isNotNull, isNull} from "drizzle-orm"
 import {alias} from "drizzle-orm/sqlite-core"
@@ -207,8 +206,6 @@ async function startOllama(progress: (message: string) => void) {
 			...process.env,
 			OLLAMA_HOST: "127.0.0.1:11434",
 			OLLAMA_NO_CLOUD: "1",
-			OLLAMA_MODELS:
-				process.env.OLLAMA_MODELS ?? resolve(".local/alt-text/models"),
 		},
 	})
 	const stop = () => {
