@@ -26,7 +26,7 @@ For a photo grid, run `pnpm dev` and open `http://localhost:4321/admin/alt-text`
 
 ## Local files and R2
 
-`photos/catalog.sqlite` stores metadata and collection membership. Source JPEGs and generated images are stored in `photos/objects/`. With `pnpm dev`, [Astro serves those local files through `/cdn`](../astro.config.mjs#L22), so I can preview photos before uploading them.
+`photos/catalog.sqlite` stores metadata and collection membership. There are no migration files: `pnpm photos:db:push` creates the tables from the [Drizzle schema](../src/repos/photos/database-schema.ts#L1) and applies later schema changes. Source JPEGs and generated images are stored in `photos/objects/`. With `pnpm dev`, [Astro serves those local files through `/cdn`](../astro.config.mjs#L22), so I can preview photos before uploading them.
 
 Sync finishes the local work before attempting R2 uploads. Missing exports do not stop the remaining photos from syncing and uploading. Sync lists their filenames so I can export them and run sync again. It [checks hashes and sizes](../src/repos/photos/r2.ts#L72) to avoid uploading the same files again and [backs up the SQLite catalog](../src/repos/photos/backup.ts#L9) too.
 

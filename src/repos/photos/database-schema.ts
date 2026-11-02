@@ -64,14 +64,7 @@ export const photos = sqliteTable(
 		createdAt: text("created_at").notNull(),
 		updatedAt: text("updated_at").notNull(),
 	},
-	(table) => [
-		check("photos_check_3", sql`${table.status} IN ('active', 'deleted')`),
-		check(
-			"photos_alt_text_status_check",
-			sql`${table.altTextStatus} IN ('generated', 'approved', 'edited')`,
-		),
-		index("photos_status_idx").on(table.status),
-	],
+	(table) => [index("photos_status_idx").on(table.status)],
 )
 
 export const collectionPhotos = sqliteTable(
@@ -157,10 +150,6 @@ export const photoDerivatives = sqliteTable(
 			.on(table.exportId, table.kind)
 			.where(sql`${table.deletedAt} IS NULL`),
 		uniqueIndex("photo_derivatives_r2_key_unique").on(table.r2Key),
-		check(
-			"photo_derivatives_check_7",
-			sql`${table.kind} IN ('source', 'thumb', 'detail', 'og')`,
-		),
 		index("photo_derivatives_pending_idx").on(
 			table.uploadedAt,
 			table.deletedAt,
@@ -185,13 +174,5 @@ export const equipmentAliases = sqliteTable(
 			columns: [table.kind, table.sourceName],
 			name: "equipment_aliases_pk",
 		}),
-		check(
-			"equipment_aliases_check_4",
-			sql`${table.kind} IN ('camera', 'lens')`,
-		),
-		check(
-			"equipment_aliases_check_5",
-			sql`${table.focalLengthDisplay} IN ('native', '35mm')`,
-		),
 	],
 )

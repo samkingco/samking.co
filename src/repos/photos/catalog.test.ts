@@ -3,9 +3,7 @@ import {mkdtemp, rm} from "node:fs/promises"
 import {tmpdir} from "node:os"
 import {join} from "node:path"
 import test, {type TestContext} from "node:test"
-import {fileURLToPath} from "node:url"
 import {eq} from "drizzle-orm"
-import {migrate} from "drizzle-orm/node-sqlite/migrator"
 import sharp from "sharp"
 import {createRefraktRecords} from "../../atproto/refrakt.ts"
 import {
@@ -27,6 +25,7 @@ import {
 } from "./database-schema.ts"
 import {bindDocument, checkDocument, openPhotoDatabase} from "./database.ts"
 import {saveEquipmentAlias} from "./equipment.ts"
+import {pushPhotoSchema} from "./push-schema.ts"
 import {configuredRootIds, saveRoots} from "./roots.ts"
 
 const date = "2025-01-01T00:00:00.000Z"
@@ -70,14 +69,10 @@ const metadata = {
 	tagEdges: [],
 }
 
-function fixture(t: TestContext) {
+async function fixture(t: TestContext) {
 	const database = openPhotoDatabase(":memory:")
 	t.after(() => database.$client.close())
-	migrate(database, {
-		migrationsFolder: fileURLToPath(
-			new URL("../../../drizzle/photos", import.meta.url),
-		),
-	})
+	await pushPhotoSchema(database.$client)
 	database
 		.insert(collections)
 		.values(
@@ -174,7 +169,7 @@ function fixture(t: TestContext) {
 }
 
 async function altFixture(t: TestContext) {
-	const db = fixture(t)
+	const db = await fixture(t)
 	const directory = await mkdtemp(join(tmpdir(), "photo-alt-"))
 	t.after(() => rm(directory, {recursive: true, force: true}))
 	const path = join(directory, "source.jpg")
@@ -300,8 +295,8 @@ test("generation and stale review cannot overwrite a concurrent human edit", asy
 	assert.equal(readAltTextPhotos(db, "a")[0]!.altText, "Human edit")
 })
 
-test("bulk alt review saves only submitted photos using the existing statuses", (t) => {
-	const db = fixture(t)
+test("bulk alt review saves only submitted photos using the existing statuses", async (t) => {
+	const db = await fixture(t)
 	db.update(photos)
 		.set({
 			metadataJson: JSON.stringify({...metadata, alt: null}),
@@ -345,8 +340,8 @@ test("bulk alt review saves only submitted photos using the existing statuses", 
 	assert.deepEqual(readGeneratedAltTextPhotos(db), [])
 })
 
-test("bulk alt review rolls back the whole save on invalid or stale input", (t) => {
-	const db = fixture(t)
+test("bulk alt review rolls back the whole save on invalid or stale input", async (t) => {
+	const db = await fixture(t)
 	db.update(photos)
 		.set({
 			metadataJson: JSON.stringify({...metadata, alt: null}),
@@ -387,7 +382,7 @@ test("bulk alt review rolls back the whole save on invalid or stale input", (t) 
 })
 
 test("catalog reads preserve membership order and use edits in both destinations", async (t) => {
-	const db = fixture(t)
+	const db = await fixture(t)
 	saveCollectionDescription(db, "album", "Birds near home")
 	saveEquipmentAlias(db, {
 		kind: "camera",
@@ -444,8 +439,8 @@ test("catalog reads preserve membership order and use edits in both destinations
 	)
 })
 
-test("both catalogs prefer IPTC alt text, then catalog alt text, without changing metadata", (t) => {
-	const db = fixture(t)
+test("both catalogs prefer IPTC alt text, then catalog alt text, without changing metadata", async (t) => {
+	const db = await fixture(t)
 	const originalMetadata = readWebsiteCatalog(db, website, false).photos[0]!
 		.metadata
 	const paddedMetadata = {...metadata, alt: `  ${metadata.alt}\n`}
@@ -497,8 +492,8 @@ test("both catalogs prefer IPTC alt text, then catalog alt text, without changin
 	}
 })
 
-test("website availability and Refrakt completeness are distinct", (t) => {
-	const db = fixture(t)
+test("website availability and Refrakt completeness are distinct", async (t) => {
+	const db = await fixture(t)
 	db.update(photoDerivatives)
 		.set({uploadedAt: null})
 		.where(eq(photoDerivatives.r2Key, "photos/b/website/detail"))
@@ -537,8 +532,8 @@ test("website availability and Refrakt completeness are distinct", (t) => {
 	)
 })
 
-test("document checks do not bind the database or overwrite another catalog", (t) => {
-	const db = fixture(t)
+test("document checks do not bind the database or overwrite another catalog", async (t) => {
+	const db = await fixture(t)
 	checkDocument(db, "one")
 	assert.deepEqual(db.select().from(catalog).all(), [])
 	bindDocument(db, "one")
@@ -546,8 +541,8 @@ test("document checks do not bind the database or overwrite another catalog", (t
 	assert.equal(db.select().from(catalog).get()?.documentId, "one")
 })
 
-test("changing selected collections preserves their descriptions", (t) => {
-	const db = fixture(t)
+test("changing selected collections preserves their descriptions", async (t) => {
+	const db = await fixture(t)
 	const snapshot = {
 		documentId: "one",
 		variants: [],
@@ -576,8 +571,8 @@ test("changing selected collections preserves their descriptions", (t) => {
 	assert.ok(readCollections(db).some(({id}) => id === "album"))
 })
 
-test("root selection includes nested members and excludes photos outside the root", (t) => {
-	const db = fixture(t)
+test("root selection includes nested members and excludes photos outside the root", async (t) => {
+	const db = await fixture(t)
 	db.insert(collections)
 		.values({
 			id: "nested",

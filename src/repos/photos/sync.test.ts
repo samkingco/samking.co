@@ -7,7 +7,6 @@ import {DatabaseSync} from "node:sqlite"
 import test from "node:test"
 import {fileURLToPath, pathToFileURL} from "node:url"
 import {eq, isNull} from "drizzle-orm"
-import {migrate} from "drizzle-orm/node-sqlite/migrator"
 import sharp from "sharp"
 import {
 	collectionPhotos,
@@ -18,6 +17,7 @@ import {
 	photos,
 } from "./database-schema.ts"
 import {openPhotoDatabase} from "./database.ts"
+import {pushPhotoSchema} from "./push-schema.ts"
 
 const cli = fileURLToPath(new URL("../../cli/index.ts", import.meta.url))
 const configUrl = new URL("../../site.config.ts", import.meta.url).href
@@ -105,11 +105,7 @@ test("Capture One sync uses source metadata, keeps fixed outputs, and can be rep
 		.run(2, pathToFileURL(refrakt).href)
 	const db = openPhotoDatabase(join(cwd, "photos/catalog.sqlite"))
 	using _ = db.$client
-	migrate(db, {
-		migrationsFolder: fileURLToPath(
-			new URL("../../../drizzle/photos", import.meta.url),
-		),
-	})
+	await pushPhotoSchema(db.$client)
 	const date = "2025-01-01T00:00:00.000Z"
 	db.insert(collections)
 		.values({
